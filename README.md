@@ -1,28 +1,46 @@
 # Akasha
 
-> **An all-in-one productivity app combining calendar, multi-level todos, habit tracking, and daily journal.**  
-> 一款集动态日历、无限多级待办清单、习惯打卡与随笔日记于一体的个人计划管理工具。
+<p align="center">
+  <img src="public/icon-check-512.png" width="96" height="96" alt="Akasha Logo" />
+</p>
 
-[![Vue 3](https://img.shields.io/badge/Vue-3.5-4FC08D?style=flat-square&logo=vue.js&logoColor=white)](https://vuejs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite-8.x-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
-[![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-4.x-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Dexie.js](https://img.shields.io/badge/Dexie.js-IndexedDB-orange?style=flat-square)](https://dexie.com/)
-[![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
+<p align="center">
+  <strong>一个开源、极简且注重隐私的个人生活与工作架构流操作系统。</strong><br>
+  <em>An open-source, minimalist, and privacy-first Personal Life & Work Architecture OS.</em>
+</p>
+
+<p align="center">
+  <a href="README.md"><strong>简体中文</strong></a> •
+  <a href="README_EN.md">English</a>
+</p>
+
+<p align="center">
+  <a href="https://vuejs.org/"><img src="https://img.shields.io/badge/Vue-3.5-4FC08D?style=flat-square&logo=vue.js&logoColor=white" alt="Vue 3"></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript"></a>
+  <a href="https://vitejs.dev/"><img src="https://img.shields.io/badge/Vite-8.x-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite"></a>
+  <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/TailwindCSS-4.x-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white" alt="Tailwind CSS"></a>
+  <a href="https://dexie.com/"><img src="https://img.shields.io/badge/Dexie.js-IndexedDB-orange?style=flat-square" alt="Dexie.js"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="License"></a>
+</p>
 
 ---
 
-## 📖 简介 (Introduction)
+## 📖 简介
 
-**Akasha** 是一款简洁实用、本地优先（Local-First）的个人计划与时间管理工具。
+**Akasha** 是一个开源、优雅且完全掌控于己的个人生活与工作架构流操作系统（Personal Life & Work Architecture OS）。
 
-日常生活中，我们经常需要在不同的应用间来回切换：在日历里查日程、在待办软件里拆任务、在打卡工具里记习惯、在备忘录里写随笔。
+在数字工具泛滥的当下，我们常常在割裂的应用间疲于切换：在日历里查日程、在待办软件里拆任务、在打卡工具里记习惯、在备忘录里写随笔——工具本该服务于生活，却反而将注意力撕扯成碎片。
 
-Akasha 将**自适应动态日历、多级待办清单、规律习惯追踪、固定日程规划以及随笔复盘**整合为一体。操作直观自然，无需在多款工具间割裂跳转。同时，所有数据均存储在本地浏览器 IndexedDB 数据库中，无需登录账号，私密、快速且支持离线使用。
+**Akasha 为重塑秩序与日常心流而生。**  
+名字取自古梵语 *Ākāśa*（虚空 / 以太，意为容纳万物运行与生灭的原生容器）。它将**宏观人生领域规划、动态自适应月历、无限多级任务树、规律习惯追踪、固定日程安排以及每日随笔复盘**深度缝合为一个有机整体，让长期愿景自然穿透到每一天的微小行动中。
+
+坚持纯粹的 **本地优先（Local-First）** 哲学，所有数据只存放在您设备本地浏览器的 IndexedDB 数据库中。无需注册登录，零云端追踪，毫秒级即时响应，全离线可用，更支持标准的 PWA 桌面与移动端无缝沉浸安装。
+
+它不仅是一款效率工具，更是助你在纷乱日常中厘清纷扰、专注当下、从容前行的数字精神栖居之所。
 
 ---
 
-## ✨ 核心特性 (Key Features)
+## ✨ 核心特性
 
 ### 1. 顶层架构：领域与项目 (Areas & Projects)
 * **人生领域定义**：自由开辟长期关注领域（如：工作事业、学业提升、生活理财、健康身心等）。
@@ -61,13 +79,16 @@ Akasha 将**自适应动态日历、多级待办清单、规律习惯追踪、�
 * **日期驱动书写**：支持任意日期的随笔撰写，记录心得、情绪状态与当日复盘。
 * **月度归档目录**：侧边栏支持“全部记录”与“按月份筛选”切换，卡片直观显示日期与文字摘要，点击即可即时载入编辑。
 
-### 7. 全局检索与系统设置 (Global Tools & System Settings)
+### 7. 全局检索与个性化定制 (Global Tools & Preferences)
 * **全景穿透搜索**：快捷检索项目、待办、习惯、日程与随笔，结果一键穿透直达。
-* **抽屉式流型设置**：
-  * **明暗双主题**：纯净浅色（Clean Light）与沉浸深色（Deep Dark）平滑过渡。
-  * **界面字号缩放**：提供小、标准、大三档字体调控，全局自适应等比缩放。
-  * **霞鹜文楷正文字体**：默认搭载温润清爽的霞鹜文楷屏幕字体（LXGW WenKai），阅读舒适。
-  * **数据自主可控**：支持一键导出/导入全量 JSON 备份，支持一键清空重置为完全空白数据集。
+* **全界面等比缩放**：内置 90%（紧凑）、100%（标准）、108%（舒适）、118%（大屏）四档全局无损比例缩放。
+* **多字体风格一键切换**：支持霞鹜文楷（文雅温润）、系统默认黑体（现代利落）、典雅宋体（沉稳内敛）。
+* **明暗双主题**：纯净浅色（Clean Light）与沉浸深色（Deep Dark）平滑过渡。
+* **数据自主可控**：支持一键导出/导入全量 JSON 备份，支持一键清空重置为完全空白数据集。
+
+### 8. 渐进式 Web 应用 (PWA & Mobile Ready)
+* **独立应用模式**：全面适配 Android Chrome WebAPK 与 iOS Safari 添加到主屏幕，无浏览器地址栏与安全角标，呈现原生全屏体验。
+* **离线服务工作线程**：内置 Service Worker 预缓存，断网状态下照常加载与操作。
 
 ---
 
@@ -80,7 +101,7 @@ Akasha 将**自适应动态日历、多级待办清单、规律习惯追踪、�
 * **本地数据库**：[Dexie.js](https://dexie.com/) (HTML5 IndexedDB 高性能封装)
 * **图标组件**：[Lucide Vue Next](https://lucide.dev/)
 * **视觉粒子**：[canvas-confetti](https://github.com/catdad/canvas-confetti)
-* **正文字体**：[LXGW WenKai Screen](https://github.com/lxgw/LxgwWenKai)
+* **默认字体**：[LXGW WenKai Screen](https://github.com/lxgw/LxgwWenKai)
 
 ---
 
@@ -99,14 +120,14 @@ git clone https://github.com/yyzmiao/Akasha.git
 # 2. 进入项目目录
 cd Akasha
 
-# 3. 安装项目依赖
+# 3. 安装依赖
 npm install
 
 # 4. 启动本地开发服务
 npm run dev
 ```
 
-默认开发服务将运行在：`http://localhost:5173/` (端口冲突时顺延)
+默认开发服务运行在：`http://localhost:5173/`
 
 ### 生产构建与预览 (Build & Preview)
 
@@ -145,7 +166,9 @@ Akasha/
 ├── deploy/                # 生产部署与反向代理模板
 │   ├── .htpasswd.example  # Basic Auth 凭据模版
 │   └── nginx-proxy.conf   # 生产 Nginx 反向代理配置模版
-├── public/                # 静态资源与 PWA 清单
+├── public/                # 静态资源、图标与 PWA 清单
+│   ├── icon-check-192.png # PWA 192x192 高清图标
+│   ├── icon-check-512.png # PWA 512x512 高清图标
 │   └── manifest.json      # 应用清单配置
 ├── src/
 │   ├── components/        # 核心功能组件
