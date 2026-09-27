@@ -335,6 +335,136 @@
             </div>
           </section>
 
+          <!-- AI 智能副驾驶配置 (AI Copilot Settings) -->
+          <section class="space-y-3">
+            <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+              <span class="flex items-center gap-1.5">
+                <Sparkles class="w-3.5 h-3.5 text-indigo-500" />
+                <span>AI 个人效能配置 (Copilot)</span>
+              </span>
+              <span v-if="aiConfig.apiKey" class="text-[11px] font-normal text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                已配置
+              </span>
+            </h3>
+
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-3.5">
+              <!-- 快捷预设供应商选择 -->
+              <div class="space-y-1.5">
+                <div class="text-xs font-medium text-slate-800 dark:text-slate-200">推荐服务商预设</div>
+                <div class="grid grid-cols-3 gap-1.5 text-xs">
+                  <button
+                    v-for="(preset, pKey) in providerPresets"
+                    :key="pKey"
+                    type="button"
+                    @click="applyProviderPreset(pKey)"
+                    :class="[
+                      'p-1.5 rounded-lg border text-center transition-all truncate text-[11px] cursor-pointer',
+                      aiConfig.provider === pKey
+                        ? 'bg-white dark:bg-slate-700 border-indigo-500 text-indigo-600 dark:text-white font-semibold shadow-2xs'
+                        : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-750'
+                    ]"
+                  >
+                    {{ preset.label.split(' ')[0] }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Base URL -->
+              <div class="space-y-1">
+                <label class="text-[11px] font-medium text-slate-700 dark:text-slate-300">API 接口地址 (Base URL)</label>
+                <input
+                  v-model="aiConfig.baseUrl"
+                  type="text"
+                  placeholder="如 https://api.deepseek.com 或 http://localhost:11434/v1"
+                  class="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-600 text-xs font-mono focus:outline-hidden focus:border-indigo-500"
+                />
+              </div>
+
+              <!-- API Key -->
+              <div class="space-y-1">
+                <div class="flex items-center justify-between">
+                  <label class="text-[11px] font-medium text-slate-700 dark:text-slate-300">API 密钥 (API Key)</label>
+                  <span class="text-[10px] text-slate-400">保存在本地浏览器</span>
+                </div>
+                <input
+                  v-model="aiConfig.apiKey"
+                  type="password"
+                  placeholder="sk-..."
+                  class="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-600 text-xs font-mono focus:outline-hidden focus:border-indigo-500"
+                />
+              </div>
+
+              <!-- Model Name -->
+              <div class="space-y-1">
+                <label class="text-[11px] font-medium text-slate-700 dark:text-slate-300">模型名称 (Model)</label>
+                <input
+                  v-model="aiConfig.model"
+                  type="text"
+                  placeholder="如 deepseek-chat 或 gpt-4o-mini"
+                  class="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-600 text-xs font-mono focus:outline-hidden focus:border-indigo-500"
+                />
+              </div>
+
+              <!-- Nginx Proxy Switch -->
+              <div class="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-medium text-slate-800 dark:text-slate-200">使用服务器反向代理</div>
+                  <div class="text-[11px] text-slate-400">解决跨域拦截或 HTTPS 下无法访问本地模型的问题</div>
+                </div>
+                <button
+                  type="button"
+                  @click="aiConfig.useProxy = !aiConfig.useProxy"
+                  :class="[
+                    'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden',
+                    aiConfig.useProxy ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'
+                  ]"
+                  role="switch"
+                  :aria-checked="aiConfig.useProxy"
+                >
+                  <span
+                    :class="[
+                      'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out',
+                      aiConfig.useProxy ? 'translate-x-4' : 'translate-x-0'
+                    ]"
+                  />
+                </button>
+              </div>
+
+              <!-- Action buttons: Save & Ping Test -->
+              <div class="grid grid-cols-2 gap-2 pt-1">
+                <button
+                  type="button"
+                  @click="handleSaveAiConfig"
+                  class="py-2 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 active:scale-98 text-white text-xs font-medium transition-all shadow-xs cursor-pointer text-center"
+                >
+                  保存 AI 设置
+                </button>
+                <button
+                  type="button"
+                  @click="handleTestAiConnection"
+                  :disabled="isTestingAi"
+                  class="py-2 px-3 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-600 active:scale-98 text-slate-700 dark:text-slate-200 text-xs font-medium transition-all cursor-pointer text-center"
+                >
+                  {{ isTestingAi ? '正在测试...' : '⚡ 测试连通性' }}
+                </button>
+              </div>
+
+              <!-- Test feedback -->
+              <div
+                v-if="aiTestResult"
+                :class="[
+                  'p-2.5 rounded-lg border text-[11px] leading-relaxed',
+                  aiTestResult.success
+                    ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300'
+                    : 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300'
+                ]"
+              >
+                {{ aiTestResult.message }}
+              </div>
+            </div>
+          </section>
+
           <!-- 云端多端实时同步 (PocketBase) -->
           <section class="space-y-3">
             <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">
@@ -588,6 +718,7 @@ import {
   Sun,
   Moon,
   Clock,
+  Sparkles,
   Database,
   Download,
   Upload,
@@ -598,6 +729,13 @@ import {
   LogOut,
 } from 'lucide-vue-next'
 import type { FontSize, FontFamily, UiScale } from '@/types'
+import type { AiProviderConfig, AiProviderType } from '@/types/copilot'
+import {
+  loadAiConfig,
+  saveAiConfig,
+  testAiConnection,
+  PROVIDER_PRESETS,
+} from '@/services/aiService'
 import {
   serverUrl,
   currentUser,
@@ -700,6 +838,37 @@ function resetAutoThemeTimes() {
     start: '08:00',
     end: '22:00',
   })
+}
+
+// --- AI Copilot Settings Logic ---
+const aiConfig = ref<AiProviderConfig>(loadAiConfig())
+const providerPresets = PROVIDER_PRESETS
+const isTestingAi = ref(false)
+const aiTestResult = ref<{ success: boolean; message: string } | null>(null)
+
+function applyProviderPreset(pKey: AiProviderType) {
+  const p = PROVIDER_PRESETS[pKey]
+  aiConfig.value.provider = pKey
+  if (p.baseUrl) aiConfig.value.baseUrl = p.baseUrl
+  if (p.defaultModel) aiConfig.value.model = p.defaultModel
+}
+
+function handleSaveAiConfig() {
+  saveAiConfig(aiConfig.value)
+  alert('AI 大模型配置已成功保存！')
+}
+
+async function handleTestAiConnection() {
+  isTestingAi.value = true
+  aiTestResult.value = null
+  try {
+    const res = await testAiConnection(aiConfig.value)
+    aiTestResult.value = res
+  } catch (err: any) {
+    aiTestResult.value = { success: false, message: '测试请求异常: ' + (err.message || err) }
+  } finally {
+    isTestingAi.value = false
+  }
 }
 
 // --- Cloud Sync Logic ---

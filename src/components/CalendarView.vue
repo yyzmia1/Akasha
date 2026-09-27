@@ -435,6 +435,27 @@
 
           <!-- Column Content Sections -->
           <div class="flex-1 space-y-2.5 overflow-y-auto min-h-0 pr-0.5 no-scrollbar">
+            <!-- AI 幽灵草稿 (Ghost Schedules Preview) -->
+            <div v-if="getGhostSchedulesForDay(day.dateStr).length > 0" class="space-y-1">
+              <div class="text-[10px] font-semibold text-purple-600 dark:text-purple-400 flex items-center gap-1">
+                <Sparkles class="w-3 h-3 text-purple-500 animate-pulse" />
+                <span>AI 拟定草稿</span>
+              </div>
+              <div
+                v-for="gs in getGhostSchedulesForDay(day.dateStr)"
+                :key="gs.id"
+                class="px-2 py-1 rounded bg-purple-50/80 dark:bg-purple-950/40 border border-dashed border-purple-400 dark:border-purple-600 text-purple-900 dark:text-purple-200 text-xs flex items-center justify-between gap-1 select-none shadow-2xs"
+                :title="`AI 拟定草稿：${gs.title} (${gs.time || '全天'})`"
+              >
+                <div class="flex items-center gap-1.5 min-w-0 truncate">
+                  <Sparkles class="w-3 h-3 text-purple-600 shrink-0" />
+                  <span v-if="gs.time" class="font-mono text-[10px] font-semibold text-purple-700 dark:text-purple-300 shrink-0">{{ gs.time }}</span>
+                  <span class="truncate font-medium">{{ gs.title }}</span>
+                </div>
+                <span class="text-[9px] px-1 py-0.2 bg-purple-200 dark:bg-purple-800 text-purple-800 dark:text-purple-200 rounded font-mono">草稿</span>
+              </div>
+            </div>
+
             <!-- Schedules -->
             <div v-if="typeFilters.schedules && getSchedulesForDay(day.dateStr).length > 0" class="space-y-1">
               <div class="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400">固定日程</div>
@@ -1112,6 +1133,34 @@
 
         <!-- Day Card Sections -->
         <div class="flex-1 space-y-4 overflow-y-auto min-h-0 pr-0.5 no-scrollbar pt-1">
+          <!-- AI 幽灵草稿 (Ghost Schedules Preview) -->
+          <div v-if="getGhostSchedulesForDay(day.dateStr).length > 0" class="space-y-1.5">
+            <div class="flex items-center justify-between text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider">
+              <div class="flex items-center gap-1.5">
+                <Sparkles class="w-3.5 h-3.5 text-purple-500 animate-pulse" />
+                <span>AI 拟定草稿 ({{ getGhostSchedulesForDay(day.dateStr).length }})</span>
+              </div>
+              <span class="text-[10px] text-purple-500 font-normal">未确认落库</span>
+            </div>
+            <div class="space-y-1.5">
+              <div
+                v-for="gs in getGhostSchedulesForDay(day.dateStr)"
+                :key="gs.id"
+                class="flex items-center justify-between p-2.5 rounded-lg bg-purple-50/80 dark:bg-purple-950/40 border-2 border-dashed border-purple-300 dark:border-purple-600 text-xs select-none shadow-2xs"
+              >
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="font-mono font-semibold text-purple-700 dark:text-purple-300 text-xs shrink-0">
+                    {{ gs.time ? `${gs.time} ~ ${gs.endTime || ''}` : '全天' }}
+                  </span>
+                  <span class="font-medium text-purple-950 dark:text-purple-100 truncate">{{ gs.title }}</span>
+                </div>
+                <span class="text-[10px] px-1.5 py-0.5 rounded bg-purple-200 dark:bg-purple-800 text-purple-800 dark:text-purple-200 font-mono">
+                  草稿虚影
+                </span>
+              </div>
+            </div>
+          </div>
+
           <!-- 固定日程 -->
           <div v-if="typeFilters.schedules" class="space-y-2">
             <div class="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
@@ -1308,6 +1357,33 @@
             <BookOpen class="w-3 h-3" />
             <span>{{ hasJournalOnDate(selectedMobileDate) ? '读随笔' : '写随笔' }}</span>
           </button>
+        </div>
+      </div>
+
+      <!-- AI 幽灵草稿 (Mobile Ghost Schedules Preview) -->
+      <div v-if="getGhostSchedulesForDay(selectedMobileDate).length > 0" class="space-y-1.5">
+        <div class="flex items-center justify-between text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider">
+          <div class="flex items-center gap-1">
+            <Sparkles class="w-3 h-3 text-purple-500 animate-pulse" />
+            <span>AI 拟定草稿 ({{ getGhostSchedulesForDay(selectedMobileDate).length }})</span>
+          </div>
+          <span>未落库</span>
+        </div>
+        <div
+          v-for="gs in getGhostSchedulesForDay(selectedMobileDate)"
+          :key="gs.id"
+          class="flex items-center justify-between p-2 rounded-lg bg-purple-50/80 dark:bg-purple-950/40 border border-dashed border-purple-400 text-xs shadow-2xs select-none"
+        >
+          <div class="flex items-center gap-2 min-w-0">
+            <Sparkles class="w-3.5 h-3.5 text-purple-600 shrink-0" />
+            <span class="font-mono font-semibold text-purple-700 dark:text-purple-300 text-[11px] shrink-0">
+              {{ gs.time ? `${gs.time} ~ ${gs.endTime || ''}` : '全天' }}
+            </span>
+            <span class="font-medium text-slate-800 dark:text-slate-100 truncate">{{ gs.title }}</span>
+          </div>
+          <span class="text-[9px] px-1 py-0.2 rounded bg-purple-200 dark:bg-purple-800 text-purple-800 dark:text-purple-200 font-mono">
+            草稿
+          </span>
         </div>
       </div>
 
@@ -2004,6 +2080,7 @@ import {
   ExternalLink,
 } from 'lucide-vue-next'
 import type { TodoItem, JournalEntry, ScheduleItem, Project, Habit, HabitLog, CalendarViewMode } from '@/types'
+import type { ScheduleDraft } from '@/types/copilot'
 import {
   getViewDays,
   formatPeriodTitle,
@@ -2023,6 +2100,7 @@ const props = defineProps<{
   journals: JournalEntry[]
   habits?: Habit[]
   habitLogs?: HabitLog[]
+  ghostSchedules?: ScheduleDraft[]
 }>()
 
 const emit = defineEmits<{
@@ -2453,6 +2531,16 @@ function getProjectColor(projectId?: string | null): string {
 
 function getSchedulesForDay(dateStr: string): ScheduleItem[] {
   return props.schedules.filter((s) => {
+    if (s.endDate) {
+      return isDateInRange(dateStr, s.date, s.endDate)
+    }
+    return s.date === dateStr
+  })
+}
+
+function getGhostSchedulesForDay(dateStr: string): ScheduleDraft[] {
+  if (!props.ghostSchedules || props.ghostSchedules.length === 0) return []
+  return props.ghostSchedules.filter((s) => {
     if (s.endDate) {
       return isDateInRange(dateStr, s.date, s.endDate)
     }
