@@ -40,11 +40,11 @@
         </div>
 
         <div class="flex items-center gap-1">
-          <!-- 当前模型状态提示 -->
+          <!-- 当前模型状态提示 / 点击切换或配置模型 -->
           <button
-            @click="$emit('open-settings')"
-            class="text-[11px] px-2 py-1 rounded-md border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1 transition-colors"
-            :title="aiConfig.apiKey ? `当前模型: ${aiConfig.model}` : '未配置 API Key，点击去设置'"
+            @click="showConfigView = !showConfigView"
+            class="text-[11px] px-2 py-1 rounded-md border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1 transition-colors cursor-pointer"
+            :title="aiConfig.apiKey ? `当前模型: ${aiConfig.model} (点击配置/切换)` : '未配置 API Key，点击配置'"
           >
             <span :class="['w-1.5 h-1.5 rounded-full', aiConfig.apiKey ? 'bg-emerald-500' : 'bg-amber-500']"></span>
             <span class="max-w-[100px] truncate">{{ aiConfig.apiKey ? aiConfig.model : '配置模型' }}</span>
@@ -53,7 +53,7 @@
           <!-- 展开/收起伴侣面板 -->
           <button
             @click="isExpanded = !isExpanded"
-            class="hidden sm:flex p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            class="hidden sm:flex p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             :title="isExpanded ? '收起紧凑模式' : '展开伴侣面板'"
           >
             <Minimize2 v-if="isExpanded" class="w-4 h-4" />
@@ -63,7 +63,7 @@
           <!-- 关闭 -->
           <button
             @click="handleClose"
-            class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X class="w-4 h-4" />
           </button>
@@ -71,7 +71,7 @@
       </div>
 
       <!-- 移动端专用的模式切换药丸条 -->
-      <div class="sm:hidden px-3 py-1.5 border-b border-slate-100 dark:border-slate-800 flex items-center gap-1 overflow-x-auto bg-slate-50/50 dark:bg-slate-950/40 text-xs">
+      <div v-if="!showConfigView" class="sm:hidden px-3 py-1.5 border-b border-slate-100 dark:border-slate-800 flex items-center gap-1 overflow-x-auto bg-slate-50/50 dark:bg-slate-950/40 text-xs">
         <button
           v-for="m in modeOptions"
           :key="m.value"
@@ -88,11 +88,143 @@
         </button>
       </div>
 
+      <!-- 内嵌 AI 配置视图 (无需离开 Copilot，就地设置) -->
+      <div v-if="showConfigView" class="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 animate-in fade-in">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+          <button
+            @click="showConfigView = false"
+            class="flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+          >
+            <ArrowLeft class="w-4 h-4" />
+            <span>返回计划生成</span>
+          </button>
+          <span class="text-xs font-bold text-slate-700 dark:text-slate-300">
+            AI 模型与连接配置
+          </span>
+        </div>
+
+        <div class="space-y-3.5 max-w-xl mx-auto py-1">
+          <!-- 快捷预设供应商选择 -->
+          <div class="space-y-1.5">
+            <div class="text-xs font-medium text-slate-800 dark:text-slate-200">推荐服务商预设</div>
+            <div class="grid grid-cols-3 gap-1.5 text-xs">
+              <button
+                v-for="(preset, pKey) in providerPresets"
+                :key="pKey"
+                type="button"
+                @click="applyProviderPreset(pKey)"
+                :class="[
+                  'p-2 rounded-lg border text-center transition-all truncate text-[11px] cursor-pointer',
+                  aiConfig.provider === pKey
+                    ? 'bg-blue-50 dark:bg-slate-700 border-blue-500 text-blue-600 dark:text-white font-semibold shadow-2xs'
+                    : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-750'
+                ]"
+              >
+                {{ preset.label.split(' ')[0] }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Base URL -->
+          <div class="space-y-1">
+            <label class="text-[11px] font-medium text-slate-700 dark:text-slate-300">API 接口地址 (Base URL)</label>
+            <input
+              v-model="aiConfig.baseUrl"
+              type="text"
+              placeholder="如 https://api.deepseek.com 或 http://localhost:11434/v1"
+              class="w-full px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-mono focus:outline-hidden focus:border-blue-500"
+            />
+          </div>
+
+          <!-- API Key -->
+          <div class="space-y-1">
+            <div class="flex items-center justify-between">
+              <label class="text-[11px] font-medium text-slate-700 dark:text-slate-300">API 密钥 (API Key)</label>
+              <span class="text-[10px] text-slate-400">仅保存在当前浏览器本地</span>
+            </div>
+            <input
+              v-model="aiConfig.apiKey"
+              type="password"
+              placeholder="sk-..."
+              class="w-full px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-mono focus:outline-hidden focus:border-blue-500"
+            />
+          </div>
+
+          <!-- Model Name -->
+          <div class="space-y-1">
+            <label class="text-[11px] font-medium text-slate-700 dark:text-slate-300">模型名称 (Model)</label>
+            <input
+              v-model="aiConfig.model"
+              type="text"
+              placeholder="如 deepseek-chat 或 gpt-4o-mini"
+              class="w-full px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-mono focus:outline-hidden focus:border-blue-500"
+            />
+          </div>
+
+          <!-- Nginx Proxy Switch -->
+          <div class="pt-2 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between">
+            <div>
+              <div class="text-xs font-medium text-slate-800 dark:text-slate-200">使用服务器反向代理</div>
+              <div class="text-[11px] text-slate-400">解决跨域拦截或 HTTPS 下无法访问本地模型的问题</div>
+            </div>
+            <button
+              type="button"
+              @click="aiConfig.useProxy = !aiConfig.useProxy"
+              :class="[
+                'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden',
+                aiConfig.useProxy ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-700'
+              ]"
+              role="switch"
+              :aria-checked="aiConfig.useProxy"
+            >
+              <span
+                :class="[
+                  'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out',
+                  aiConfig.useProxy ? 'translate-x-4' : 'translate-x-0'
+                ]"
+              />
+            </button>
+          </div>
+
+          <!-- Action buttons: Save & Ping Test -->
+          <div class="grid grid-cols-2 gap-2 pt-2">
+            <button
+              type="button"
+              @click="handleSaveAndReturn"
+              class="py-2.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-98 text-white text-xs font-semibold transition-all shadow-xs cursor-pointer text-center"
+            >
+              保存并返回
+            </button>
+            <button
+              type="button"
+              @click="handleTestConnectionInModal"
+              :disabled="isTestingAi"
+              class="py-2.5 px-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-750 active:scale-98 text-slate-700 dark:text-slate-200 text-xs font-medium transition-all cursor-pointer text-center"
+            >
+              {{ isTestingAi ? '正在测试...' : '⚡ 测试连通性' }}
+            </button>
+          </div>
+
+          <!-- Test feedback -->
+          <div
+            v-if="aiTestResult"
+            :class="[
+              'p-2.5 rounded-lg border text-[11px] leading-relaxed',
+              aiTestResult.success
+                ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300'
+                : 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300'
+            ]"
+          >
+            {{ aiTestResult.message }}
+          </div>
+        </div>
+      </div>
+
       <!-- 主体输入与对话/草稿区 -->
-      <div class="flex-1 overflow-y-auto p-4 space-y-4">
+      <div v-else class="flex-1 overflow-y-auto p-4 space-y-4">
         <!-- 未配置 API Key 的温馨提示横幅 -->
         <div
-          v-if="!aiConfig.apiKey"
+          v-if="!aiConfig.apiKey && aiConfig.provider !== 'ollama'"
           class="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 flex items-center justify-between gap-3 text-xs text-amber-800 dark:text-amber-300"
         >
           <div class="flex items-center gap-2">
@@ -100,10 +232,10 @@
             <span>尚未配置大模型 API Key。系统支持 DeepSeek、OpenAI、硅基流动、Ollama 等。</span>
           </div>
           <button
-            @click="$emit('open-settings')"
-            class="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-medium shrink-0 transition-colors"
+            @click="showConfigView = true"
+            class="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-medium shrink-0 transition-colors cursor-pointer"
           >
-            去配置
+            就地配置
           </button>
         </div>
 
@@ -422,13 +554,17 @@ import {
   AlertTriangle,
   Check,
   RefreshCw,
+  ArrowLeft,
 } from 'lucide-vue-next'
 import type { Area, Project, ScheduleItem, Habit } from '@/types'
-import type { CopilotMode, CopilotPlanResult, AiProviderConfig } from '@/types/copilot'
+import type { CopilotMode, CopilotPlanResult, AiProviderConfig, AiProviderType } from '@/types/copilot'
 import {
   loadAiConfig,
+  saveAiConfig,
+  testAiConnection,
   buildSystemPrompt,
   streamPlanGeneration,
+  PROVIDER_PRESETS,
 } from '@/services/aiService'
 import { annotateConflicts } from '@/services/conflictDetector'
 
@@ -456,6 +592,43 @@ const isLoading = ref(false)
 const streamingText = ref('')
 const currentPlan = ref<CopilotPlanResult | null>(null)
 const aiConfig = ref<AiProviderConfig>(loadAiConfig())
+
+const showConfigView = ref(false)
+const isTestingAi = ref(false)
+const aiTestResult = ref<{ success: boolean; message: string } | null>(null)
+const providerPresets = PROVIDER_PRESETS
+
+function applyProviderPreset(presetKey: AiProviderType) {
+  const p = providerPresets[presetKey]
+  if (p) {
+    aiConfig.value.provider = presetKey
+    aiConfig.value.baseUrl = p.baseUrl
+    aiConfig.value.model = p.model
+    aiConfig.value.useProxy = p.useProxy
+  }
+}
+
+function handleSaveAndReturn() {
+  saveAiConfig(aiConfig.value)
+  showConfigView.value = false
+  aiTestResult.value = null
+}
+
+async function handleTestConnectionInModal() {
+  isTestingAi.value = true
+  aiTestResult.value = null
+  try {
+    const res = await testAiConnection(aiConfig.value)
+    aiTestResult.value = res
+  } catch (err: any) {
+    aiTestResult.value = {
+      success: false,
+      message: err.message || '网络连接异常'
+    }
+  } finally {
+    isTestingAi.value = false
+  }
+}
 
 const modeOptions: { label: string; value: CopilotMode; icon: any }[] = [
   { label: '智能复合', value: 'smart', icon: Sparkles },
@@ -487,6 +660,8 @@ watch(
         inputRef.value?.focus()
       }, 50)
     } else {
+      showConfigView.value = false
+      aiTestResult.value = null
       // 关闭时清理幽灵草稿
       emit('update-ghosts', [])
     }
@@ -533,7 +708,7 @@ async function handleStartGenerate() {
   if (!inputPrompt.value.trim() || isLoading.value) return
 
   if (!aiConfig.value.apiKey && aiConfig.value.provider !== 'ollama') {
-    emit('open-settings')
+    showConfigView.value = true
     return
   }
 
