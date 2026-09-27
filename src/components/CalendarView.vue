@@ -1140,7 +1140,7 @@
                 <Sparkles class="w-3.5 h-3.5 text-purple-500 animate-pulse" />
                 <span>AI 拟定草稿 ({{ getGhostSchedulesForDay(day.dateStr).length }})</span>
               </div>
-              <span class="text-[10px] text-purple-500 font-normal">未确认落库</span>
+              <span class="text-[10px] text-purple-500 font-normal">待确认</span>
             </div>
             <div class="space-y-1.5">
               <div
@@ -1155,7 +1155,7 @@
                   <span class="font-medium text-purple-950 dark:text-purple-100 truncate">{{ gs.title }}</span>
                 </div>
                 <span class="text-[10px] px-1.5 py-0.5 rounded bg-purple-200 dark:bg-purple-800 text-purple-800 dark:text-purple-200 font-mono">
-                  草稿虚影
+                  草稿
                 </span>
               </div>
             </div>
@@ -1367,7 +1367,7 @@
             <Sparkles class="w-3 h-3 text-purple-500 animate-pulse" />
             <span>AI 拟定草稿 ({{ getGhostSchedulesForDay(selectedMobileDate).length }})</span>
           </div>
-          <span>未落库</span>
+          <span>待确认</span>
         </div>
         <div
           v-for="gs in getGhostSchedulesForDay(selectedMobileDate)"

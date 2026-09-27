@@ -221,7 +221,7 @@
       </div>
 
       <!-- 主体输入与对话/草稿区 -->
-      <div v-else class="flex-1 overflow-y-auto p-4 space-y-4">
+      <div v-else ref="mainScrollRef" @scroll="handleMainScroll" class="flex-1 overflow-y-auto p-4 space-y-4">
         <!-- 未配置 API Key 的温馨提示横幅 -->
         <div
           v-if="!aiConfig.apiKey && aiConfig.provider !== 'ollama'"
@@ -287,11 +287,26 @@
           v-if="isLoading || streamingText"
           class="p-3.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/40 space-y-2 animate-in fade-in"
         >
-          <div class="flex items-center gap-2 text-xs font-semibold text-blue-700 dark:text-blue-300">
-            <Sparkles class="w-3.5 h-3.5 text-blue-500 animate-spin" />
-            <span>AI 排程思考与构思中...</span>
+          <div class="flex items-center justify-between text-xs font-semibold text-blue-700 dark:text-blue-300">
+            <div class="flex items-center gap-2">
+              <Sparkles class="w-3.5 h-3.5 text-blue-500 animate-spin" />
+              <span>AI 排程思考与构思中...</span>
+            </div>
+            <!-- 当用户向上翻动脱耦时，显示快速回到底部的提示按钮 -->
+            <button
+              v-if="!isThinkingAutoScrollCoupled"
+              type="button"
+              @click="resumeAutoScroll"
+              class="text-[10px] font-normal text-blue-600 dark:text-blue-400 bg-blue-100/70 dark:bg-blue-900/40 hover:bg-blue-200 dark:hover:bg-blue-800/60 px-2 py-0.5 rounded-md cursor-pointer transition-colors flex items-center gap-1"
+            >
+              <span>↓ 回到底部</span>
+            </button>
           </div>
-          <div class="text-xs text-slate-600 dark:text-slate-300 font-mono whitespace-pre-wrap leading-relaxed max-h-32 overflow-y-auto">
+          <div
+            ref="thinkingBoxRef"
+            @scroll="handleThinkingScroll"
+            class="text-xs text-slate-600 dark:text-slate-300 font-mono whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto"
+          >
             {{ streamingText || '正在解析时间线与碰撞检测...' }}
           </div>
         </div>
@@ -310,16 +325,15 @@
             <p class="leading-relaxed">{{ currentPlan.reasoning }}</p>
           </div>
 
-          <!-- 提示：底层日历已投影幽灵草稿 -->
+          <!-- 日历预览轻量提示（非按钮，仅作提示） -->
           <div
             v-if="currentPlan.schedules.length > 0"
-            class="flex items-center justify-between px-3 py-1.5 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 text-[11px] text-emerald-700 dark:text-emerald-300"
+            class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-slate-100/80 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400"
           >
-            <span class="flex items-center gap-1.5">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-              <span>已在背景日历视图投射 <strong>{{ currentPlan.schedules.length }}</strong> 项「幽灵草稿虚影」，供直观查看时间空隙</span>
+            <Calendar class="w-3.5 h-3.5 text-blue-500 shrink-0" />
+            <span class="leading-tight">
+              已在日历中同步显示 <strong>{{ currentPlan.schedules.length }}</strong> 项日程预览（确认后正式生效）
             </span>
-            <span class="text-[10px] text-emerald-600 dark:text-emerald-400">确认后方正式落库</span>
           </div>
 
           <!-- 分组卡片列表 -->
@@ -531,7 +545,7 @@
             class="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 disabled:opacity-40 text-white font-semibold shadow-xs transition-all cursor-pointer"
           >
             <Check class="w-3.5 h-3.5" />
-            <span>确认应用落库 (Enter)</span>
+            <span>确认应用 (Enter)</span>
           </button>
         </div>
       </div>
@@ -540,7 +554,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import {
   Sparkles,
   Calendar,
@@ -597,6 +611,51 @@ const showConfigView = ref(false)
 const isTestingAi = ref(false)
 const aiTestResult = ref<{ success: boolean; message: string } | null>(null)
 const providerPresets = PROVIDER_PRESETS
+
+const mainScrollRef = ref<HTMLElement | null>(null)
+const thinkingBoxRef = ref<HTMLElement | null>(null)
+
+// 自动滚动耦合状态：默认接偶（跟随最新流式内容）。向上翻动时脱耦，拉回底部时再次接偶
+const isThinkingAutoScrollCoupled = ref(true)
+const isMainAutoScrollCoupled = ref(true)
+
+function handleThinkingScroll() {
+  if (!thinkingBoxRef.value) return
+  const el = thinkingBoxRef.value
+  const distanceToBottom = el.scrollHeight - el.scrollTop - el.clientHeight
+  // 离底部 <= 24px 判定为处于最下方（重新接偶），否则向上翻动判定为脱耦
+  isThinkingAutoScrollCoupled.value = distanceToBottom <= 24
+}
+
+function handleMainScroll() {
+  if (!mainScrollRef.value) return
+  const el = mainScrollRef.value
+  const distanceToBottom = el.scrollHeight - el.scrollTop - el.clientHeight
+  // 离底部 <= 36px 判定为处于最下方（重新接偶）
+  isMainAutoScrollCoupled.value = distanceToBottom <= 36
+}
+
+function resumeAutoScroll() {
+  isThinkingAutoScrollCoupled.value = true
+  isMainAutoScrollCoupled.value = true
+  if (thinkingBoxRef.value) {
+    thinkingBoxRef.value.scrollTop = thinkingBoxRef.value.scrollHeight
+  }
+  if (mainScrollRef.value) {
+    mainScrollRef.value.scrollTop = mainScrollRef.value.scrollHeight
+  }
+}
+
+// 监听 AI 流式思考文本，若接偶则自动跟随滚动到最下方
+watch(streamingText, async () => {
+  await nextTick()
+  if (isThinkingAutoScrollCoupled.value && thinkingBoxRef.value) {
+    thinkingBoxRef.value.scrollTop = thinkingBoxRef.value.scrollHeight
+  }
+  if (isMainAutoScrollCoupled.value && mainScrollRef.value) {
+    mainScrollRef.value.scrollTop = mainScrollRef.value.scrollHeight
+  }
+})
 
 function applyProviderPreset(presetKey: AiProviderType) {
   const p = providerPresets[presetKey]
@@ -715,6 +774,8 @@ async function handleStartGenerate() {
   isLoading.value = true
   streamingText.value = ''
   currentPlan.value = null
+  isThinkingAutoScrollCoupled.value = true
+  isMainAutoScrollCoupled.value = true
   emit('update-ghosts', [])
 
   try {
@@ -740,7 +801,12 @@ async function handleStartGenerate() {
     result.schedules = annotateConflicts(result.schedules, props.schedules)
     currentPlan.value = result
 
-    // 默认投射到日历上作为幽灵虚影
+    await nextTick()
+    if (isMainAutoScrollCoupled.value && mainScrollRef.value) {
+      mainScrollRef.value.scrollTop = mainScrollRef.value.scrollHeight
+    }
+
+    // 默认在日历上同步显示日程草稿预览
     handleDraftSelectionChanged()
   } catch (err: any) {
     alert('AI 生成失败：' + (err.message || err))

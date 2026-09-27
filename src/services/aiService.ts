@@ -311,7 +311,8 @@ export async function streamPlanGeneration(
 
       try {
         const parsed = JSON.parse(dataStr)
-        const delta = parsed.choices?.[0]?.delta?.content || ''
+        const choice = parsed.choices?.[0]
+        const delta = (choice?.delta?.reasoning_content || '') + (choice?.delta?.content || '')
         if (delta) {
           fullText += delta
           onChunk(fullText)
