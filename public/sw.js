@@ -1,4 +1,4 @@
-const CACHE_NAME = 'akasha-pwa-v9'
+const CACHE_NAME = 'akasha-pwa-v10'
 
 self.addEventListener('install', (event) => {
   self.skipWaiting()

@@ -6,7 +6,8 @@ export function formatDate(date: Date): string {
 }
 
 export function parseDate(dateStr: string): Date {
-  const [year, month, day] = dateStr.split('-').map(Number)
+  const clean = dateStr.split('T')[0].split(' ')[0]
+  const [year, month, day] = clean.split('-').map(Number)
   return new Date(year, month - 1, day)
 }
 

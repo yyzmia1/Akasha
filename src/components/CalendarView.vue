@@ -1129,7 +1129,9 @@
                 class="flex items-center justify-between p-2.5 rounded-lg bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-900 text-xs hover:border-indigo-400 active:scale-[0.99] cursor-pointer transition-all"
               >
                 <div class="flex items-center gap-2 min-w-0">
-                  <span v-if="s.time" class="font-mono font-semibold text-indigo-700 dark:text-indigo-300 text-xs shrink-0">{{ s.time }}</span>
+                  <span class="font-mono font-semibold text-indigo-700 dark:text-indigo-300 text-xs shrink-0">
+                    {{ getScheduleTimeDisplay(s, day.dateStr) }}
+                  </span>
                   <span class="font-medium text-slate-800 dark:text-slate-100 truncate">{{ s.title }}</span>
                 </div>
                 <div class="flex items-center gap-1.5 shrink-0">
@@ -1168,7 +1170,7 @@
                     : 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/60 text-amber-900 dark:text-amber-200'
                 ]"
               >
-                <div class="flex items-center gap-2.5 min-w-0">
+                <div class="flex items-center gap-2 min-w-0">
                   <button
                     type="button"
                     class="w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors"
@@ -1180,6 +1182,9 @@
                   >
                     <Check v-if="isHabitDoneOnDate(h.id, day.dateStr)" class="w-3 h-3 stroke-[3]" />
                   </button>
+                  <span v-if="h.time" class="font-mono text-[10px] font-semibold text-amber-700 dark:text-amber-300 px-1 py-0.2 rounded bg-amber-100/60 dark:bg-amber-900/40 shrink-0">
+                    🕒 {{ h.time }}
+                  </span>
                   <span :class="['font-medium truncate', isHabitDoneOnDate(h.id, day.dateStr) ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-100']">
                     {{ h.title }}
                   </span>
@@ -1231,6 +1236,12 @@
                   >
                     <Check v-if="todo.completed" class="w-3 h-3 stroke-[3]" />
                   </button>
+                  <span
+                    v-if="getTodoTimeDisplay(todo)"
+                    class="font-mono text-[10px] font-semibold text-indigo-700 dark:text-indigo-300 px-1 py-0.2 rounded bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 shrink-0"
+                  >
+                    🕒 {{ getTodoTimeDisplay(todo) }}
+                  </span>
                   <span class="font-medium truncate">{{ todo.title }}</span>
                   <span
                     v-if="todo.importance"
@@ -1261,11 +1272,16 @@
       class="sm:hidden bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3.5 space-y-3 shadow-xs"
     >
       <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-        <div class="flex items-center gap-2">
-          <Calendar class="w-4 h-4 text-blue-600" />
-          <span class="text-xs font-bold text-slate-800 dark:text-slate-100">
+        <div
+          class="flex items-center gap-1.5 cursor-pointer hover:text-blue-600 transition-colors group"
+          @click="jumpToDayView(selectedMobileDate)"
+          title="点击进入单日视图"
+        >
+          <Calendar class="w-4 h-4 text-blue-600 group-hover:scale-110 transition-transform" />
+          <span class="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-blue-600">
             {{ formatDisplayDate(selectedMobileDate) }}
           </span>
+          <ChevronRight class="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 transition-colors" />
         </div>
 
         <div class="flex items-center gap-1.5">
@@ -1306,7 +1322,9 @@
         >
           <div class="flex items-center gap-2 min-w-0">
             <CalendarDays class="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-            <span v-if="s.time" class="font-mono font-semibold text-indigo-700 dark:text-indigo-300 text-[11px] shrink-0">{{ s.time }}</span>
+            <span class="font-mono font-semibold text-indigo-700 dark:text-indigo-300 text-[11px] shrink-0">
+              {{ getScheduleTimeDisplay(s, selectedMobileDate) }}
+            </span>
             <span class="font-medium text-slate-800 dark:text-slate-100 truncate">{{ s.title }}</span>
           </div>
           <span
@@ -2065,6 +2083,18 @@ function toggleDropdown() {
 }
 
 function selectViewMode(mode: CalendarViewMode) {
+  const now = new Date()
+  const isViewingCurrentMonth =
+    currentBaseDate.value.getFullYear() === now.getFullYear() &&
+    currentBaseDate.value.getMonth() === now.getMonth()
+
+  if (viewMode.value === 'month' && mode !== 'month') {
+    if (isViewingCurrentMonth) {
+      currentBaseDate.value = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      selectedMobileDate.value = formatDate(now)
+    }
+  }
+
   setViewMode(mode)
   isDropdownOpen.value = false
 }
@@ -2227,8 +2257,7 @@ function prevPeriod() {
   } else if (viewMode.value === '2weeks') {
     currentBaseDate.value = addDays(d, -14)
   } else if (viewMode.value === 'month') {
-    d.setMonth(d.getMonth() - 1)
-    currentBaseDate.value = d
+    currentBaseDate.value = new Date(d.getFullYear(), d.getMonth() - 1, 1)
   }
   selectedMobileDate.value = formatDate(currentBaseDate.value)
 }
@@ -2246,8 +2275,7 @@ function nextPeriod() {
   } else if (viewMode.value === '2weeks') {
     currentBaseDate.value = addDays(d, 14)
   } else if (viewMode.value === 'month') {
-    d.setMonth(d.getMonth() + 1)
-    currentBaseDate.value = d
+    currentBaseDate.value = new Date(d.getFullYear(), d.getMonth() + 1, 1)
   }
   selectedMobileDate.value = formatDate(currentBaseDate.value)
 }
@@ -2264,10 +2292,38 @@ function goToToday() {
 
 function handleDayCellClick(dateStr: string) {
   selectedMobileDate.value = dateStr
-  currentBaseDate.value = parseDate(dateStr)
+  // 注意：在月视图/双周视图中点击具体日期仅切换下方抽屉详情，不再污染全局 currentBaseDate，避免切换至双日/多日视图时日期偏移跳变
   if (typeof window !== 'undefined' && window.innerWidth >= 640) {
     emit('open-journal', dateStr)
   }
+}
+
+function jumpToDayView(dateStr: string) {
+  currentBaseDate.value = parseDate(dateStr)
+  selectedMobileDate.value = dateStr
+  setViewMode('day')
+}
+
+function getScheduleTimeDisplay(s: ScheduleItem, currentDateStr?: string): string {
+  if (s.date && s.endDate && s.date !== s.endDate) {
+    if (currentDateStr) {
+      if (s.date === currentDateStr) {
+        return s.time ? `${s.time} 开始` : '全天开始'
+      } else if (s.endDate === currentDateStr) {
+        return (s.endTime || s.time) ? `${s.endTime || s.time} 结束` : '全天结束'
+      } else {
+        return '跨日进行中'
+      }
+    }
+    return `${s.date.slice(5)} ~ ${s.endDate.slice(5)}`
+  }
+  if (s.time && s.endTime) {
+    return `${s.time} ~ ${s.endTime}`
+  }
+  if (s.time) {
+    return s.time
+  }
+  return '全天'
 }
 
 function getHabitsForDay(dateStr: string): Habit[] {
