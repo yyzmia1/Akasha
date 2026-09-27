@@ -555,14 +555,14 @@
       class="flex-1 min-h-0 max-w-4xl mx-auto w-full space-y-4 pb-6"
     >
       <template v-if="displayDays.length > 0">
-        <!-- Day Card: All-day & Overview -->
-        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 shadow-2xs space-y-4">
-          <!-- Day Header -->
-          <div class="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-slate-800">
-            <div class="flex items-center gap-3">
+        <!-- Day Card: All-day & Overview (Compact) -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-3 sm:p-4 shadow-2xs space-y-2.5 sm:space-y-3">
+          <!-- Day Header: Compact -->
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-2.5">
               <span
                 :class="[
-                  'text-lg font-bold w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-2xs',
+                  'text-base font-bold w-8 h-8 rounded-lg flex items-center justify-center shrink-0 shadow-2xs',
                   displayDays[0].isToday
                     ? 'bg-blue-600 text-white'
                     : displayDays[0].isWeekend
@@ -572,131 +572,115 @@
               >
                 {{ displayDays[0].dayNumber }}
               </span>
-              <div>
-                <div class="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                  <span>{{ displayDays[0].weekdayName }}</span>
-                  <span
-                    v-if="displayDays[0].isToday"
-                    class="text-xs px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-semibold"
-                  >
-                    今日聚焦
-                  </span>
-                </div>
-                <div class="text-xs text-slate-400 font-mono mt-0.5">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">
+                  {{ displayDays[0].weekdayName }}
+                </span>
+                <span
+                  v-if="displayDays[0].isToday"
+                  class="text-[11px] px-1.5 py-0.2 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-semibold"
+                >
+                  今日聚焦
+                </span>
+                <span class="text-xs text-slate-400 font-mono">
                   {{ displayDays[0].dateStr }}
-                </div>
+                </span>
               </div>
             </div>
-
           </div>
 
-          <!-- Metrics Overview Bar -->
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+          <!-- Metrics Overview Bar: Single 3-column row, compact -->
+          <div class="grid grid-cols-3 gap-1.5 sm:gap-2.5">
             <!-- 待办完成率 -->
             <div
               @click="$emit('switch-tab', 'todos')"
-              class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/60 hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20 flex items-center justify-between cursor-pointer transition-all group"
+              class="p-2 sm:p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/60 hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20 flex flex-col justify-between cursor-pointer transition-all group"
               title="点击前往待办管理"
             >
-              <div class="space-y-0.5 min-w-0">
-                <div class="text-[11px] text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 font-medium flex items-center gap-1 transition-colors">
-                  <span>当日待办事项</span>
-                  <ExternalLink class="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-                <div class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-                  <span>{{ getDayTodosCompleted(displayDays[0].dateStr) }}/{{ getTodosForDay(displayDays[0].dateStr).length }}</span>
-                  <span class="text-[11px] text-slate-400 font-normal">({{ getDayTodosRate(displayDays[0].dateStr) }}%)</span>
-                </div>
+              <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                <span class="truncate">待办</span>
+                <CheckSquare class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
               </div>
-              <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <CheckSquare class="w-4 h-4" />
+              <div class="mt-1 flex items-baseline gap-1">
+                <span class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">
+                  {{ getDayTodosCompleted(displayDays[0].dateStr) }}/{{ getTodosForDay(displayDays[0].dateStr).length }}
+                </span>
+                <span class="text-[10px] text-slate-400 font-normal">
+                  {{ getDayTodosRate(displayDays[0].dateStr) }}%
+                </span>
               </div>
             </div>
 
             <!-- 习惯打卡 -->
             <div
               @click="$emit('switch-tab', 'habits')"
-              class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700/60 hover:bg-amber-50/40 dark:hover:bg-amber-950/20 flex items-center justify-between cursor-pointer transition-all group"
+              class="p-2 sm:p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700/60 hover:bg-amber-50/40 dark:hover:bg-amber-950/20 flex flex-col justify-between cursor-pointer transition-all group"
               title="点击前往习惯管理"
             >
-              <div class="space-y-0.5 min-w-0">
-                <div class="text-[11px] text-slate-400 group-hover:text-amber-600 dark:group-hover:text-amber-400 font-medium flex items-center gap-1 transition-colors">
-                  <span>打卡习惯</span>
-                  <ExternalLink class="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-                <div class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-                  <span>{{ getDayHabitsCompleted(displayDays[0].dateStr) }}/{{ getHabitsForDay(displayDays[0].dateStr).length }}</span>
-                  <span class="text-[11px] text-slate-400 font-normal">已打卡</span>
-                </div>
+              <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                <span class="truncate">习惯</span>
+                <Sparkles class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
               </div>
-              <div class="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <Sparkles class="w-4 h-4" />
+              <div class="mt-1 flex items-baseline gap-1">
+                <span class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">
+                  {{ getDayHabitsCompleted(displayDays[0].dateStr) }}/{{ getHabitsForDay(displayDays[0].dateStr).length }}
+                </span>
+                <span class="text-[10px] text-slate-400 font-normal">已打卡</span>
               </div>
             </div>
 
             <!-- 固定日程 -->
             <div
               @click="$emit('switch-tab', 'schedules')"
-              class="col-span-2 sm:col-span-1 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700/60 hover:bg-indigo-50/40 dark:hover:bg-indigo-950/20 flex items-center justify-between cursor-pointer transition-all group"
+              class="p-2 sm:p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700/60 hover:bg-indigo-50/40 dark:hover:bg-indigo-950/20 flex flex-col justify-between cursor-pointer transition-all group"
               title="点击前往日程管理"
             >
-              <div class="space-y-0.5 min-w-0">
-                <div class="text-[11px] text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 font-medium flex items-center gap-1 transition-colors">
-                  <span>日程排期安排</span>
-                  <ExternalLink class="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-                <div class="text-sm font-bold text-slate-800 dark:text-slate-100">
-                  {{ getDayTotalScheduleCount(displayDays[0].dateStr) }} 个事项
-                </div>
+              <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                <span class="truncate">日程</span>
+                <CalendarDays class="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
               </div>
-              <div class="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <CalendarDays class="w-4 h-4" />
+              <div class="mt-1 flex items-baseline gap-1">
+                <span class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">
+                  {{ getDayTotalScheduleCount(displayDays[0].dateStr) }}
+                </span>
+                <span class="text-[10px] text-slate-400 font-normal">个事项</span>
               </div>
             </div>
           </div>
 
-          <!-- 当日随笔卡片 -->
+          <!-- 当日随笔卡片: Compact -->
           <div
             v-if="getJournalForDay(displayDays[0].dateStr)"
             @click="$emit('open-journal', displayDays[0].dateStr)"
-            class="p-3.5 rounded-xl border border-amber-200/80 dark:border-amber-900/60 bg-amber-50/40 dark:bg-amber-950/20 hover:bg-amber-50 dark:hover:bg-amber-950/30 hover:border-amber-300 transition-all cursor-pointer space-y-1.5 group"
+            class="py-1.5 px-2.5 sm:py-2 sm:px-3 rounded-xl border border-amber-200/80 dark:border-amber-900/60 bg-amber-50/40 dark:bg-amber-950/20 hover:bg-amber-50 dark:hover:bg-amber-950/30 hover:border-amber-300 transition-all cursor-pointer space-y-0.5 group"
           >
             <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <BookOpen class="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                <span class="text-xs font-bold text-amber-900 dark:text-amber-200">当日随笔心得</span>
+              <div class="flex items-center gap-1.5">
+                <BookOpen class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                <span class="text-[11px] font-bold text-amber-900 dark:text-amber-200">当日随笔</span>
                 <span v-if="getJournalForDay(displayDays[0].dateStr)?.mood" class="text-xs">
                   {{ getJournalForDay(displayDays[0].dateStr)?.mood }}
                 </span>
               </div>
-              <span class="text-[11px] text-amber-600 dark:text-amber-400 font-medium group-hover:underline flex items-center gap-0.5">
-                编辑随笔
+              <span class="text-[10px] text-amber-600 dark:text-amber-400 font-medium group-hover:underline flex items-center gap-0.5">
+                编辑
                 <ChevronRight class="w-3 h-3" />
               </span>
             </div>
-            <p class="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
+            <p class="text-xs text-slate-600 dark:text-slate-300 line-clamp-1 leading-normal">
               {{ getJournalForDay(displayDays[0].dateStr)?.content }}
             </p>
-            <div v-if="getJournalForDay(displayDays[0].dateStr)?.tags?.length" class="flex flex-wrap gap-1 pt-0.5">
-              <span
-                v-for="tag in getJournalForDay(displayDays[0].dateStr)?.tags"
-                :key="tag"
-                class="text-[10px] px-1.5 py-0.2 rounded bg-amber-100/70 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 font-mono"
-              >
-                #{{ tag }}
-              </span>
-            </div>
           </div>
           <div
             v-else
             @click="$emit('open-journal', displayDays[0].dateStr)"
-            class="p-3 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700/60 bg-slate-50/50 dark:bg-slate-800/20 hover:bg-amber-50/30 dark:hover:bg-amber-950/20 cursor-pointer transition-all flex items-center justify-between group"
+            class="py-1.5 px-2.5 sm:py-2 sm:px-3 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700/60 bg-slate-50/50 dark:bg-slate-800/20 hover:bg-amber-50/30 dark:hover:bg-amber-950/20 cursor-pointer transition-all flex items-center justify-between group"
           >
-            <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 group-hover:text-amber-700 dark:group-hover:text-amber-300">
-              <BookOpen class="w-4 h-4 text-slate-400 group-hover:text-amber-500 transition-colors" />
-              <span>记录今日复盘心得、灵感或生活随笔...</span>
+            <div class="flex items-center gap-1.5 text-[11px] sm:text-xs text-slate-400 group-hover:text-amber-700 dark:group-hover:text-amber-300 truncate">
+              <BookOpen class="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-500 transition-colors shrink-0" />
+              <span class="truncate">记录今日复盘心得、灵感或生活随笔...</span>
             </div>
-            <span class="text-xs font-medium text-amber-600 dark:text-amber-400 group-hover:underline flex items-center gap-0.5 shrink-0">
+            <span class="text-[11px] font-medium text-amber-600 dark:text-amber-400 group-hover:underline flex items-center gap-0.5 shrink-0 ml-2">
               + 记随笔
             </span>
           </div>
@@ -803,15 +787,17 @@
 
           <!-- Timeline Flow Container -->
           <div class="relative pt-2 pb-2">
-            <!-- Continuous Vertical Track Line -->
-            <div class="absolute left-[4rem] sm:left-[4.5rem] -translate-x-1/2 top-4 bottom-4 w-0.5 bg-slate-200 dark:bg-slate-800"></div>
+            <!-- 1. Has Timeline Events: Render vertical track and items -->
+            <template v-if="hasTimelineEvents(displayDays[0].dateStr, displayDays[0].isToday)">
+              <!-- Continuous Vertical Track Line -->
+              <div class="absolute left-[4rem] sm:left-[4.5rem] -translate-x-1/2 top-4 bottom-4 w-0.5 bg-slate-200 dark:bg-slate-800"></div>
 
-            <!-- Timeline Items -->
-            <div class="space-y-4 sm:space-y-5">
-              <template
-                v-for="item in getDayTimelineItems(displayDays[0].dateStr, displayDays[0].isToday)"
-                :key="item.id"
-              >
+              <!-- Timeline Items -->
+              <div class="space-y-4 sm:space-y-5">
+                <template
+                  v-for="item in getDayTimelineItems(displayDays[0].dateStr, displayDays[0].isToday)"
+                  :key="item.id"
+                >
                 <!-- Item Row -->
                 <div class="relative flex items-start group">
                   <!-- Left Timestamp -->
@@ -1037,38 +1023,23 @@
                 </div>
               </template>
             </div>
+          </template>
 
-            <!-- Empty State when no timeline events -->
+            <!-- 2. Empty State when no timeline events (Clean, no track line overlap, removed useless buttons) -->
             <div
-              v-if="!hasTimelineEvents(displayDays[0].dateStr, displayDays[0].isToday)"
-              class="py-8 text-center space-y-3"
+              v-else
+              class="py-8 text-center space-y-2.5"
             >
-              <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
-                <Clock class="w-6 h-6" />
+              <div class="w-11 h-11 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
+                <Clock class="w-5 h-5" />
               </div>
               <div class="space-y-1">
                 <div class="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  今日暂无时段排期
+                  {{ displayDays[0].isToday ? '今日暂无时段排期' : '该日暂无时段排期' }}
                 </div>
-                <div class="text-xs text-slate-400 max-w-sm mx-auto">
+                <div class="text-xs text-slate-400 max-w-sm mx-auto px-4">
                   没有固定日程或打卡习惯，享受自由专注的一天。
                 </div>
-              </div>
-              <div class="flex items-center justify-center gap-2.5 pt-1">
-                <button
-                  @click="$emit('switch-tab', 'schedules')"
-                  class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 text-xs font-semibold hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors cursor-pointer shadow-2xs"
-                >
-                  <CalendarDays class="w-3.5 h-3.5" />
-                  <span>查看全部日程</span>
-                </button>
-                <button
-                  @click="$emit('switch-tab', 'habits')"
-                  class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 text-xs font-semibold hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors cursor-pointer shadow-2xs"
-                >
-                  <Sparkles class="w-3.5 h-3.5" />
-                  <span>习惯打卡管理</span>
-                </button>
               </div>
             </div>
           </div>
