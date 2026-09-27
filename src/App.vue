@@ -99,6 +99,9 @@
     <SettingsDrawer
       :is-open="isSettingsOpen"
       :is-dark="isDark"
+      :theme-auto-enabled="themeAutoEnabled"
+      :theme-auto-start="themeAutoStart"
+      :theme-auto-end="themeAutoEnd"
       :font-size="currentFontSize"
       :font-family="currentFontFamily"
       :ui-scale="currentUiScale"
@@ -108,6 +111,7 @@
       :journals-count="journals.length"
       @close="isSettingsOpen = false"
       @toggle-theme="toggleTheme"
+      @update-theme-auto="handleUpdateThemeAuto"
       @change-font-size="applyFontSize"
       @change-font-family="applyFontFamily"
       @change-ui-scale="applyUiScale"
@@ -167,7 +171,57 @@ import { enqueueChange, onRemoteDataChange, syncAll, applyBackupToCloud, resetSy
 import { isAuthenticated } from '@/sync/pocketbase'
 
 const THEME_KEY = 'flow_os_theme'
+const THEME_AUTO_ENABLED_KEY = 'flow_os_theme_auto_enabled'
+const THEME_AUTO_START_KEY = 'flow_os_theme_auto_start'
+const THEME_AUTO_END_KEY = 'flow_os_theme_auto_end'
+
 const isDark = ref(false)
+const themeAutoEnabled = ref(false)
+const themeAutoStart = ref('08:00')
+const themeAutoEnd = ref('22:00')
+
+let autoThemeTimer: any = null
+
+function checkAndApplyAutoTheme() {
+  if (!themeAutoEnabled.value) return
+  const now = new Date()
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const cur = `${pad(now.getHours())}:${pad(now.getMinutes())}`
+  const start = themeAutoStart.value || '08:00'
+  const end = themeAutoEnd.value || '22:00'
+
+  let isLight = false
+  if (start <= end) {
+    isLight = cur >= start && cur < end
+  } else {
+    isLight = cur >= start || cur < end
+  }
+
+  const shouldBeDark = !isLight
+  if (isDark.value !== shouldBeDark) {
+    applyTheme(shouldBeDark)
+  }
+}
+
+function handleUpdateThemeAuto(payload: { enabled: boolean; start: string; end: string }) {
+  themeAutoEnabled.value = payload.enabled
+  themeAutoStart.value = payload.start || '08:00'
+  themeAutoEnd.value = payload.end || '22:00'
+
+  localStorage.setItem(THEME_AUTO_ENABLED_KEY, String(payload.enabled))
+  localStorage.setItem(THEME_AUTO_START_KEY, themeAutoStart.value)
+  localStorage.setItem(THEME_AUTO_END_KEY, themeAutoEnd.value)
+
+  if (payload.enabled) {
+    checkAndApplyAutoTheme()
+  }
+}
+
+function handleVisibilityChange() {
+  if (!document.hidden && themeAutoEnabled.value) {
+    checkAndApplyAutoTheme()
+  }
+}
 
 function applyTheme(dark: boolean) {
   isDark.value = dark
@@ -181,6 +235,11 @@ function applyTheme(dark: boolean) {
 }
 
 function toggleTheme() {
+  // 手动切换模式时，主动关闭自动定时切换，避免后台定时器再次强行覆写用户的临时选择
+  if (themeAutoEnabled.value) {
+    themeAutoEnabled.value = false
+    localStorage.setItem(THEME_AUTO_ENABLED_KEY, 'false')
+  }
   applyTheme(!isDark.value)
 }
 
@@ -311,12 +370,35 @@ async function loadAllData() {
 
 onMounted(async () => {
   window.addEventListener('keydown', handleGlobalKeydown)
-  const saved = localStorage.getItem(THEME_KEY)
-  if (saved === 'dark') {
-    applyTheme(true)
+
+  // 读取定时主题切换配置与主题设置
+  const savedAutoEnabled = localStorage.getItem(THEME_AUTO_ENABLED_KEY)
+  const savedAutoStart = localStorage.getItem(THEME_AUTO_START_KEY)
+  const savedAutoEnd = localStorage.getItem(THEME_AUTO_END_KEY)
+
+  if (savedAutoStart) themeAutoStart.value = savedAutoStart
+  if (savedAutoEnd) themeAutoEnd.value = savedAutoEnd
+
+  if (savedAutoEnabled === 'true') {
+    themeAutoEnabled.value = true
+    checkAndApplyAutoTheme()
   } else {
-    applyTheme(false)
+    const saved = localStorage.getItem(THEME_KEY)
+    if (saved === 'dark') {
+      applyTheme(true)
+    } else {
+      applyTheme(false)
+    }
   }
+
+  // 每 30 秒轮询一次当前时间点，确保到点平滑自动变色
+  autoThemeTimer = setInterval(() => {
+    checkAndApplyAutoTheme()
+  }, 30000)
+
+  // 监听网页/应用前台恢复，立刻重新校准主题
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+
   const savedScale = localStorage.getItem(UI_SCALE_KEY) as UiScale | null
   if (savedScale && UI_SCALE_MAP[savedScale]) {
     applyUiScale(savedScale)
@@ -352,6 +434,11 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleGlobalKeydown)
+  if (autoThemeTimer) {
+    clearInterval(autoThemeTimer)
+    autoThemeTimer = null
+  }
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
 })
 
 async function handleSaveArea(areaData: Partial<Area>) {
