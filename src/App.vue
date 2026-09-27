@@ -111,6 +111,7 @@
       :journals-count="journals.length"
       @close="isSettingsOpen = false"
       @toggle-theme="toggleTheme"
+      @set-theme="handleSetTheme"
       @update-theme-auto="handleUpdateThemeAuto"
       @change-font-size="applyFontSize"
       @change-font-family="applyFontFamily"
@@ -241,6 +242,15 @@ function toggleTheme() {
     localStorage.setItem(THEME_AUTO_ENABLED_KEY, 'false')
   }
   applyTheme(!isDark.value)
+}
+
+function handleSetTheme(dark: boolean) {
+  // 显式选择模式时，关闭自动定时切换
+  if (themeAutoEnabled.value) {
+    themeAutoEnabled.value = false
+    localStorage.setItem(THEME_AUTO_ENABLED_KEY, 'false')
+  }
+  applyTheme(dark)
 }
 
 const UI_SCALE_KEY = 'flow_os_ui_scale'

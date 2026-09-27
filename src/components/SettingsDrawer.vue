@@ -61,105 +61,185 @@
               <SunMoon class="w-3.5 h-3.5 text-blue-500" />
               <span>界面外观</span>
             </h3>
-            <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <div>
-                <div class="text-xs font-medium text-slate-800 dark:text-slate-200">当前模式</div>
-                <div class="text-[11px] text-slate-400 mt-0.5">
-                  {{ isDark ? '暗色模式 (Dark)' : '白天明亮模式 (Light)' }}
-                  <span v-if="themeAutoEnabled" class="text-blue-500 font-medium ml-1">· 定时自动生效中</span>
-                </div>
-              </div>
-              <button
-                @click="$emit('toggle-theme')"
-                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 shadow-xs hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors"
-              >
-                <Sun v-if="isDark" class="w-3.5 h-3.5 text-amber-500" />
-                <Moon v-else class="w-3.5 h-3.5 text-blue-500" />
-                <span>{{ isDark ? '切换浅色' : '切换暗色' }}</span>
-              </button>
-            </div>
-
-            <!-- 定时自动切换外观 -->
-            <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-3">
-              <div class="flex items-center justify-between">
-                <div class="space-y-0.5">
-                  <div class="text-xs font-medium text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                    <Clock class="w-3.5 h-3.5 text-blue-500" />
-                    <span>按时间自动切换外观</span>
-                  </div>
-                  <div class="text-[11px] text-slate-400">
-                    在设定的时间段内自动切换浅色与暗色
-                  </div>
-                </div>
-                <!-- 开关 Toggle -->
+            <!-- 界面外观 (整合模式选择与自动定时为单个卡片) -->
+            <div class="p-3.5 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-3.5">
+              <!-- 模式选择双卡片 -->
+              <div class="grid grid-cols-2 gap-3">
+                <!-- 浅色模式 -->
                 <button
                   type="button"
-                  @click="handleToggleAutoTheme"
+                  @click="handleSelectTheme(false)"
                   :class="[
-                    'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden',
-                    themeAutoEnabled ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-700'
+                    'relative flex flex-col items-center justify-between p-3 rounded-xl border text-center transition-all cursor-pointer group',
+                    !isDark
+                      ? 'bg-white dark:bg-slate-700/90 border-blue-500 shadow-xs ring-2 ring-blue-500/20'
+                      : 'bg-white/60 dark:bg-slate-800/50 border-slate-200 dark:border-slate-750 hover:border-slate-300 dark:hover:border-slate-600'
                   ]"
-                  role="switch"
-                  :aria-checked="themeAutoEnabled"
                 >
-                  <span
-                    :class="[
-                      'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out',
-                      themeAutoEnabled ? 'translate-x-4' : 'translate-x-0'
-                    ]"
-                  />
+                  <!-- 浅色视窗微缩图 -->
+                  <div class="w-full h-12 rounded-lg bg-slate-100/90 border border-slate-200/90 p-1.5 flex flex-col justify-between mb-2 shadow-2xs">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-1">
+                        <div class="w-3.5 h-3.5 rounded-full bg-amber-400 flex items-center justify-center">
+                          <Sun class="w-2.5 h-2.5 text-white" />
+                        </div>
+                        <div class="w-8 h-1.5 rounded-full bg-slate-300"></div>
+                      </div>
+                      <div class="w-2 h-2 rounded-full bg-blue-500/30"></div>
+                    </div>
+                    <div class="space-y-1">
+                      <div class="w-full h-1.5 rounded-full bg-white shadow-2xs"></div>
+                      <div class="w-3/4 h-1.5 rounded-full bg-slate-200"></div>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center justify-center gap-1.5">
+                    <span :class="['text-xs font-semibold', !isDark ? 'text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300']">
+                      浅色模式
+                    </span>
+                    <!-- 单选圆点 -->
+                    <div
+                      :class="[
+                        'w-3.5 h-3.5 rounded-full border flex items-center justify-center transition-colors',
+                        !isDark
+                          ? 'border-blue-600 bg-blue-600'
+                          : 'border-slate-300 dark:border-slate-600 bg-transparent'
+                      ]"
+                    >
+                      <div v-if="!isDark" class="w-1 h-1 rounded-full bg-white"></div>
+                    </div>
+                  </div>
+                </button>
+
+                <!-- 暗色模式 -->
+                <button
+                  type="button"
+                  @click="handleSelectTheme(true)"
+                  :class="[
+                    'relative flex flex-col items-center justify-between p-3 rounded-xl border text-center transition-all cursor-pointer group',
+                    isDark
+                      ? 'bg-white dark:bg-slate-700/90 border-blue-500 shadow-xs ring-2 ring-blue-500/20'
+                      : 'bg-white/60 dark:bg-slate-800/50 border-slate-200 dark:border-slate-750 hover:border-slate-300 dark:hover:border-slate-600'
+                  ]"
+                >
+                  <!-- 暗色视窗微缩图 -->
+                  <div class="w-full h-12 rounded-lg bg-slate-900 border border-slate-800 p-1.5 flex flex-col justify-between mb-2 shadow-2xs">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-1">
+                        <div class="w-3.5 h-3.5 rounded-full bg-indigo-500 flex items-center justify-center">
+                          <Moon class="w-2.5 h-2.5 text-white" />
+                        </div>
+                        <div class="w-8 h-1.5 rounded-full bg-slate-700"></div>
+                      </div>
+                      <div class="w-2 h-2 rounded-full bg-indigo-400/40"></div>
+                    </div>
+                    <div class="space-y-1">
+                      <div class="w-full h-1.5 rounded-full bg-slate-800 shadow-2xs"></div>
+                      <div class="w-3/4 h-1.5 rounded-full bg-slate-700/80"></div>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center justify-center gap-1.5">
+                    <span :class="['text-xs font-semibold', isDark ? 'text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300']">
+                      暗色模式
+                    </span>
+                    <!-- 单选圆点 -->
+                    <div
+                      :class="[
+                        'w-3.5 h-3.5 rounded-full border flex items-center justify-center transition-colors',
+                        isDark
+                          ? 'border-blue-600 bg-blue-600'
+                          : 'border-slate-300 dark:border-slate-600 bg-transparent'
+                      ]"
+                    >
+                      <div v-if="isDark" class="w-1 h-1 rounded-full bg-white"></div>
+                    </div>
+                  </div>
                 </button>
               </div>
 
-              <!-- 时间段设置 -->
-              <div v-if="themeAutoEnabled" class="pt-2.5 border-t border-slate-200/70 dark:border-slate-700/60 space-y-2.5">
-                <div class="flex items-center justify-between text-xs">
-                  <span class="text-slate-600 dark:text-slate-400 font-medium">浅色时段 (其余为暗色)</span>
+              <!-- 自动定时切换部分 (同卡片下方，由细分割线衔接) -->
+              <div class="pt-3 border-t border-slate-200/80 dark:border-slate-700/70 space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <div class="space-y-0.5">
+                    <div class="text-xs font-medium text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                      <Clock class="w-3.5 h-3.5 text-blue-500" />
+                      <span>按时间自动切换外观</span>
+                    </div>
+                    <div class="text-[11px] text-slate-400">
+                      {{ themeAutoEnabled ? (isCurrentTimeInAutoLight ? '当前在浅色时段，到点自动切换' : '当前在暗色时段，到点自动切换') : '在设定的时间段内自动切换浅色与暗色' }}
+                    </div>
+                  </div>
+                  <!-- 开关 Toggle -->
                   <button
-                    v-if="effectiveAutoStart !== '08:00' || effectiveAutoEnd !== '22:00'"
-                    @click="resetAutoThemeTimes"
-                    class="text-[11px] text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                    type="button"
+                    @click="handleToggleAutoTheme"
+                    :class="[
+                      'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden',
+                      themeAutoEnabled ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-700'
+                    ]"
+                    role="switch"
+                    :aria-checked="themeAutoEnabled"
                   >
-                    恢复默认 (08:00 - 22:00)
+                    <span
+                      :class="[
+                        'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out',
+                        themeAutoEnabled ? 'translate-x-4' : 'translate-x-0'
+                      ]"
+                    />
                   </button>
-                  <span v-else class="text-[11px] text-slate-400">默认: 08:00 - 22:00</span>
                 </div>
 
-                <div class="flex items-center gap-2">
-                  <div class="flex-1 flex items-center gap-1.5 bg-white dark:bg-slate-700/80 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 shadow-2xs">
-                    <Sun class="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                    <span class="text-[11px] text-slate-400 shrink-0">浅色从</span>
-                    <input
-                      type="time"
-                      :value="effectiveAutoStart"
-                      @change="handleStartTimeChange(($event.target as HTMLInputElement).value)"
-                      class="bg-transparent text-xs text-slate-800 dark:text-slate-200 focus:outline-hidden w-full font-mono cursor-pointer [color-scheme:light] dark:[color-scheme:dark]"
-                    />
+                <!-- 时间段展开配置 -->
+                <div v-if="themeAutoEnabled" class="pt-2 border-t border-slate-200/60 dark:border-slate-700/50 space-y-2.5">
+                  <div class="flex items-center justify-between text-xs">
+                    <span class="text-slate-600 dark:text-slate-400 font-medium">浅色时段 (其余为暗色)</span>
+                    <button
+                      v-if="effectiveAutoStart !== '08:00' || effectiveAutoEnd !== '22:00'"
+                      @click="resetAutoThemeTimes"
+                      class="text-[11px] text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                    >
+                      恢复默认 (08:00 - 22:00)
+                    </button>
+                    <span v-else class="text-[11px] text-slate-400">默认: 08:00 - 22:00</span>
                   </div>
 
-                  <span class="text-slate-400 text-xs font-medium">至</span>
+                  <div class="flex items-center gap-2">
+                    <div class="flex-1 flex items-center gap-1.5 bg-white dark:bg-slate-700/80 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 shadow-2xs">
+                      <Sun class="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                      <span class="text-[11px] text-slate-400 shrink-0">浅色从</span>
+                      <input
+                        type="time"
+                        :value="effectiveAutoStart"
+                        @change="handleStartTimeChange(($event.target as HTMLInputElement).value)"
+                        class="bg-transparent text-xs text-slate-800 dark:text-slate-200 focus:outline-hidden w-full font-mono cursor-pointer [color-scheme:light] dark:[color-scheme:dark]"
+                      />
+                    </div>
 
-                  <div class="flex-1 flex items-center gap-1.5 bg-white dark:bg-slate-700/80 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 shadow-2xs">
-                    <Moon class="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                    <span class="text-[11px] text-slate-400 shrink-0">暗色从</span>
-                    <input
-                      type="time"
-                      :value="effectiveAutoEnd"
-                      @change="handleEndTimeChange(($event.target as HTMLInputElement).value)"
-                      class="bg-transparent text-xs text-slate-800 dark:text-slate-200 focus:outline-hidden w-full font-mono cursor-pointer [color-scheme:light] dark:[color-scheme:dark]"
-                    />
+                    <span class="text-slate-400 text-xs font-medium">至</span>
+
+                    <div class="flex-1 flex items-center gap-1.5 bg-white dark:bg-slate-700/80 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 shadow-2xs">
+                      <Moon class="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                      <span class="text-[11px] text-slate-400 shrink-0">暗色从</span>
+                      <input
+                        type="time"
+                        :value="effectiveAutoEnd"
+                        @change="handleEndTimeChange(($event.target as HTMLInputElement).value)"
+                        class="bg-transparent text-xs text-slate-800 dark:text-slate-200 focus:outline-hidden w-full font-mono cursor-pointer [color-scheme:light] dark:[color-scheme:dark]"
+                      />
+                    </div>
                   </div>
-                </div>
 
-                <!-- 实时状态提示 -->
-                <div class="flex items-center justify-between text-[11px] bg-blue-50/80 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 px-2.5 py-1.5 rounded-lg border border-blue-100 dark:border-blue-900/40">
-                  <span class="flex items-center gap-1.5">
-                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
-                    <span>当前判定：{{ isCurrentTimeInAutoLight ? '浅色模式时段 (白天)' : '暗色模式时段 (夜间)' }}</span>
-                  </span>
-                  <span class="text-[10px] text-blue-500/80 dark:text-blue-400/80">
-                    自动运行中
-                  </span>
+                  <!-- 实时状态提示 -->
+                  <div class="flex items-center justify-between text-[11px] bg-blue-50/80 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 px-2.5 py-1.5 rounded-lg border border-blue-100 dark:border-blue-900/40">
+                    <span class="flex items-center gap-1.5">
+                      <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                      <span>当前判定：{{ isCurrentTimeInAutoLight ? '浅色模式时段 (白天)' : '暗色模式时段 (夜间)' }}</span>
+                    </span>
+                    <span class="text-[10px] text-blue-500/80 dark:text-blue-400/80">
+                      自动运行中
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -555,6 +635,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'close'): void
   (e: 'toggle-theme'): void
+  (e: 'set-theme', dark: boolean): void
   (e: 'update-theme-auto', payload: { enabled: boolean; start: string; end: string }): void
   (e: 'change-font-size', size: FontSize): void
   (e: 'change-font-family', family: FontFamily): void
@@ -564,6 +645,11 @@ const emit = defineEmits<{
   (e: 'clear-all'): void
   (e: 'reload-data'): void
 }>()
+
+function handleSelectTheme(dark: boolean) {
+  if (props.isDark === dark) return
+  emit('set-theme', dark)
+}
 
 // --- 自动暗色/浅色模式逻辑 ---
 const effectiveAutoStart = computed(() => props.themeAutoStart || '08:00')
