@@ -11,9 +11,6 @@
           <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
             固定日程安排
           </h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            单次特定预约与重要日程排期（周期循环打卡请前往“习惯”）
-          </p>
         </div>
       </div>
 
