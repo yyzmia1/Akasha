@@ -6,6 +6,7 @@
       @update:active-tab="handleTabChange"
       @open-settings="isSettingsOpen = true"
       @open-search="isSearchOpen = true"
+      @open-copilot="isCopilotOpen = true"
       @toggle-theme="toggleTheme"
     />
 
@@ -18,6 +19,7 @@
         :journals="journals"
         :habits="habits"
         :habit-logs="habitLogs"
+        :ghost-schedules="ghostSchedules"
         @switch-tab="handleTabChange($event as any)"
         @open-todo="handleOpenTodo"
         @open-schedule="handleOpenSchedule"
@@ -137,6 +139,51 @@
       @select-habit="handleSearchSelectHabit"
       @select-journal="handleSearchSelectJournal"
     />
+
+    <CopilotModal
+      :is-open="isCopilotOpen"
+      :areas="areas"
+      :projects="projects"
+      :schedules="schedules"
+      :habits="habits"
+      :active-hours="{ start: themeAutoStart, end: themeAutoEnd }"
+      @close="isCopilotOpen = false"
+      @open-settings="isSettingsOpen = true"
+      @update-ghosts="ghostSchedules = $event"
+      @apply-plan="handleApplyCopilotPlan"
+    />
+
+    <!-- 10秒浮动撤销条 (Undo Toast) -->
+    <Transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="transform translate-y-4 opacity-0 scale-95"
+      enter-to-class="transform translate-y-0 opacity-100 scale-100"
+      leave-active-class="transition duration-150 ease-in"
+      leave-from-class="transform translate-y-0 opacity-100 scale-100"
+      leave-to-class="transform translate-y-4 opacity-0 scale-95"
+    >
+      <div
+        v-if="undoToast?.show"
+        class="fixed bottom-16 md:bottom-6 inset-x-0 mx-auto w-fit z-50 flex items-center gap-3 px-4 py-2.5 rounded-xl bg-slate-900/95 dark:bg-white/95 text-white dark:text-slate-900 shadow-2xl backdrop-blur-md border border-slate-700 dark:border-slate-200 text-xs font-medium"
+      >
+        <div class="flex items-center gap-2">
+          <Sparkles class="w-4 h-4 text-amber-400 dark:text-amber-500" />
+          <span>{{ undoToast.message }}</span>
+        </div>
+        <button
+          @click="handleRollbackUndo"
+          class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-[11px] active:scale-95 transition-all cursor-pointer"
+        >
+          撤销 (Undo)
+        </button>
+        <button
+          @click="dismissUndoToast"
+          class="p-1 rounded-md text-slate-400 hover:text-white dark:hover:text-slate-900 transition-colors"
+        >
+          <X class="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -151,6 +198,9 @@ import HabitsView from '@/components/HabitsView.vue'
 import JournalView from '@/components/JournalView.vue'
 import SettingsDrawer from '@/components/SettingsDrawer.vue'
 import GlobalSearch from '@/components/GlobalSearch.vue'
+import CopilotModal from '@/components/copilot/CopilotModal.vue'
+import { Sparkles, X } from 'lucide-vue-next'
+import type { CopilotPlanResult, ScheduleDraft } from '@/types/copilot'
 
 import { db, clearAllDatabaseData, initSeedData } from '@/db'
 import type {
@@ -318,6 +368,28 @@ const journals = ref<JournalEntry[]>([])
 
 const isSettingsOpen = ref(false)
 const isSearchOpen = ref(false)
+const isCopilotOpen = ref(false)
+const ghostSchedules = ref<ScheduleDraft[]>([])
+const undoToast = ref<{
+  show: boolean
+  message: string
+  timer: any
+  rollbackFn: () => Promise<void>
+} | null>(null)
+
+function dismissUndoToast() {
+  if (undoToast.value?.timer) {
+    clearTimeout(undoToast.value.timer)
+  }
+  undoToast.value = null
+}
+
+async function handleRollbackUndo() {
+  if (undoToast.value?.rollbackFn) {
+    await undoToast.value.rollbackFn()
+  }
+  dismissUndoToast()
+}
 
 const todosCount = computed(() => {
   const total = todos.value.length
@@ -329,6 +401,187 @@ function handleGlobalKeydown(e: KeyboardEvent) {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
     e.preventDefault()
     isSearchOpen.value = !isSearchOpen.value
+  } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'j') {
+    e.preventDefault()
+    isCopilotOpen.value = !isCopilotOpen.value
+  }
+}
+
+async function handleApplyCopilotPlan(plan: CopilotPlanResult) {
+  const selectedProjects = (plan.projects || []).filter((p) => p.selected)
+  const selectedSchedules = (plan.schedules || []).filter((s) => s.selected)
+  const selectedTodos = (plan.todos || []).filter((t) => t.selected)
+  const selectedHabits = (plan.habits || []).filter((h) => h.selected)
+
+  const createdProjectIds: string[] = []
+  const createdScheduleIds: string[] = []
+  const createdTodoIds: string[] = []
+  const createdHabitIds: string[] = []
+
+  const now = Date.now()
+
+  // 1. 创建新项目 (如果有)
+  const projectTitleMap = new Map<string, string>()
+  for (const p of projects.value) {
+    projectTitleMap.set(p.title.trim().toLowerCase(), p.id)
+  }
+
+  for (const pd of selectedProjects) {
+    const newProj: Project = {
+      id: 'proj-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
+      areaId: areas.value[0]?.id || 'area-1',
+      title: pd.title,
+      color: pd.color || '#3b82f6',
+      order: projects.value.length + createdProjectIds.length,
+      createdAt: new Date().toISOString(),
+      updatedAt: now,
+    }
+    await db.projects.add(newProj)
+    enqueueChange('project', newProj.id, newProj)
+    createdProjectIds.push(newProj.id)
+    projectTitleMap.set(newProj.title.trim().toLowerCase(), newProj.id)
+  }
+
+  // 2. 创建日程
+  for (const sd of selectedSchedules) {
+    let assignedProjectId = sd.projectId || null
+    if (!assignedProjectId && sd.suggestedProjectTitle) {
+      assignedProjectId = projectTitleMap.get(sd.suggestedProjectTitle.trim().toLowerCase()) || null
+    }
+
+    const newSch: ScheduleItem = {
+      id: 'sch-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
+      projectId: assignedProjectId,
+      title: sd.title,
+      date: sd.date,
+      time: sd.time,
+      endDate: sd.endDate,
+      endTime: sd.endTime,
+      recurringType: sd.recurringType || 'none',
+      recurringDayOfWeek: sd.recurringDayOfWeek,
+      createdAt: new Date().toISOString(),
+      updatedAt: now,
+    }
+    await db.schedules.add(newSch)
+    enqueueChange('schedule', newSch.id, newSch)
+    createdScheduleIds.push(newSch.id)
+  }
+
+  // 3. 创建待办 (含子任务)
+  for (const td of selectedTodos) {
+    let assignedProjectId = td.projectId || null
+    if (!assignedProjectId && td.suggestedProjectTitle) {
+      assignedProjectId = projectTitleMap.get(td.suggestedProjectTitle.trim().toLowerCase()) || null
+    }
+
+    const parentId = 'todo-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7)
+    const newTodo: TodoItem = {
+      id: parentId,
+      projectId: assignedProjectId,
+      parentId: null,
+      title: td.title,
+      completed: false,
+      importance: td.importance || 2,
+      startDate: td.startDate,
+      startTime: td.startTime,
+      dueDate: td.dueDate,
+      dueTime: td.dueTime,
+      notes: td.notes,
+      order: todos.value.length + createdTodoIds.length,
+      createdAt: new Date().toISOString(),
+      updatedAt: now,
+    }
+    await db.todos.add(newTodo)
+    enqueueChange('todo', newTodo.id, newTodo)
+    createdTodoIds.push(newTodo.id)
+
+    // 子任务
+    if (td.subtasks && td.subtasks.length > 0) {
+      for (let sIdx = 0; sIdx < td.subtasks.length; sIdx++) {
+        const subTitle = td.subtasks[sIdx]
+        const subTodo: TodoItem = {
+          id: 'todo-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
+          projectId: assignedProjectId,
+          parentId: parentId,
+          title: subTitle,
+          completed: false,
+          importance: td.importance || 2,
+          order: sIdx,
+          createdAt: new Date().toISOString(),
+          updatedAt: now,
+        }
+        await db.todos.add(subTodo)
+        enqueueChange('todo', subTodo.id, subTodo)
+        createdTodoIds.push(subTodo.id)
+      }
+    }
+  }
+
+  // 4. 创建习惯
+  for (const hd of selectedHabits) {
+    let assignedProjectId = hd.projectId || null
+    if (!assignedProjectId && hd.suggestedProjectTitle) {
+      assignedProjectId = projectTitleMap.get(hd.suggestedProjectTitle.trim().toLowerCase()) || null
+    }
+
+    const newHabit: Habit = {
+      id: 'habit-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
+      projectId: assignedProjectId,
+      title: hd.title,
+      frequency: hd.frequency || 'daily',
+      timeSlot: hd.timeSlot || 'anytime',
+      time: hd.time,
+      targetDaysOfWeek: hd.targetDaysOfWeek,
+      showOnCalendar: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: now,
+    }
+    await db.habits.add(newHabit)
+    enqueueChange('habit', newHabit.id, newHabit)
+    createdHabitIds.push(newHabit.id)
+  }
+
+  // 清除日历幽灵草稿
+  ghostSchedules.value = []
+  await loadAllData()
+
+  // 弹出 10 秒浮动撤销条
+  dismissUndoToast()
+  const summaryParts: string[] = []
+  if (createdScheduleIds.length) summaryParts.push(`${createdScheduleIds.length} 项日程`)
+  if (createdTodoIds.length) summaryParts.push(`${createdTodoIds.length} 项待办`)
+  if (createdHabitIds.length) summaryParts.push(`${createdHabitIds.length} 项习惯`)
+  if (createdProjectIds.length) summaryParts.push(`${createdProjectIds.length} 个项目`)
+
+  const toastMessage = `✨ 已成功添加 ${summaryParts.join('、') || '事项'}`
+
+  const timer = setTimeout(() => {
+    dismissUndoToast()
+  }, 10000)
+
+  undoToast.value = {
+    show: true,
+    message: toastMessage,
+    timer,
+    rollbackFn: async () => {
+      for (const id of createdScheduleIds) {
+        await db.schedules.delete(id)
+        enqueueChange('schedule', id, null, true)
+      }
+      for (const id of createdTodoIds) {
+        await db.todos.delete(id)
+        enqueueChange('todo', id, null, true)
+      }
+      for (const id of createdHabitIds) {
+        await db.habits.delete(id)
+        enqueueChange('habit', id, null, true)
+      }
+      for (const id of createdProjectIds) {
+        await db.projects.delete(id)
+        enqueueChange('project', id, null, true)
+      }
+      await loadAllData()
+    },
   }
 }
 

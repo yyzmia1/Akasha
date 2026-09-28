@@ -25,6 +25,14 @@
             <div class="h-4 w-px bg-slate-200 dark:bg-slate-800 mx-1"></div>
 
             <button
+              @click="$emit('open-copilot'); isVisible = true"
+              class="p-1.5 rounded-lg text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors"
+              title="AI 个人效能副驾驶 (Ctrl+J)"
+            >
+              <Sparkles class="w-4 h-4" />
+            </button>
+
+            <button
               @click="$emit('open-search'); isVisible = true"
               class="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               title="全局检索 (Ctrl+K)"
@@ -127,6 +135,16 @@
         <div class="flex items-center gap-1 sm:gap-2">
           <!-- Sync Status Badge -->
           <SyncStatusBadge @click="$emit('open-settings')" />
+
+          <!-- Mobile AI Copilot Button -->
+          <button
+            @click="$emit('open-copilot'); isVisible = true"
+            class="md:hidden p-2 rounded-lg text-indigo-600 dark:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            title="AI 副驾驶 (Ctrl+J)"
+            aria-label="AI 副驾驶"
+          >
+            <Sparkles class="w-4 h-4" />
+          </button>
 
           <!-- Mobile Only Search Button -->
           <button
@@ -288,6 +306,7 @@ const emit = defineEmits<{
   (e: 'update:activeTab', tab: ActiveTab): void
   (e: 'open-settings'): void
   (e: 'open-search'): void
+  (e: 'open-copilot'): void
   (e: 'toggle-theme'): void
 }>()
 
