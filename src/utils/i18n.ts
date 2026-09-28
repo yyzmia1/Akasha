@@ -118,7 +118,9 @@ export const messages: Record<SupportedLocale, Record<string, any>> = {
       searchPlaceholder: '搜索任意城市 (如: 苏州、大连、青岛...)',
       humidity: '空气湿度',
       windSpeed: '风速',
-      feelsLike: '体感'
+      feelsLike: '体感',
+      fullForecast: '全文预报',
+      viewFullForecast: '查看外部权威全文气象预报 (Windy 气象中心)'
     },
     schedule: {
       title: '固定日程安排',
@@ -228,7 +230,9 @@ export const messages: Record<SupportedLocale, Record<string, any>> = {
       searchPlaceholder: 'Search any city (e.g. Tokyo, London, Paris...)',
       humidity: 'Humidity',
       windSpeed: 'Wind Speed',
-      feelsLike: 'Feels like'
+      feelsLike: 'Feels like',
+      fullForecast: 'Full Forecast',
+      viewFullForecast: 'View Authoritative Full Weather Forecast (Windy)'
     },
     schedule: {
       title: 'Fixed Schedules',
@@ -338,7 +342,9 @@ export const messages: Record<SupportedLocale, Record<string, any>> = {
       searchPlaceholder: '都市を検索 (例: 東京、大阪、京都...)',
       humidity: '湿度',
       windSpeed: '風速',
-      feelsLike: '体感'
+      feelsLike: '体感',
+      fullForecast: '詳細予報',
+      viewFullForecast: '外部の公式気象詳細を見る (Windy)'
     },
     schedule: {
       title: 'スケジュール予定',
@@ -448,7 +454,9 @@ export const messages: Record<SupportedLocale, Record<string, any>> = {
       searchPlaceholder: 'Rechercher une ville (ex: Paris, Lyon, Marseille...)',
       humidity: 'Humidité',
       windSpeed: 'Vitesse du vent',
-      feelsLike: 'Ressenti'
+      feelsLike: 'Ressenti',
+      fullForecast: 'Prévisions',
+      viewFullForecast: 'Consulter les prévisions météorologiques détaillées (Windy)'
     },
     schedule: {
       title: 'Planning fixe',
@@ -558,7 +566,9 @@ export const messages: Record<SupportedLocale, Record<string, any>> = {
       searchPlaceholder: 'Stadt suchen (z. B. Berlin, München, Hamburg...)',
       humidity: 'Luftfeuchtigkeit',
       windSpeed: 'Windgeschwindigkeit',
-      feelsLike: 'Gefühlt'
+      feelsLike: 'Gefühlt',
+      fullForecast: 'Vorhersage',
+      viewFullForecast: 'Ausführliche meteorologische Vorhersage öffnen (Windy)'
     },
     schedule: {
       title: 'Feste Termine',

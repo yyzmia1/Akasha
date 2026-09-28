@@ -300,6 +300,17 @@ onUnmounted(() => {
               <LocateFixed class="w-3.5 h-3.5" />
             </button>
 
+            <!-- 外部权威全文预报按钮 -->
+            <a
+              :href="externalWeatherUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              :title="t('weather.viewFullForecast')"
+            >
+              <ExternalLink class="w-3.5 h-3.5" />
+            </a>
+
             <!-- 刷新按钮 -->
             <button
               @click="loadWeatherData(true)"
@@ -322,17 +333,39 @@ onUnmounted(() => {
         <!-- 中部：实时大温度与天气现象 -->
         <div class="py-3 flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <component
-              :is="weatherIconComponent"
-              class="w-10 h-10"
-              :class="iconColorClass"
-            />
+            <!-- 天气 Logo（点击直达外部权威全文气象预报） -->
+            <a
+              :href="externalWeatherUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="group/logo relative p-1 -m-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all cursor-pointer block"
+              :title="t('weather.viewFullForecast')"
+            >
+              <component
+                :is="weatherIconComponent"
+                class="w-10 h-10 transition-transform duration-200 group-hover/logo:scale-110"
+                :class="iconColorClass"
+              />
+            </a>
+
             <div>
-              <div class="flex items-baseline gap-1">
+              <div class="flex items-baseline gap-1.5">
                 <span class="text-3xl font-bold font-mono tracking-tight text-slate-900 dark:text-white">
                   {{ weather.current.temp }}°
                 </span>
                 <span class="text-xs text-slate-400 font-medium">C</span>
+
+                <!-- 气温旁的外部权威全文预报按钮 -->
+                <a
+                  :href="externalWeatherUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center gap-0.5 ml-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 border border-slate-200/60 dark:border-slate-800 transition-all cursor-pointer group/link"
+                  :title="t('weather.viewFullForecast')"
+                >
+                  <span>{{ t('weather.fullForecast') }}</span>
+                  <ExternalLink class="w-2.5 h-2.5 opacity-60 group-hover/link:opacity-100 transition-opacity" />
+                </a>
               </div>
               <p class="text-xs text-slate-500 dark:text-slate-400">
                 体感 {{ weather.current.apparentTemp }}°C
