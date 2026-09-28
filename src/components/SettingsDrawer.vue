@@ -385,11 +385,7 @@
               <div class="space-y-1">
                 <div class="flex items-center justify-between">
                   <label class="text-[11px] font-medium text-slate-700 dark:text-slate-300">API 密钥 (API Key)</label>
-                  <span v-if="syncCopilotOption === 'include_copilot'" class="text-[10px] text-indigo-600 dark:text-indigo-400 font-medium flex items-center gap-1">
-                    <Cloud class="w-3 h-3 text-blue-500" />
-                    <span>云端多端同步中</span>
-                  </span>
-                  <span v-else class="text-[10px] text-slate-400">仅存本地浏览器</span>
+                  <span class="text-[10px] text-slate-400">保存在本地浏览器</span>
                 </div>
                 <input
                   v-model="aiConfig.apiKey"
@@ -433,27 +429,6 @@
                     ]"
                   />
                 </button>
-              </div>
-
-              <!-- 云端多端同步选项 (Copilot 配置同步下拉) -->
-              <div class="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
-                <div>
-                  <div class="text-xs font-medium text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                    <Cloud class="w-3.5 h-3.5 text-blue-500" />
-                    <span>云端多端同步此配置</span>
-                  </div>
-                  <div class="text-[11px] text-slate-400">
-                    {{ syncCopilotOption === 'include_copilot' ? '已开启跨端自动同步（手机与电脑共享）' : '仅在当前设备本地保存（保护 API Key）' }}
-                  </div>
-                </div>
-                <select
-                  v-model="syncCopilotOption"
-                  @change="handleSyncCopilotChange"
-                  class="px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-hidden focus:border-indigo-500 cursor-pointer font-medium"
-                >
-                  <option value="business_only">仅存本地</option>
-                  <option value="include_copilot">云端同步</option>
-                </select>
               </div>
 
               <!-- Action buttons: Save & Ping Test -->
