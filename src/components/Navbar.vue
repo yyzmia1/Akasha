@@ -27,7 +27,7 @@
             <button
               @click="$emit('open-academic'); isVisible = true"
               class="p-1.5 rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors"
-              title="教务 / WakeUp 课表导入"
+              :title="t('nav.academic')"
             >
               <GraduationCap class="w-4 h-4" />
             </button>
@@ -35,7 +35,7 @@
             <button
               @click="$emit('open-copilot'); isVisible = true"
               class="p-1.5 rounded-lg text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors"
-              title="AI 个人效能副驾驶 (Ctrl+J)"
+              :title="t('nav.copilot')"
             >
               <Sparkles class="w-4 h-4" />
             </button>
@@ -43,7 +43,7 @@
             <button
               @click="$emit('open-search'); isVisible = true"
               class="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              title="全局检索 (Ctrl+K)"
+              :title="t('nav.search')"
             >
               <Search class="w-4 h-4" />
             </button>
@@ -51,7 +51,7 @@
             <button
               @click="$emit('open-settings'); isVisible = true"
               class="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              title="设置"
+              :title="t('nav.settings')"
             >
               <Settings class="w-4 h-4" />
             </button>
@@ -70,7 +70,7 @@
             ]"
           >
             <Calendar class="w-4 h-4" />
-            <span>日历</span>
+            <span>{{ t('nav.calendar') }}</span>
           </button>
 
           <button
@@ -83,7 +83,7 @@
             ]"
           >
             <FolderKanban class="w-4 h-4" />
-            <span>项目</span>
+            <span>{{ t('nav.projects') }}</span>
           </button>
 
           <button
@@ -96,7 +96,7 @@
             ]"
           >
             <CalendarDays class="w-4 h-4" />
-            <span>日程</span>
+            <span>{{ t('nav.schedules') }}</span>
           </button>
 
           <button
@@ -109,7 +109,7 @@
             ]"
           >
             <CheckSquare class="w-4 h-4" />
-            <span>待办</span>
+            <span>{{ t('nav.todos') }}</span>
           </button>
 
           <button
@@ -122,7 +122,7 @@
             ]"
           >
             <Sparkles class="w-4 h-4" />
-            <span>习惯</span>
+            <span>{{ t('nav.habits') }}</span>
           </button>
 
           <button
@@ -135,7 +135,7 @@
             ]"
           >
             <BookOpen class="w-4 h-4" />
-            <span>日记</span>
+            <span>{{ t('nav.journal') }}</span>
           </button>
         </nav>
 
@@ -148,8 +148,8 @@
           <button
             @click="$emit('open-academic'); isVisible = true"
             class="md:hidden p-2 rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            title="课表导入"
-            aria-label="课表导入"
+            :title="t('nav.academic')"
+            :aria-label="t('nav.academic')"
           >
             <GraduationCap class="w-4 h-4" />
           </button>
@@ -158,8 +158,8 @@
           <button
             @click="$emit('open-copilot'); isVisible = true"
             class="md:hidden p-2 rounded-lg text-indigo-600 dark:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            title="AI 副驾驶 (Ctrl+J)"
-            aria-label="AI 副驾驶"
+            :title="t('nav.copilot')"
+            :aria-label="t('nav.copilot')"
           >
             <Sparkles class="w-4 h-4" />
           </button>
@@ -168,8 +168,8 @@
           <button
             @click="$emit('open-search'); isVisible = true"
             class="md:hidden p-2 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            title="全局检索"
-            aria-label="全局检索"
+            :title="t('nav.search')"
+            :aria-label="t('nav.search')"
           >
             <Search class="w-4 h-4" />
           </button>
@@ -189,8 +189,8 @@
           <button
             @click="$emit('open-settings'); isVisible = true"
             class="md:hidden p-2 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            title="设置"
-            aria-label="设置"
+            :title="t('nav.settings')"
+            :aria-label="t('nav.settings')"
           >
             <Settings class="w-4 h-4" />
           </button>
@@ -215,7 +215,7 @@
           <div :class="['p-1 rounded-md transition-colors', activeTab === 'calendar' ? 'bg-blue-50 dark:bg-blue-950/60' : '']">
             <Calendar class="w-4 h-4 sm:w-4.5 sm:h-4.5" />
           </div>
-          <span class="text-[10px] mt-0.5 leading-none truncate whitespace-nowrap">日历</span>
+          <span class="text-[10px] mt-0.5 leading-none truncate whitespace-nowrap">{{ t('nav.calendar') }}</span>
         </button>
 
         <button
@@ -230,7 +230,7 @@
           <div :class="['p-1 rounded-md transition-colors', activeTab === 'projects' ? 'bg-blue-50 dark:bg-blue-950/60' : '']">
             <FolderKanban class="w-4 h-4 sm:w-4.5 sm:h-4.5" />
           </div>
-          <span class="text-[10px] mt-0.5 leading-none truncate whitespace-nowrap">项目</span>
+          <span class="text-[10px] mt-0.5 leading-none truncate whitespace-nowrap">{{ t('nav.projects') }}</span>
         </button>
 
         <button
@@ -245,7 +245,7 @@
           <div :class="['p-1 rounded-md transition-colors', activeTab === 'schedules' ? 'bg-blue-50 dark:bg-blue-950/60' : '']">
             <CalendarDays class="w-4 h-4 sm:w-4.5 sm:h-4.5" />
           </div>
-          <span class="text-[10px] mt-0.5 leading-none truncate whitespace-nowrap">日程</span>
+          <span class="text-[10px] mt-0.5 leading-none truncate whitespace-nowrap">{{ t('nav.schedules') }}</span>
         </button>
 
         <button
@@ -260,7 +260,7 @@
           <div :class="['p-1 rounded-md transition-colors', activeTab === 'todos' ? 'bg-blue-50 dark:bg-blue-950/60' : '']">
             <CheckSquare class="w-4 h-4 sm:w-4.5 sm:h-4.5" />
           </div>
-          <span class="text-[10px] mt-0.5 leading-none truncate whitespace-nowrap">待办</span>
+          <span class="text-[10px] mt-0.5 leading-none truncate whitespace-nowrap">{{ t('nav.todos') }}</span>
         </button>
 
         <button
@@ -275,7 +275,7 @@
           <div :class="['p-1 rounded-md transition-colors', activeTab === 'habits' ? 'bg-blue-50 dark:bg-blue-950/60' : '']">
             <Sparkles class="w-4 h-4 sm:w-4.5 sm:h-4.5" />
           </div>
-          <span class="text-[10px] mt-0.5 leading-none truncate whitespace-nowrap">习惯</span>
+          <span class="text-[10px] mt-0.5 leading-none truncate whitespace-nowrap">{{ t('nav.habits') }}</span>
         </button>
 
         <button
@@ -290,7 +290,7 @@
           <div :class="['p-1 rounded-md transition-colors', activeTab === 'journal' ? 'bg-blue-50 dark:bg-blue-950/60' : '']">
             <BookOpen class="w-4 h-4 sm:w-4.5 sm:h-4.5" />
           </div>
-          <span class="text-[10px] mt-0.5 leading-none truncate whitespace-nowrap">日记</span>
+          <span class="text-[10px] mt-0.5 leading-none truncate whitespace-nowrap">{{ t('nav.journal') }}</span>
         </button>
       </div>
     </nav>
@@ -314,6 +314,7 @@ import {
 } from 'lucide-vue-next'
 import WeatherWidget from './WeatherWidget.vue'
 import SyncStatusBadge from './SyncStatusBadge.vue'
+import { t } from '@/utils/i18n'
 import type { ActiveTab } from '@/types'
 
 const props = defineProps<{

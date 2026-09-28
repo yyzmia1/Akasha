@@ -11,8 +11,8 @@
       >
         <div class="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 dark:border-slate-800">
           <div>
-            <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">系统设置</h2>
-            <p class="text-xs text-slate-400 mt-0.5">偏好配置与本地数据管理</p>
+            <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">{{ t('settings.title') }}</h2>
+            <p class="text-xs text-slate-400 mt-0.5">{{ t('settings.subtitle') }}</p>
           </div>
           <button
             @click="$emit('close')"
@@ -26,29 +26,29 @@
           <section class="space-y-3">
             <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
               <Activity class="w-3.5 h-3.5 text-blue-500" />
-              <span>数据概览</span>
+              <span>{{ t('settings.overview') }}</span>
             </h3>
             <div class="grid grid-cols-2 gap-3">
               <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-                <div class="text-xs text-slate-400">总项目数</div>
+                <div class="text-xs text-slate-400">{{ t('settings.totalProjects') }}</div>
                 <div class="text-lg font-bold text-slate-800 dark:text-slate-100 mt-1">
                   {{ projectsCount }}
                 </div>
               </div>
               <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-                <div class="text-xs text-slate-400">待办进度</div>
+                <div class="text-xs text-slate-400">{{ t('settings.todoProgress') }}</div>
                 <div class="text-lg font-bold text-slate-800 dark:text-slate-100 mt-1">
                   {{ todosCount.completed }}/{{ todosCount.total }}
                 </div>
               </div>
               <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-                <div class="text-xs text-slate-400">日常习惯</div>
+                <div class="text-xs text-slate-400">{{ t('settings.habitsCount') }}</div>
                 <div class="text-lg font-bold text-slate-800 dark:text-slate-100 mt-1">
                   {{ habitsCount }}
                 </div>
               </div>
               <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-                <div class="text-xs text-slate-400">日记随笔</div>
+                <div class="text-xs text-slate-400">{{ t('settings.journalCount') }}</div>
                 <div class="text-lg font-bold text-slate-800 dark:text-slate-100 mt-1">
                   {{ journalsCount }}
                 </div>
@@ -59,7 +59,7 @@
           <section class="space-y-3">
             <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
               <SunMoon class="w-3.5 h-3.5 text-blue-500" />
-              <span>界面外观</span>
+              <span>{{ t('settings.appearance') }}</span>
             </h3>
             <!-- 界面外观 (整合模式选择与自动定时为单个卡片) -->
             <div class="p-3.5 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-3.5">
@@ -95,7 +95,7 @@
 
                   <div class="flex items-center justify-center gap-1.5">
                     <span :class="['text-xs font-semibold', !isDark ? 'text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300']">
-                      浅色模式
+                      {{ t('settings.lightMode') }}
                     </span>
                     <!-- 单选圆点 -->
                     <div
@@ -141,7 +141,7 @@
 
                   <div class="flex items-center justify-center gap-1.5">
                     <span :class="['text-xs font-semibold', isDark ? 'text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300']">
-                      暗色模式
+                      {{ t('settings.darkMode') }}
                     </span>
                     <!-- 单选圆点 -->
                     <div
@@ -164,10 +164,10 @@
                   <div class="space-y-0.5">
                     <div class="text-xs font-medium text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                       <Clock class="w-3.5 h-3.5 text-blue-500" />
-                      <span>按时间自动切换外观</span>
+                      <span>{{ t('settings.autoTheme') }}</span>
                     </div>
                     <div class="text-[11px] text-slate-400">
-                      {{ themeAutoEnabled ? (isCurrentTimeInAutoLight ? '当前在浅色时段，到点自动切换' : '当前在暗色时段，到点自动切换') : '在设定的时间段内自动切换浅色与暗色' }}
+                      {{ themeAutoEnabled ? (isCurrentTimeInAutoLight ? t('settings.currentAutoLight') : t('settings.currentAutoDark')) : t('settings.autoThemeDesc') }}
                     </div>
                   </div>
                   <!-- 开关 Toggle -->
@@ -193,21 +193,21 @@
                 <!-- 时间段展开配置 -->
                 <div v-if="themeAutoEnabled" class="pt-2 border-t border-slate-200/60 dark:border-slate-700/50 space-y-2.5">
                   <div class="flex items-center justify-between text-xs">
-                    <span class="text-slate-600 dark:text-slate-400 font-medium">浅色时段 (其余为暗色)</span>
+                    <span class="text-slate-600 dark:text-slate-400 font-medium">{{ t('settings.lightPeriod') }}</span>
                     <button
                       v-if="effectiveAutoStart !== '08:00' || effectiveAutoEnd !== '22:00'"
                       @click="resetAutoThemeTimes"
                       class="text-[11px] text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
                     >
-                      恢复默认 (08:00 - 22:00)
+                      {{ t('settings.restoreDefault') }}
                     </button>
-                    <span v-else class="text-[11px] text-slate-400">默认: 08:00 - 22:00</span>
+                    <span v-else class="text-[11px] text-slate-400">{{ t('settings.defaultTimeRange') }}</span>
                   </div>
 
                   <div class="flex items-center gap-2">
                     <div class="flex-1 flex items-center gap-1.5 bg-white dark:bg-slate-700/80 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 shadow-2xs">
                       <Sun class="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                      <span class="text-[11px] text-slate-400 shrink-0">浅色从</span>
+                      <span class="text-[11px] text-slate-400 shrink-0">{{ t('settings.lightFrom') }}</span>
                       <input
                         type="time"
                         :value="effectiveAutoStart"
@@ -216,11 +216,11 @@
                       />
                     </div>
 
-                    <span class="text-slate-400 text-xs font-medium">至</span>
+                    <span class="text-slate-400 text-xs font-medium">{{ t('settings.to') }}</span>
 
                     <div class="flex-1 flex items-center gap-1.5 bg-white dark:bg-slate-700/80 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 shadow-2xs">
                       <Moon class="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                      <span class="text-[11px] text-slate-400 shrink-0">暗色从</span>
+                      <span class="text-[11px] text-slate-400 shrink-0">{{ t('settings.darkFrom') }}</span>
                       <input
                         type="time"
                         :value="effectiveAutoEnd"
@@ -234,10 +234,10 @@
                   <div class="flex items-center justify-between text-[11px] bg-blue-50/80 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 px-2.5 py-1.5 rounded-lg border border-blue-100 dark:border-blue-900/40">
                     <span class="flex items-center gap-1.5">
                       <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
-                      <span>当前判定：{{ isCurrentTimeInAutoLight ? '浅色模式时段 (白天)' : '暗色模式时段 (夜间)' }}</span>
+                      <span>{{ isCurrentTimeInAutoLight ? t('settings.currentAutoLight') : t('settings.currentAutoDark') }}</span>
                     </span>
                     <span class="text-[10px] text-blue-500/80 dark:text-blue-400/80">
-                      自动运行中
+                      {{ t('settings.runningAuto') }}
                     </span>
                   </div>
                 </div>
@@ -247,9 +247,9 @@
             <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-2.5">
               <div class="flex items-center justify-between">
                 <div>
-                  <div class="text-xs font-medium text-slate-800 dark:text-slate-200">界面缩放比例</div>
+                  <div class="text-xs font-medium text-slate-800 dark:text-slate-200">{{ t('settings.uiScale') }}</div>
                   <div class="text-[11px] text-slate-400 mt-0.5">
-                    等比缩放整个界面、卡片与布局
+                    {{ t('settings.uiScaleDesc') }}
                   </div>
                 </div>
                 <span class="text-xs font-medium text-blue-600 dark:text-blue-400">
@@ -277,9 +277,9 @@
             <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-2.5">
               <div class="flex items-center justify-between">
                 <div>
-                  <div class="text-xs font-medium text-slate-800 dark:text-slate-200">字体风格</div>
+                  <div class="text-xs font-medium text-slate-800 dark:text-slate-200">{{ t('settings.fontFamily') }}</div>
                   <div class="text-[11px] text-slate-400 mt-0.5">
-                    整站全局排版字体切换
+                    {{ t('settings.fontFamilyDesc') }}
                   </div>
                 </div>
                 <span class="text-xs font-medium text-blue-600 dark:text-blue-400">
@@ -330,6 +330,45 @@
                   ]"
                 >
                   {{ opt.label }}
+                </button>
+              </div>
+            </div>
+
+            <!-- 多语言偏好设置 (Language Settings) -->
+            <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1.5">
+                  <Languages class="w-3.5 h-3.5 text-blue-500" />
+                  <div>
+                    <div class="text-xs font-medium text-slate-800 dark:text-slate-200">
+                      {{ t('settings.language') }}
+                    </div>
+                    <div class="text-[11px] text-slate-400 mt-0.5">
+                      {{ t('settings.languageDesc') }}
+                    </div>
+                  </div>
+                </div>
+                <span class="text-xs font-medium text-blue-600 dark:text-blue-400">
+                  {{ currentLanguageLabel }}
+                </span>
+              </div>
+
+              <!-- 5 种语言切换按钮组: 中文 / 英文 / 日文 / 法文 / 德文 -->
+              <div class="grid grid-cols-5 gap-1.5 p-1 bg-slate-200/60 dark:bg-slate-800 rounded-lg text-xs">
+                <button
+                  v-for="lang in LANGUAGE_OPTIONS"
+                  :key="lang.value"
+                  type="button"
+                  @click="setLocale(lang.value)"
+                  :class="[
+                    'py-1.5 px-0.5 rounded-md font-medium transition-all text-center truncate cursor-pointer',
+                    currentLocale === lang.value
+                      ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-white shadow-xs font-semibold'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+                  ]"
+                  :title="lang.nativeName"
+                >
+                  {{ lang.label }}
                 </button>
               </div>
             </div>
@@ -785,7 +824,9 @@ import {
   RefreshCw,
   LogOut,
   GraduationCap,
+  Languages,
 } from 'lucide-vue-next'
+import { t, currentLocale, setLocale, LANGUAGE_OPTIONS, type SupportedLocale } from '@/utils/i18n'
 import type { FontSize, FontFamily, UiScale } from '@/types'
 import type { AiProviderConfig, AiProviderType } from '@/types/copilot'
 import {
@@ -1116,6 +1157,11 @@ const fontSizeOptions: { value: FontSize; label: string }[] = [
 
 const currentFontSizeLabel = computed(() => {
   return fontSizeOptions.find((o) => o.value === props.fontSize)?.label || '标准'
+})
+
+const currentLanguageLabel = computed(() => {
+  const found = LANGUAGE_OPTIONS.find((l) => l.value === currentLocale.value)
+  return found ? found.label : '中文'
 })
 
 function handleFileImport(event: Event) {

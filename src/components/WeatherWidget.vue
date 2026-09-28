@@ -24,10 +24,13 @@ import {
   detectLocation,
   searchCities,
   hasStoredLocation,
+  reverseGeocode,
+  setStoredLocation,
   PRESET_CITIES,
   type WeatherSummary,
   type WeatherLocation
 } from '../utils/weather'
+import { t } from '../utils/i18n'
 
 const weather = ref<WeatherSummary | null>(null)
 const isLoading = ref(false)
@@ -270,7 +273,7 @@ onUnmounted(() => {
                 ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
                 : 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/40'"
             >
-              {{ weather.location.isAuto ? '定位' : '手动' }}
+              {{ weather.location.isAuto ? t('common.locationAuto') : t('common.locationManual') }}
             </span>
           </div>
 
@@ -279,7 +282,7 @@ onUnmounted(() => {
             <button
               @click="handleRedetectLocation"
               class="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-              title="重新自动定位 (IP/GPS)"
+              :title="t('weather.redetect')"
             >
               <LocateFixed class="w-3.5 h-3.5" />
             </button>
@@ -288,7 +291,7 @@ onUnmounted(() => {
             <button
               @click="loadWeatherData(true)"
               class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-              title="刷新天气"
+              :title="t('weather.refresh')"
             >
               <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': isLoading }" />
             </button>
@@ -362,7 +365,7 @@ onUnmounted(() => {
           <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/40">
             <Droplets class="w-3.5 h-3.5 text-sky-500" />
             <div>
-              <div class="text-[10px] text-slate-400">空气湿度</div>
+              <div class="text-[10px] text-slate-400">{{ t('weather.humidity') }}</div>
               <div class="font-semibold text-slate-700 dark:text-slate-200">{{ weather.current.humidity }}%</div>
             </div>
           </div>
@@ -370,7 +373,7 @@ onUnmounted(() => {
           <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/40">
             <Wind class="w-3.5 h-3.5 text-teal-500" />
             <div>
-              <div class="text-[10px] text-slate-400">风速</div>
+              <div class="text-[10px] text-slate-400">{{ t('weather.windSpeed') }}</div>
               <div class="font-semibold text-slate-700 dark:text-slate-200">{{ weather.current.windSpeed }} km/h</div>
             </div>
           </div>
@@ -387,7 +390,7 @@ onUnmounted(() => {
                 @input="onSearchInput"
                 @keydown.enter.prevent="onSearchEnter"
                 type="text"
-                placeholder="搜索任意城市 (如: 苏州、大连、青岛...)"
+                :placeholder="t('weather.searchPlaceholder')"
                 class="w-full pl-8 pr-7 py-1.5 text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-lg text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
               />
               <Loader2 v-if="isSearching" class="w-3.5 h-3.5 text-blue-500 animate-spin absolute right-2.5" />
@@ -436,14 +439,14 @@ onUnmounted(() => {
           <!-- 热门城市快捷点选 -->
           <div>
             <div class="flex items-center justify-between mb-1.5">
-              <span class="text-[11px] font-medium text-slate-400">热门城市</span>
+              <span class="text-[11px] font-medium text-slate-400">{{ t('weather.popularCities') }}</span>
               <button
                 @click="handleRedetectLocation"
                 class="text-[11px] text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
-                title="重新根据网络/GPS进行自动定位"
+                :title="t('weather.redetect')"
               >
                 <LocateFixed class="w-3 h-3" />
-                重新自动定位
+                {{ t('weather.redetectBtn') }}
               </button>
             </div>
 
