@@ -29,8 +29,7 @@ export const messages: Record<SupportedLocale, Record<string, any>> = {
       journal: '日记',
       settings: '设置',
       search: '全局检索 (Ctrl+K)',
-      copilot: 'AI 个人效能副驾驶 (Ctrl+J)',
-      academic: '教务 / WakeUp 课表导入'
+      copilot: 'AI 个人效能副驾驶 (Ctrl+J)'
     },
     settings: {
       title: '系统设置',
@@ -141,8 +140,7 @@ export const messages: Record<SupportedLocale, Record<string, any>> = {
       journal: 'Journal',
       settings: 'Settings',
       search: 'Search (Ctrl+K)',
-      copilot: 'AI Copilot (Ctrl+J)',
-      academic: 'Import Academic Schedule'
+      copilot: 'AI Copilot (Ctrl+J)'
     },
     settings: {
       title: 'System Settings',
@@ -253,8 +251,7 @@ export const messages: Record<SupportedLocale, Record<string, any>> = {
       journal: '日記',
       settings: '設定',
       search: '全体検索 (Ctrl+K)',
-      copilot: 'AI コパイロット (Ctrl+J)',
-      academic: '時間割インポート'
+      copilot: 'AI コパイロット (Ctrl+J)'
     },
     settings: {
       title: 'システム設定',
@@ -365,8 +362,7 @@ export const messages: Record<SupportedLocale, Record<string, any>> = {
       journal: 'Journal',
       settings: 'Paramètres',
       search: 'Recherche globale (Ctrl+K)',
-      copilot: 'AI Copilote (Ctrl+J)',
-      academic: 'Emploi du temps'
+      copilot: 'AI Copilote (Ctrl+J)'
     },
     settings: {
       title: 'Paramètres système',
@@ -477,8 +473,7 @@ export const messages: Record<SupportedLocale, Record<string, any>> = {
       journal: 'Tagebuch',
       settings: 'Einstellungen',
       search: 'Globale Suche (Ctrl+K)',
-      copilot: 'KI-Copilot (Ctrl+J)',
-      academic: 'Stundenplan importieren'
+      copilot: 'KI-Copilot (Ctrl+J)'
     },
     settings: {
       title: 'Systemeinstellungen',

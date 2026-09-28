@@ -25,14 +25,6 @@
             <div class="h-4 w-px bg-slate-200 dark:bg-slate-800 mx-1"></div>
 
             <button
-              @click="$emit('open-academic'); isVisible = true"
-              class="p-1.5 rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors"
-              :title="t('nav.academic')"
-            >
-              <GraduationCap class="w-4 h-4" />
-            </button>
-
-            <button
               @click="$emit('open-copilot'); isVisible = true"
               class="p-1.5 rounded-lg text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors"
               :title="t('nav.copilot')"
@@ -143,16 +135,6 @@
         <div class="flex items-center gap-1 sm:gap-2">
           <!-- Sync Status Badge -->
           <SyncStatusBadge @click="$emit('open-settings')" />
-
-          <!-- Mobile Academic Schedule Import Button -->
-          <button
-            @click="$emit('open-academic'); isVisible = true"
-            class="md:hidden p-2 rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            :title="t('nav.academic')"
-            :aria-label="t('nav.academic')"
-          >
-            <GraduationCap class="w-4 h-4" />
-          </button>
 
           <!-- Mobile AI Copilot Button -->
           <button
@@ -310,7 +292,6 @@ import {
   Settings,
   Sun,
   Moon,
-  GraduationCap,
 } from 'lucide-vue-next'
 import WeatherWidget from './WeatherWidget.vue'
 import SyncStatusBadge from './SyncStatusBadge.vue'
@@ -327,7 +308,6 @@ const emit = defineEmits<{
   (e: 'open-settings'): void
   (e: 'open-search'): void
   (e: 'open-copilot'): void
-  (e: 'open-academic'): void
   (e: 'toggle-theme'): void
 }>()
 
