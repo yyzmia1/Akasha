@@ -59,19 +59,48 @@ export const PROVIDER_PRESETS: Record<
   },
 }
 
+let memoryAiConfig: AiProviderConfig | null = null
+
 export function loadAiConfig(): AiProviderConfig {
   try {
-    const raw = localStorage.getItem(AI_CONFIG_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      return { ...DEFAULT_AI_CONFIG, ...parsed }
+    if (typeof localStorage !== 'undefined') {
+      const raw = localStorage.getItem(AI_CONFIG_KEY)
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        return { ...DEFAULT_AI_CONFIG, ...parsed }
+      }
+    } else if (memoryAiConfig) {
+      return { ...DEFAULT_AI_CONFIG, ...memoryAiConfig }
     }
   } catch (_e) {}
-  return { ...DEFAULT_AI_CONFIG }
+  return memoryAiConfig ? { ...DEFAULT_AI_CONFIG, ...memoryAiConfig } : { ...DEFAULT_AI_CONFIG }
+}
+
+let aiConfigChangeListeners: Array<(cfg: AiProviderConfig) => void> = []
+
+export function onAiConfigChange(callback: (cfg: AiProviderConfig) => void): () => void {
+  aiConfigChangeListeners.push(callback)
+  return () => {
+    aiConfigChangeListeners = aiConfigChangeListeners.filter((fn) => fn !== callback)
+  }
+}
+
+export function notifyAiConfigChanged(cfg: AiProviderConfig) {
+  for (const fn of aiConfigChangeListeners) {
+    try {
+      fn(cfg)
+    } catch (_e) {}
+  }
 }
 
 export function saveAiConfig(cfg: AiProviderConfig) {
-  localStorage.setItem(AI_CONFIG_KEY, JSON.stringify(cfg))
+  try {
+    memoryAiConfig = { ...cfg }
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(AI_CONFIG_KEY, JSON.stringify(cfg))
+    }
+  } catch (_e) {}
+  notifyAiConfigChanged(cfg)
 }
 
 function resolveEndpoint(cfg: AiProviderConfig, path: string): { url: string; headers: Record<string, string> } {

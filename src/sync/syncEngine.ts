@@ -1,10 +1,12 @@
 import { ref, watch } from 'vue'
 import { db } from '@/db'
 import type { EntityType, SyncItemRecord, SyncStatus } from '@/types'
+import { loadAiConfig, saveAiConfig } from '@/services/aiService'
 import { pb, currentUser, isAuthenticated, setServerUrl } from './pocketbase'
 
 const LAST_SYNC_KEY = 'akasha_last_sync_timestamp'
 const PENDING_CHANGES_KEY = 'akasha_pending_sync_queue'
+const SYNC_COPILOT_KEY = 'akasha_sync_copilot_config'
 
 export const syncStatus = ref<SyncStatus>('offline')
 export const lastSyncTime = ref<number | null>(
@@ -12,6 +14,21 @@ export const lastSyncTime = ref<number | null>(
 )
 export const syncError = ref<string | null>(null)
 export const isOnline = ref(typeof navigator !== 'undefined' ? navigator.onLine : true)
+
+// 是否同时同步 AI Copilot 配置（包含 API Key、接口与模型设置）
+export const syncCopilotEnabled = ref<boolean>(
+  localStorage.getItem(SYNC_COPILOT_KEY) === 'true'
+)
+
+export function setSyncCopilotEnabled(enabled: boolean): void {
+  syncCopilotEnabled.value = enabled
+  localStorage.setItem(SYNC_COPILOT_KEY, enabled ? 'true' : 'false')
+  if (enabled && isAuthenticated.value && isOnline.value) {
+    // 立即入队当前本地 AI 配置并触发同步推送
+    enqueueChange('copilotConfig', 'global', loadAiConfig())
+    flushPendingChanges()
+  }
+}
 
 // In-memory queue of pending local changes: key = `${entityType}:${entityId}`
 interface PendingItem {
@@ -80,6 +97,8 @@ function getTable(type: EntityType): any {
       return db.todos
     case 'journal':
       return db.journals
+    case 'copilotConfig':
+      return null
   }
 }
 
@@ -290,6 +309,15 @@ export async function pullUpdates(): Promise<void> {
         continue
       }
 
+      // Special entity: copilotConfig (AI Copilot settings)
+      if (record.entityType === 'copilotConfig') {
+        if (syncCopilotEnabled.value && !record.isDeleted && record.payload) {
+          saveAiConfig(record.payload)
+          hasLocalUpdates = true
+        }
+        continue
+      }
+
       const table = getTable(record.entityType)
       if (!table) continue
 
@@ -339,6 +367,15 @@ export async function startRealtimeSubscription(): Promise<void> {
       const key = `${record.entityType}:${record.entityId}`
       const pending = pendingChanges.get(key)
       if (pending && pending.clientUpdatedAt >= record.clientUpdatedAt) {
+        return
+      }
+
+      // Special entity: copilotConfig
+      if (record.entityType === 'copilotConfig') {
+        if (syncCopilotEnabled.value && !record.isDeleted && record.payload) {
+          saveAiConfig(record.payload)
+          notifyRemoteChange()
+        }
         return
       }
 
@@ -414,6 +451,13 @@ export async function uploadAllLocalToCloud(): Promise<{ count: number }> {
     ...allTodos.map((item) => ({ entityType: 'todo' as EntityType, entityId: item.id, payload: item })),
     ...allJournals.map((item) => ({ entityType: 'journal' as EntityType, entityId: item.id, payload: item })),
   ]
+
+  if (syncCopilotEnabled.value) {
+    const aiCfg = loadAiConfig()
+    if (aiCfg) {
+      batch.push({ entityType: 'copilotConfig' as EntityType, entityId: 'global', payload: aiCfg })
+    }
+  }
 
   const now = Date.now()
   for (const item of batch) {
@@ -516,6 +560,11 @@ export async function downloadAllCloudToLocal(): Promise<{ count: number }> {
       case 'journal':
         journals.push(rec.payload)
         break
+      case 'copilotConfig':
+        if (syncCopilotEnabled.value && rec.payload) {
+          saveAiConfig(rec.payload)
+        }
+        break
     }
   }
 
@@ -586,6 +635,9 @@ export async function applyBackupToCloud(backupData: any): Promise<void> {
   }
   if (Array.isArray(backupData.journals)) {
     backupData.journals.forEach((item: any) => item?.id && backupBatch.push({ entityType: 'journal', entityId: item.id, payload: item }))
+  }
+  if (backupData.aiConfig && syncCopilotEnabled.value) {
+    backupBatch.push({ entityType: 'copilotConfig', entityId: 'global', payload: backupData.aiConfig })
   }
 
   const backupKeySet = new Set(backupBatch.map((b) => `${b.entityType}:${b.entityId}`))

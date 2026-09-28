@@ -218,7 +218,8 @@ import type {
 } from '@/types'
 import { formatDate } from '@/utils/date'
 import { getDescendantTodoIds, calculateLinkedTodoCompletion } from '@/utils/tree'
-import { enqueueChange, onRemoteDataChange, syncAll, applyBackupToCloud, resetSyncOutbox } from '@/sync/syncEngine'
+import { enqueueChange, onRemoteDataChange, syncAll, applyBackupToCloud, resetSyncOutbox, syncCopilotEnabled } from '@/sync/syncEngine'
+import { loadAiConfig, saveAiConfig } from '@/services/aiService'
 import { isAuthenticated } from '@/sync/pocketbase'
 
 const THEME_KEY = 'flow_os_theme'
@@ -1121,6 +1122,7 @@ async function handleExportData() {
     habits: await db.habits.toArray(),
     habitLogs: await db.habitLogs.toArray(),
     journals: await db.journals.toArray(),
+    aiConfig: syncCopilotEnabled.value ? loadAiConfig() : undefined,
   }
 
   const blob = new Blob([JSON.stringify(payload, null, 2)], {
@@ -1192,6 +1194,13 @@ async function handleImportData(jsonStr: string) {
         if (data.journals.length > 0) await db.journals.bulkAdd(data.journals)
       }
     })
+
+    if (data.aiConfig && typeof data.aiConfig === 'object') {
+      saveAiConfig(data.aiConfig)
+      if (syncCopilotEnabled.value && isAuthenticated.value) {
+        enqueueChange('copilotConfig', 'global', data.aiConfig)
+      }
+    }
 
     // Cloud sync handling: apply to cloud or reset queue
     if (isAuthenticated.value) {

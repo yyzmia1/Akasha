@@ -104,7 +104,7 @@ export type FontSize = 'small' | 'standard' | 'large' | 'xlarge'
 export type FontFamily = 'wenkai' | 'system' | 'serif'
 export type UiScale = 'compact' | 'standard' | 'comfortable' | 'large'
 
-export type EntityType = 'area' | 'project' | 'schedule' | 'habit' | 'habitLog' | 'todo' | 'journal'
+export type EntityType = 'area' | 'project' | 'schedule' | 'habit' | 'habitLog' | 'todo' | 'journal' | 'copilotConfig'
 export type SyncStatus = 'offline' | 'connecting' | 'synced' | 'syncing' | 'error'
 
 export interface SyncItemRecord {

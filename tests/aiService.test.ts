@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { parsePlanResultFromText, buildSystemPrompt } from '@/services/aiService'
+import {
+  parsePlanResultFromText,
+  buildSystemPrompt,
+  saveAiConfig,
+  loadAiConfig,
+  onAiConfigChange,
+} from '@/services/aiService'
 
 describe('aiService (AI 规划解析与上下文构建)', () => {
   it('能够从标准 markdown ```json 代码块中提取并解析数据', () => {
@@ -96,5 +102,26 @@ describe('aiService (AI 规划解析与上下文构建)', () => {
       habits: [],
     })
     expect(promptScheduleOnly).toContain('专一模式：仅提取日程安排')
+  })
+
+  it('saveAiConfig 应触发 onAiConfigChange 监听回调', () => {
+    let notifiedCfg: any = null
+    const unsubscribe = onAiConfigChange((cfg) => {
+      notifiedCfg = cfg
+    })
+
+    const testCfg = {
+      provider: 'openai' as const,
+      baseUrl: 'https://api.openai.com/v1',
+      apiKey: 'sk-test-sync-key',
+      model: 'gpt-4o',
+      temperature: 0.5,
+      useProxy: true,
+    }
+
+    saveAiConfig(testCfg)
+    expect(notifiedCfg).toEqual(testCfg)
+    expect(loadAiConfig().apiKey).toBe('sk-test-sync-key')
+    unsubscribe()
   })
 })

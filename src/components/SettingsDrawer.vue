@@ -385,7 +385,11 @@
               <div class="space-y-1">
                 <div class="flex items-center justify-between">
                   <label class="text-[11px] font-medium text-slate-700 dark:text-slate-300">API 密钥 (API Key)</label>
-                  <span class="text-[10px] text-slate-400">保存在本地浏览器</span>
+                  <span v-if="syncCopilotOption === 'include_copilot'" class="text-[10px] text-indigo-600 dark:text-indigo-400 font-medium flex items-center gap-1">
+                    <Cloud class="w-3 h-3 text-blue-500" />
+                    <span>云端多端同步中</span>
+                  </span>
+                  <span v-else class="text-[10px] text-slate-400">仅存本地浏览器</span>
                 </div>
                 <input
                   v-model="aiConfig.apiKey"
@@ -429,6 +433,27 @@
                     ]"
                   />
                 </button>
+              </div>
+
+              <!-- 云端多端同步选项 (Copilot 配置同步下拉) -->
+              <div class="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-medium text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                    <Cloud class="w-3.5 h-3.5 text-blue-500" />
+                    <span>云端多端同步此配置</span>
+                  </div>
+                  <div class="text-[11px] text-slate-400">
+                    {{ syncCopilotOption === 'include_copilot' ? '已开启跨端自动同步（手机与电脑共享）' : '仅在当前设备本地保存（保护 API Key）' }}
+                  </div>
+                </div>
+                <select
+                  v-model="syncCopilotOption"
+                  @change="handleSyncCopilotChange"
+                  class="px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-hidden focus:border-indigo-500 cursor-pointer font-medium"
+                >
+                  <option value="business_only">仅存本地</option>
+                  <option value="include_copilot">云端同步</option>
+                </select>
               </div>
 
               <!-- Action buttons: Save & Ping Test -->
@@ -517,6 +542,44 @@
                   >
                     重置队列
                   </button>
+                </div>
+              </div>
+
+              <!-- 同步数据范围下拉选项 (可选择是否同步 AI Copilot 配置) -->
+              <div class="p-3 rounded-lg bg-white/70 dark:bg-slate-750/70 border border-slate-200/80 dark:border-slate-700/80 space-y-2">
+                <div class="flex items-center justify-between">
+                  <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <Sparkles class="w-3.5 h-3.5 text-indigo-500" />
+                    <span>同步数据范围</span>
+                  </label>
+                  <span
+                    :class="[
+                      'text-[10px] px-2 py-0.5 rounded-full font-medium transition-colors',
+                      syncCopilotOption === 'include_copilot'
+                        ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800'
+                        : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                    ]"
+                  >
+                    {{ syncCopilotOption === 'include_copilot' ? '包含 Copilot 配置' : '仅业务数据' }}
+                  </span>
+                </div>
+
+                <!-- 下拉选择框 -->
+                <div class="relative">
+                  <select
+                    v-model="syncCopilotOption"
+                    @change="handleSyncCopilotChange"
+                    class="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-600 text-xs font-medium focus:outline-hidden focus:border-indigo-500 cursor-pointer shadow-2xs"
+                  >
+                    <option value="business_only">仅同步业务数据 (日程、清单、项目、习惯、笔记)</option>
+                    <option value="include_copilot">包含 AI Copilot 配置 (多端同步 API Key、接口与模型)</option>
+                  </select>
+                </div>
+
+                <div class="text-[10px] text-slate-400 dark:text-slate-400 leading-normal">
+                  {{ syncCopilotOption === 'include_copilot'
+                    ? '✨ 手机与电脑之间将自动同步 AI 模型、接口与密钥，多端免重复手动配置。'
+                    : '🔒 API Key 与模型等 AI 配置仅保存在当前设备本地，不上传云端。' }}
                 </div>
               </div>
 
@@ -719,7 +782,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import {
   X,
   Activity,
@@ -743,6 +806,7 @@ import {
   loadAiConfig,
   saveAiConfig,
   testAiConnection,
+  onAiConfigChange,
   PROVIDER_PRESETS,
 } from '@/services/aiService'
 import {
@@ -763,6 +827,9 @@ import {
   uploadAllLocalToCloud,
   downloadAllCloudToLocal,
   resetSyncOutbox,
+  syncCopilotEnabled,
+  setSyncCopilotEnabled,
+  enqueueChange,
 } from '@/sync/syncEngine'
 
 const props = defineProps<{
@@ -856,6 +923,30 @@ const providerPresets = PROVIDER_PRESETS
 const isTestingAi = ref(false)
 const aiTestResult = ref<{ success: boolean; message: string } | null>(null)
 
+// 响应远程同步对 AI 配置的实时变更推送
+onAiConfigChange((newCfg) => {
+  aiConfig.value = { ...newCfg }
+})
+
+// 同步范围下拉选项: 'business_only' | 'include_copilot'
+const syncCopilotOption = ref<'business_only' | 'include_copilot'>(
+  syncCopilotEnabled.value ? 'include_copilot' : 'business_only'
+)
+
+// 监听云端同步开关状态并保持单向/双向绑定
+watch(syncCopilotEnabled, (val) => {
+  syncCopilotOption.value = val ? 'include_copilot' : 'business_only'
+})
+
+function handleSyncCopilotChange() {
+  const enabled = syncCopilotOption.value === 'include_copilot'
+  setSyncCopilotEnabled(enabled)
+  if (enabled && isAuthenticated.value) {
+    enqueueChange('copilotConfig', 'global', aiConfig.value)
+    handleManualSync()
+  }
+}
+
 function applyProviderPreset(pKey: AiProviderType) {
   const p = PROVIDER_PRESETS[pKey]
   aiConfig.value.provider = pKey
@@ -865,7 +956,10 @@ function applyProviderPreset(pKey: AiProviderType) {
 
 function handleSaveAiConfig() {
   saveAiConfig(aiConfig.value)
-  alert('AI 大模型配置已成功保存！')
+  if (syncCopilotEnabled.value && isAuthenticated.value) {
+    enqueueChange('copilotConfig', 'global', aiConfig.value)
+  }
+  alert('AI 大模型配置已成功保存！' + (syncCopilotEnabled.value ? '（已同步至云端）' : ''))
 }
 
 async function handleTestAiConnection() {
