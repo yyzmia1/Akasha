@@ -719,6 +719,16 @@
                   <input type="file" accept=".json" class="hidden" @change="handleFileImport" />
                 </label>
               </div>
+
+              <!-- 教务 / WakeUp 课程表专用导入向导 -->
+              <button
+                type="button"
+                @click="$emit('open-academic'); $emit('close')"
+                class="flex items-center justify-center gap-1.5 w-full mt-2.5 px-3 py-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-medium transition-colors cursor-pointer"
+              >
+                <GraduationCap class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>教务系统 / WakeUp 课程表导入向导</span>
+              </button>
             </div>
           </section>
 
@@ -774,6 +784,7 @@ import {
   Cloud,
   RefreshCw,
   LogOut,
+  GraduationCap,
 } from 'lucide-vue-next'
 import type { FontSize, FontFamily, UiScale } from '@/types'
 import type { AiProviderConfig, AiProviderType } from '@/types/copilot'
@@ -832,6 +843,7 @@ const emit = defineEmits<{
   (e: 'change-ui-scale', scale: UiScale): void
   (e: 'export-data'): void
   (e: 'import-data', jsonData: string): void
+  (e: 'open-academic'): void
   (e: 'clear-all'): void
   (e: 'reload-data'): void
 }>()

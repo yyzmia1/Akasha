@@ -34,6 +34,16 @@
           <ChevronDown class="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
 
+        <!-- Academic Schedule Import Button -->
+        <button
+          @click="$emit('open-academic')"
+          class="h-9 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 border border-slate-200 dark:border-slate-700"
+          title="导入教务系统/WakeUp 课表"
+        >
+          <GraduationCap class="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          <span>导入课表</span>
+        </button>
+
         <!-- New Schedule Button -->
         <button
           @click="openCreateModal()"
@@ -355,6 +365,7 @@ import {
   Pencil,
   Trash2,
   X,
+  GraduationCap,
 } from 'lucide-vue-next'
 import type { ScheduleItem, Project } from '@/types'
 import { formatDate, parseDate, isDateInRange } from '@/utils/date'
@@ -369,6 +380,7 @@ const emit = defineEmits<{
   (e: 'save-schedule', data: Partial<ScheduleItem>): void
   (e: 'delete-schedule', id: string): void
   (e: 'clear-target-id'): void
+  (e: 'open-academic'): void
 }>()
 
 const highlightedScheduleId = ref<string | null>(null)

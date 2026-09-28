@@ -7,6 +7,7 @@
       @open-settings="isSettingsOpen = true"
       @open-search="isSearchOpen = true"
       @open-copilot="isCopilotOpen = true"
+      @open-academic="isAcademicModalOpen = true"
       @toggle-theme="toggleTheme"
     />
 
@@ -63,6 +64,7 @@
         @save-schedule="handleSaveSchedule"
         @delete-schedule="handleDeleteSchedule"
         @clear-target-id="targetScheduleId = null"
+        @open-academic="isAcademicModalOpen = true"
       />
 
       <TodoView
@@ -120,6 +122,7 @@
       @change-ui-scale="applyUiScale"
       @export-data="handleExportData"
       @import-data="handleImportData"
+      @open-academic="isAcademicModalOpen = true"
       @clear-all="handleClearAll"
       @reload-data="loadAllData"
     />
@@ -151,6 +154,13 @@
       @open-settings="isSettingsOpen = true"
       @update-ghosts="ghostSchedules = $event"
       @apply-plan="handleApplyCopilotPlan"
+    />
+
+    <AcademicScheduleModal
+      :is-open="isAcademicModalOpen"
+      :areas="areas"
+      @close="isAcademicModalOpen = false"
+      @apply-academic-schedule="handleApplyAcademicSchedule"
     />
 
     <!-- 10秒浮动撤销条 (Undo Toast) -->
@@ -199,6 +209,7 @@ import JournalView from '@/components/JournalView.vue'
 import SettingsDrawer from '@/components/SettingsDrawer.vue'
 import GlobalSearch from '@/components/GlobalSearch.vue'
 import CopilotModal from '@/components/copilot/CopilotModal.vue'
+import AcademicScheduleModal from '@/components/academic/AcademicScheduleModal.vue'
 import { Sparkles, X } from 'lucide-vue-next'
 import type { CopilotPlanResult, ScheduleDraft } from '@/types/copilot'
 
@@ -370,6 +381,7 @@ const journals = ref<JournalEntry[]>([])
 const isSettingsOpen = ref(false)
 const isSearchOpen = ref(false)
 const isCopilotOpen = ref(false)
+const isAcademicModalOpen = ref(false)
 const ghostSchedules = ref<ScheduleDraft[]>([])
 const undoToast = ref<{
   show: boolean
@@ -580,6 +592,124 @@ async function handleApplyCopilotPlan(plan: CopilotPlanResult) {
       for (const id of createdProjectIds) {
         await db.projects.delete(id)
         enqueueChange('project', id, null, true)
+      }
+      await loadAllData()
+    },
+  }
+}
+
+async function handleApplyAcademicSchedule(payload: {
+  project: Partial<Project>
+  schedules: Partial<ScheduleItem>[]
+  areaId?: string
+  summary: string
+}) {
+  const { project, schedules: newSchedules, areaId } = payload
+  const createdScheduleIds: string[] = []
+  let createdProjectId: string | null = null
+  let createdAreaId: string | null = null
+  const now = Date.now()
+
+  // 1. 查找或创建归属 Area
+  let targetAreaId = areaId
+  if (!targetAreaId) {
+    let academicArea = areas.value.find((a) => /学业|学习|教育|课程|大学/.test(a.title))
+    if (!academicArea) {
+      if (areas.value.length > 0) {
+        academicArea = areas.value[0]
+        targetAreaId = academicArea.id
+      } else {
+        const newArea: Area = {
+          id: 'area-academic-' + now,
+          title: '学业课程',
+          order: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: now,
+        }
+        await db.areas.add(newArea)
+        enqueueChange('area', newArea.id, newArea)
+        createdAreaId = newArea.id
+        targetAreaId = newArea.id
+      }
+    } else {
+      targetAreaId = academicArea.id
+    }
+  }
+
+  // 2. 查找或创建目标 Project
+  const projTitle = project.title || '学期课程表'
+  const targetProj = projects.value.find(
+    (p) => p.title.trim().toLowerCase() === projTitle.trim().toLowerCase()
+  )
+  let targetProjId = targetProj?.id
+
+  if (!targetProjId) {
+    const newProj: Project = {
+      id: project.id || 'proj-academic-' + now,
+      areaId: targetAreaId,
+      title: projTitle,
+      color: project.color || '#3b82f6',
+      description: project.description || '教务系统/WakeUp 导入课程表',
+      order: projects.value.length,
+      createdAt: new Date().toISOString(),
+      updatedAt: now,
+    }
+    await db.projects.add(newProj)
+    enqueueChange('project', newProj.id, newProj)
+    createdProjectId = newProj.id
+    targetProjId = newProj.id
+  }
+
+  // 3. 批量写入 ScheduleItems
+  for (const s of newSchedules) {
+    const scheduleItem: ScheduleItem = {
+      id: s.id || 'sch-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
+      projectId: targetProjId,
+      title: s.title || '课程',
+      date: s.date,
+      time: s.time,
+      endDate: s.endDate,
+      endTime: s.endTime,
+      recurringType: s.recurringType || 'none',
+      recurringDayOfWeek: s.recurringDayOfWeek,
+      recurringDayOfMonth: s.recurringDayOfMonth,
+      createdAt: s.createdAt || new Date().toISOString(),
+      updatedAt: now,
+    }
+    await db.schedules.add(scheduleItem)
+    enqueueChange('schedule', scheduleItem.id, scheduleItem)
+    createdScheduleIds.push(scheduleItem.id)
+  }
+
+  await loadAllData()
+
+  // 切换到日历视图以直观查看新排程
+  activeTab.value = 'calendar'
+
+  // 10 秒浮动撤销条 (Undo Toast)
+  dismissUndoToast()
+  const toastMessage = `✨ ${payload.summary || `已成功导入课表：${projTitle}`}`
+
+  const timer = setTimeout(() => {
+    dismissUndoToast()
+  }, 10000)
+
+  undoToast.value = {
+    show: true,
+    message: toastMessage,
+    timer,
+    rollbackFn: async () => {
+      for (const id of createdScheduleIds) {
+        await db.schedules.delete(id)
+        enqueueChange('schedule', id, null, true)
+      }
+      if (createdProjectId) {
+        await db.projects.delete(createdProjectId)
+        enqueueChange('project', createdProjectId, null, true)
+      }
+      if (createdAreaId) {
+        await db.areas.delete(createdAreaId)
+        enqueueChange('area', createdAreaId, null, true)
       }
       await loadAllData()
     },
