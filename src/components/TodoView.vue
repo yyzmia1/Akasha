@@ -6,9 +6,6 @@
           <h2 class="text-base sm:text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <CheckSquare class="w-5 h-5 text-blue-600" />
             <span>待办清单</span>
-            <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-              共 {{ totalCount }} 项 (已完成 {{ completedCount }})
-            </span>
           </h2>
         </div>
 

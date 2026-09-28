@@ -5,9 +5,6 @@
         <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
           <FolderKanban class="w-5 h-5 text-blue-600" />
           <span>我的项目</span>
-          <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-            共 {{ projects.length }} 个项目
-          </span>
         </h2>
       </div>
 
