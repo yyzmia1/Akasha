@@ -302,17 +302,158 @@ export function setCachedWeather(summary: WeatherSummary): void {
   }
 }
 
+function simplifyChinese(text: string): string {
+  return text
+    .replace(/區/g, '区')
+    .replace(/黃/g, '黄')
+    .replace(/縣/g, '县')
+    .replace(/鎮/g, '镇')
+    .replace(/鄉/g, '乡')
+    .replace(/灣/g, '湾')
+    .replace(/蘭/g, '兰')
+    .replace(/島/g, '岛')
+    .replace(/東/g, '东')
+    .replace(/西/g, '西')
+    .replace(/南/g, '南')
+    .replace(/北/g, '北')
+}
+
+export function formatDetailedRegion(data: {
+  countryName?: string
+  countryCode?: string
+  principalSubdivision?: string
+  city?: string
+  locality?: string
+  localityInfo?: any
+}): string {
+  const isChina =
+    data.countryName === '中华人民共和国' ||
+    data.countryName === '中国' ||
+    data.countryCode === 'CN'
+
+  const subdiv = simplifyChinese(data.principalSubdivision || '').trim()
+  const city = simplifyChinese(data.city || '').trim()
+  const locality = simplifyChinese(data.locality || '').trim()
+
+  if (isChina) {
+    // 直辖市 (北京市 / 上海市 / 天津市 / 重庆市)
+    if (subdiv && city && (subdiv === city || city.startsWith(subdiv) || subdiv.startsWith(city))) {
+      const parts = [city]
+      if (locality && locality !== city) {
+        parts.push(locality)
+      }
+      return parts.join(' ')
+    }
+
+    // 普通省份 (例如: 广东省 深圳市 福田区)
+    const parts: string[] = []
+    if (subdiv) parts.push(subdiv)
+    if (city && city !== subdiv) parts.push(city)
+    if (locality && locality !== city && locality !== subdiv) parts.push(locality)
+
+    if (parts.length > 0) {
+      return parts.join(' ')
+    }
+  } else {
+    // 国际地区 (例如: 美国 · 加利福尼亚州 · 洛杉矶)
+    const parts: string[] = []
+    const country = data.countryName?.trim()
+    if (country) parts.push(country)
+    if (subdiv) parts.push(subdiv)
+    const mainCity = (city && city !== subdiv) ? city : ''
+    if (mainCity && !parts.includes(mainCity)) parts.push(mainCity)
+    if (locality && !parts.includes(locality) && locality !== mainCity) parts.push(locality)
+
+    if (parts.length > 0) {
+      return parts.slice(0, 3).join(' · ')
+    }
+  }
+
+  return city || locality || subdiv || data.countryName || '本地'
+}
+
 /**
- * 尝试通过浏览器原生 Geolocation 或免费 IP 定位获取地理坐标
+ * 逆地理编码服务：根据经纬度反查多层级详细中文地区
+ * 优先使用免 Key、支持中文的高精度 BigDataCloud Reverse Geocoding Client API
+ * 备选 OpenStreetMap Nominatim
+ */
+export async function reverseGeocode(lat: number, lon: number): Promise<string> {
+  // 1. 尝试 BigDataCloud (支持中文语言、无 CORS 限制、免 Key)
+  try {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 4000)
+    const res = await fetch(
+      `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=zh`,
+      { signal: controller.signal }
+    )
+    clearTimeout(timer)
+    if (res.ok) {
+      const data = await res.json()
+      const formatted = formatDetailedRegion(data)
+      if (formatted && formatted !== '本地') {
+        return formatted
+      }
+    }
+  } catch {
+    // 降级到下一个源
+  }
+
+  // 2. 备用尝试 OpenStreetMap Nominatim
+  try {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 4000)
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=zh`,
+      {
+        signal: controller.signal,
+        headers: { 'User-Agent': 'AkashaApp/1.0' }
+      }
+    )
+    clearTimeout(timer)
+    if (res.ok) {
+      const data = await res.json()
+      const addr = data.address || {}
+      const country = (addr.country || '').replace(/;.*$/, '').trim()
+      const state = (addr.state || '').replace(/;.*$/, '').trim()
+      const city = (addr.city || addr.county || '').replace(/;.*$/, '').trim()
+      const district = (addr.suburb || addr.quarter || addr.district || '').replace(/;.*$/, '').trim()
+
+      const isChina = country === '中国' || country === 'China' || addr.country_code === 'cn'
+      if (isChina) {
+        if (state && (state === city || city.startsWith(state))) {
+          return [city, district !== city ? district : ''].filter(Boolean).join(' ')
+        }
+        const parts = [state, city !== state ? city : '', district].filter(Boolean)
+        if (parts.length > 0) return parts.join(' ')
+      } else {
+        const parts = [country, state !== city ? state : '', city || district].filter(Boolean)
+        if (parts.length > 0) return parts.join(' · ')
+      }
+    }
+  } catch {
+    // 降级
+  }
+
+  // 3. 预设国内最近城市兜底
+  const closest = findClosestCity(lat, lon)
+  if (closest) {
+    return `${closest.name}附近`
+  }
+
+  return '本地'
+}
+
+/**
+ * 尝试通过浏览器原生 Geolocation 或免费 IP 定位获取地理坐标与详细地区
  */
 export async function detectLocation(): Promise<WeatherLocation> {
-  // 1. 优先尝试浏览器原生 Geolocation (设置 4 秒超时防挂起)
+  // 1. 优先尝试浏览器原生 Geolocation (设置 8 秒超时，给用户充足的点击授权时间，开启高精度)
   if (typeof navigator !== 'undefined' && 'geolocation' in navigator) {
     try {
       const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject, {
-          timeout: 4000,
-          enableHighAccuracy: false,
+          timeout: 8000,
+          enableHighAccuracy: true,
           maximumAge: 10 * 60 * 1000 // 允许 10 分钟内的位置缓存
         })
       })
@@ -320,10 +461,11 @@ export async function detectLocation(): Promise<WeatherLocation> {
       const lat = parseFloat(pos.coords.latitude.toFixed(4))
       const lon = parseFloat(pos.coords.longitude.toFixed(4))
 
-      // 匹配最近的预设大城市名字，或者默认标注 "本地定位"
-      const matchedCity = findClosestCity(lat, lon)
+      // 高精度反查详细地址（例如：广东省 深圳市 南山区 / 上海市 黄浦区）
+      const detailedName = await reverseGeocode(lat, lon)
+
       return {
-        name: matchedCity ? `${matchedCity.name}附近` : '本地',
+        name: detailedName,
         lat,
         lon,
         isAuto: true,
@@ -337,16 +479,25 @@ export async function detectLocation(): Promise<WeatherLocation> {
   // 2. IP 粗略定位兜底 (使用免费且支持 CORS 的 ipwho.is)
   try {
     const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), 3500)
+    const timer = setTimeout(() => controller.abort(), 4000)
     const res = await fetch('https://ipwho.is/', { signal: controller.signal })
     clearTimeout(timer)
     if (res.ok) {
       const data = await res.json()
       if (data && data.success && data.latitude && data.longitude) {
+        const lat = parseFloat(data.latitude.toFixed(4))
+        const lon = parseFloat(data.longitude.toFixed(4))
+
+        // 通过获取到的坐标反查详细中文地区（如：美国 · 加利福尼亚州 · 洛杉矶）
+        const detailedName = await reverseGeocode(lat, lon)
+        const finalName = (detailedName && detailedName !== '本地')
+          ? detailedName
+          : [data.country, data.region, data.city].filter(Boolean).join(' · ') || data.city || '本地'
+
         return {
-          name: data.city || '本地',
-          lat: parseFloat(data.latitude.toFixed(4)),
-          lon: parseFloat(data.longitude.toFixed(4)),
+          name: finalName,
+          lat,
+          lon,
           isAuto: true,
           isManual: false
         }

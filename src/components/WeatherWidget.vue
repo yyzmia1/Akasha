@@ -24,6 +24,8 @@ import {
   detectLocation,
   searchCities,
   hasStoredLocation,
+  reverseGeocode,
+  setStoredLocation,
   PRESET_CITIES,
   type WeatherSummary,
   type WeatherLocation
@@ -192,6 +194,19 @@ onMounted(async () => {
     }
   } else {
     await loadWeatherData()
+    // 若当前为自动定位且城市名尚为粗略简名（如 "Los Angeles"、"本地" 等），静默升级为详细多级地区
+    if (weather.value?.location.isAuto) {
+      const currentName = weather.value.location.name
+      const needsDetail = !currentName.includes(' ') && !currentName.includes('·')
+      if (needsDetail || currentName === 'Los Angeles' || currentName === '本地') {
+        reverseGeocode(weather.value.location.lat, weather.value.location.lon).then((detailed) => {
+          if (detailed && detailed !== '本地' && weather.value) {
+            weather.value.location.name = detailed
+            setStoredLocation(weather.value.location)
+          }
+        }).catch(() => {})
+      }
+    }
   }
   window.addEventListener('click', handleClickOutside)
 })
@@ -259,7 +274,7 @@ onUnmounted(() => {
       >
         <!-- 顶部：城市名、定位/手动与操作 -->
         <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800/80">
-          <div class="flex items-center gap-1.5 truncate mr-2">
+          <div class="flex items-center gap-1.5 min-w-0 truncate mr-2">
             <MapPin class="w-3.5 h-3.5 text-blue-500 shrink-0" />
             <span class="font-semibold text-sm tracking-tight text-slate-900 dark:text-white truncate" :title="weather.location.name">
               {{ weather.location.name }}
