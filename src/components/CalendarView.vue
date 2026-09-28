@@ -718,9 +718,6 @@
               <span class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
                 当日待办清单 ({{ getTodosForDay(displayDays[0].dateStr).length }})
               </span>
-              <span class="text-[10px] text-slate-400 font-normal">
-                (按重要程度 P9-P1 排列)
-              </span>
             </div>
             <button
               @click="$emit('switch-tab', 'todos')"
@@ -800,9 +797,6 @@
             <div class="flex items-center gap-2">
               <Clock class="w-4 h-4 text-blue-600 dark:text-blue-400" />
               <span class="text-sm font-bold text-slate-800 dark:text-slate-100">当日时段排期</span>
-              <span class="text-xs text-slate-400 font-normal">
-                (固定日程、习惯打卡与重要里程碑)
-              </span>
             </div>
           </div>
 

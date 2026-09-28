@@ -8,14 +8,9 @@
           <CalendarDays class="w-5 h-5" />
         </div>
         <div>
-          <div class="flex items-center gap-2">
-            <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
-              固定日程安排
-            </h2>
-            <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono font-medium">
-              共 {{ filteredSchedules.length }} 项
-            </span>
-          </div>
+          <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
+            固定日程安排
+          </h2>
           <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             单次特定预约与重要日程排期（周期循环打卡请前往“习惯”）
           </p>
