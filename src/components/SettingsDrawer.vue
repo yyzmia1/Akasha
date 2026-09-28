@@ -508,7 +508,16 @@
               </div>
 
               <div v-if="syncError" class="p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 text-[11px] text-rose-600 dark:text-rose-400">
-                {{ syncError }}
+                <div class="flex items-start justify-between gap-2">
+                  <div class="break-all leading-relaxed">{{ syncError }}</div>
+                  <button
+                    @click="handleClearSyncQueue"
+                    class="shrink-0 px-2 py-0.5 rounded bg-rose-100 dark:bg-rose-900/60 hover:bg-rose-200 dark:hover:bg-rose-800 text-[10px] font-medium text-rose-700 dark:text-rose-200 transition-colors cursor-pointer"
+                    title="清空滞留队列并重新同步"
+                  >
+                    重置队列
+                  </button>
+                </div>
               </div>
 
               <!-- Action buttons -->
@@ -753,6 +762,7 @@ import {
   syncAll,
   uploadAllLocalToCloud,
   downloadAllCloudToLocal,
+  resetSyncOutbox,
 } from '@/sync/syncEngine'
 
 const props = defineProps<{
@@ -961,6 +971,13 @@ async function handleManualSync() {
   } catch (err: any) {
     alert('同步出错：' + (err?.message || err))
   }
+}
+
+async function handleClearSyncQueue() {
+  resetSyncOutbox()
+  syncError.value = null
+  syncStatus.value = 'synced'
+  await handleManualSync()
 }
 
 async function handleUploadAll() {

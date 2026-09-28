@@ -19,6 +19,8 @@ function getDefaultServerUrl(): string {
 
 export const serverUrl = ref(getDefaultServerUrl())
 export const pb = new PocketBase(serverUrl.value)
+// 禁用全局请求自动取消，避免批量或并发同步时相互阻断抛出 AbortError
+pb.autoCancellation(false)
 
 // Truly reactive auth state tracked by Vue
 export const authToken = ref<string>(pb.authStore.token)

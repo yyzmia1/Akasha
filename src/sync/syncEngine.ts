@@ -84,18 +84,39 @@ function getTable(type: EntityType): any {
 }
 
 function formatSyncErrorMessage(err: any): string {
+  if (err?.isAbort) {
+    return '请求被取消'
+  }
   const msg = err?.message || String(err)
   if (err?.status === 404 || msg.includes('404') || msg.includes('not found')) {
     return '云端尚未找到 sync_items 数据表，请确保已启动 PocketBase 并在后台完成了初始化'
   }
+  if (err?.status === 502 || msg.includes('502') || msg.includes('Bad Gateway')) {
+    return '网关暂时不可用 (502)，正在自动恢复中'
+  }
   if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
     return '网络连接失败，请检查服务器地址是否正确且服务已启动'
+  }
+  if (err?.data && typeof err.data === 'object') {
+    const dataObj = err.data.data || err.data
+    const details = Object.entries(dataObj)
+      .map(([k, v]: [string, any]) => `${k}: ${v?.message || JSON.stringify(v)}`)
+      .filter((s) => s.length > 0)
+      .join(', ')
+    if (details) {
+      return `${err.message || '同步请求失败'}: ${details}`
+    }
+    if (err.data.message) {
+      return err.data.message
+    }
   }
   return msg
 }
 
 let pushDebounceTimer: any = null
 let unsubscribeRealtime: (() => void) | null = null
+let isFlushing = false
+let isPulling = false
 
 /**
  * Enqueue a local change and trigger debounced sync
@@ -111,7 +132,7 @@ export function enqueueChange(
   pendingChanges.set(key, {
     entityType,
     entityId,
-    payload: isDeleted ? null : payload,
+    payload: isDeleted ? (payload || {}) : payload,
     clientUpdatedAt: timestamp,
     isDeleted,
   })
@@ -130,66 +151,110 @@ export function enqueueChange(
  */
 export async function flushPendingChanges(): Promise<void> {
   if (!isAuthenticated.value || !isOnline.value) return
+  if (isFlushing) return
   if (pendingChanges.size === 0) {
     syncStatus.value = 'synced'
     return
   }
 
+  isFlushing = true
   syncStatus.value = 'syncing'
   syncError.value = null
 
-  const items = Array.from(pendingChanges.values())
-  const user = currentUser.value
+  try {
+    const items = Array.from(pendingChanges.values())
+    const user = currentUser.value
 
-  for (const item of items) {
-    const key = `${item.entityType}:${item.entityId}`
-    try {
-      // Find existing sync record on server for this user and entity
-      let existingRecord: any = null
+    for (const item of items) {
+      const key = `${item.entityType}:${item.entityId}`
       try {
-        existingRecord = await pb.collection('sync_items').getFirstListItem(
-          `entityType="${item.entityType}" && entityId="${item.entityId}"`
-        )
+        // Find existing sync record on server for this user and entity
+        let existingRecord: any = null
+        try {
+          existingRecord = await pb.collection('sync_items').getFirstListItem(
+            `entityType="${item.entityType}" && entityId="${item.entityId}"`,
+            { requestKey: null }
+          )
+        } catch (err: any) {
+          if (err.status !== 404) {
+            throw err
+          }
+        }
+
+        if (item.isDeleted) {
+          if (existingRecord) {
+            // If server's record is older than local, mark it as deleted
+            if ((existingRecord.clientUpdatedAt || 0) <= item.clientUpdatedAt) {
+              await pb.collection('sync_items').update(
+                existingRecord.id,
+                {
+                  payload: existingRecord.payload || {},
+                  clientUpdatedAt: item.clientUpdatedAt,
+                  isDeleted: true,
+                },
+                { requestKey: null }
+              )
+            }
+          }
+          // If not found on server (404), item was never uploaded to cloud,
+          // so skip remote creation and simply clear from local pending queue.
+        } else {
+          if (existingRecord) {
+            // If server's record is older than local, update it
+            if ((existingRecord.clientUpdatedAt || 0) <= item.clientUpdatedAt) {
+              await pb.collection('sync_items').update(
+                existingRecord.id,
+                {
+                  payload: item.payload || {},
+                  clientUpdatedAt: item.clientUpdatedAt,
+                  isDeleted: false,
+                },
+                { requestKey: null }
+              )
+            }
+          } else {
+            // Create new record
+            await pb.collection('sync_items').create(
+              {
+                entityType: item.entityType,
+                entityId: item.entityId,
+                payload: item.payload || {},
+                clientUpdatedAt: item.clientUpdatedAt,
+                isDeleted: false,
+                user: user?.id,
+              },
+              { requestKey: null }
+            )
+          }
+        }
+
+        // Remove from pending queue on success
+        pendingChanges.delete(key)
       } catch (err: any) {
-        if (err.status !== 404) {
-          throw err
+        if (err?.isAbort) {
+          return
         }
-      }
-
-      if (existingRecord) {
-        // If server's record is older than local, update it
-        if ((existingRecord.clientUpdatedAt || 0) <= item.clientUpdatedAt) {
-          await pb.collection('sync_items').update(existingRecord.id, {
-            payload: item.payload,
-            clientUpdatedAt: item.clientUpdatedAt,
-            isDeleted: item.isDeleted,
-          })
+        console.warn(`[SyncEngine] Push failed for ${key}:`, err)
+        // Discard invalid / 400 validation error items so they do not block the queue indefinitely
+        if (err?.status === 400) {
+          pendingChanges.delete(key)
+          savePendingQueue()
         }
-      } else {
-        // Create new record
-        await pb.collection('sync_items').create({
-          entityType: item.entityType,
-          entityId: item.entityId,
-          payload: item.payload,
-          clientUpdatedAt: item.clientUpdatedAt,
-          isDeleted: item.isDeleted,
-          user: user.id,
-        })
+        syncStatus.value = 'error'
+        syncError.value = formatSyncErrorMessage(err)
+        savePendingQueue()
+        return
       }
+    }
 
-      // Remove from pending queue on success
-      pendingChanges.delete(key)
-    } catch (err: any) {
-      console.warn(`[SyncEngine] Push failed for ${key}:`, err)
-      syncStatus.value = 'error'
-      syncError.value = formatSyncErrorMessage(err)
-      savePendingQueue()
-      return
+    savePendingQueue()
+    syncStatus.value = 'synced'
+  } finally {
+    isFlushing = false
+    if (pendingChanges.size > 0 && syncStatus.value !== 'error') {
+      flushPendingChanges()
     }
   }
-
-  savePendingQueue()
-  syncStatus.value = 'synced'
 }
 
 /**
@@ -197,7 +262,9 @@ export async function flushPendingChanges(): Promise<void> {
  */
 export async function pullUpdates(): Promise<void> {
   if (!isAuthenticated.value || !isOnline.value) return
+  if (isPulling) return
 
+  isPulling = true
   syncStatus.value = 'syncing'
   syncError.value = null
 
@@ -209,6 +276,7 @@ export async function pullUpdates(): Promise<void> {
     const records = await pb.collection('sync_items').getFullList<SyncItemRecord>({
       filter: filter || undefined,
       sort: 'clientUpdatedAt',
+      requestKey: null,
     })
 
     let hasLocalUpdates = false
@@ -242,9 +310,12 @@ export async function pullUpdates(): Promise<void> {
       notifyRemoteChange()
     }
   } catch (err: any) {
+    if (err?.isAbort) return
     console.warn('[SyncEngine] Pull failed:', err)
     syncStatus.value = 'error'
     syncError.value = formatSyncErrorMessage(err)
+  } finally {
+    isPulling = false
   }
 }
 
@@ -350,27 +421,35 @@ export async function uploadAllLocalToCloud(): Promise<{ count: number }> {
       let existingRecord: any = null
       try {
         existingRecord = await pb.collection('sync_items').getFirstListItem(
-          `entityType="${item.entityType}" && entityId="${item.entityId}"`
+          `entityType="${item.entityType}" && entityId="${item.entityId}"`,
+          { requestKey: null }
         )
       } catch (err: any) {
         if (err.status !== 404) throw err
       }
 
       if (existingRecord) {
-        await pb.collection('sync_items').update(existingRecord.id, {
-          payload: item.payload,
-          clientUpdatedAt: now,
-          isDeleted: false,
-        })
+        await pb.collection('sync_items').update(
+          existingRecord.id,
+          {
+            payload: item.payload || {},
+            clientUpdatedAt: now,
+            isDeleted: false,
+          },
+          { requestKey: null }
+        )
       } else {
-        await pb.collection('sync_items').create({
-          entityType: item.entityType,
-          entityId: item.entityId,
-          payload: item.payload,
-          clientUpdatedAt: now,
-          isDeleted: false,
-          user: user.id,
-        })
+        await pb.collection('sync_items').create(
+          {
+            entityType: item.entityType,
+            entityId: item.entityId,
+            payload: item.payload || {},
+            clientUpdatedAt: now,
+            isDeleted: false,
+            user: user.id,
+          },
+          { requestKey: null }
+        )
       }
       count++
     } catch (err: any) {
@@ -393,6 +472,7 @@ export async function downloadAllCloudToLocal(): Promise<{ count: number }> {
 
   const records = await pb.collection('sync_items').getFullList<SyncItemRecord>({
     filter: 'isDeleted != true',
+    requestKey: null,
   })
 
   // Clear local Dexie
@@ -512,7 +592,9 @@ export async function applyBackupToCloud(backupData: any): Promise<void> {
 
   // 3. Fetch all existing cloud records for this user
   try {
-    const existingCloudRecords = await pb.collection('sync_items').getFullList<SyncItemRecord>()
+    const existingCloudRecords = await pb.collection('sync_items').getFullList<SyncItemRecord>({
+      requestKey: null,
+    })
 
     const existingCloudMap = new Map<string, SyncItemRecord>()
     for (const record of existingCloudRecords) {
@@ -524,10 +606,15 @@ export async function applyBackupToCloud(backupData: any): Promise<void> {
       const key = `${record.entityType}:${record.entityId}`
       if (!backupKeySet.has(key) && !record.isDeleted && record.id) {
         try {
-          await pb.collection('sync_items').update(record.id, {
-            isDeleted: true,
-            clientUpdatedAt: now,
-          })
+          await pb.collection('sync_items').update(
+            record.id,
+            {
+              payload: record.payload || {},
+              isDeleted: true,
+              clientUpdatedAt: now,
+            },
+            { requestKey: null }
+          )
         } catch (_e) {}
       }
     }
@@ -539,20 +626,27 @@ export async function applyBackupToCloud(backupData: any): Promise<void> {
         const existingRecord = existingCloudMap.get(key)
 
         if (existingRecord && existingRecord.id) {
-          await pb.collection('sync_items').update(existingRecord.id, {
-            payload: item.payload,
-            clientUpdatedAt: now,
-            isDeleted: false,
-          })
+          await pb.collection('sync_items').update(
+            existingRecord.id,
+            {
+              payload: item.payload || {},
+              clientUpdatedAt: now,
+              isDeleted: false,
+            },
+            { requestKey: null }
+          )
         } else {
-          await pb.collection('sync_items').create({
-            entityType: item.entityType,
-            entityId: item.entityId,
-            payload: item.payload,
-            clientUpdatedAt: now,
-            isDeleted: false,
-            user: user?.id,
-          })
+          await pb.collection('sync_items').create(
+            {
+              entityType: item.entityType,
+              entityId: item.entityId,
+              payload: item.payload || {},
+              clientUpdatedAt: now,
+              isDeleted: false,
+              user: user?.id,
+            },
+            { requestKey: null }
+          )
         }
       } catch (err: any) {
         console.warn(`[SyncEngine] Backup upload item failed for ${item.entityType}:${item.entityId}`, err)
