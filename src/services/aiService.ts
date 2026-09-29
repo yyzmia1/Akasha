@@ -22,112 +22,20 @@ export const AI_CONFIG_KEY = 'flow_os_ai_config'
 
 export const DEFAULT_AI_CONFIG: AiProviderConfig = {
   // === 主文字模式 API ===
-  provider: 'deepseek',
-  baseUrl: 'https://api.deepseek.com',
+  provider: 'custom',
+  baseUrl: '',
   apiKey: '',
-  model: 'deepseek-chat',
+  model: '',
   temperature: 0.3,
   useProxy: false,
 
   // === 独立图片识别 API ===
   visionSeparate: false,
-  visionProvider: 'siliconflow',
-  visionBaseUrl: 'https://api.siliconflow.cn/v1',
+  visionProvider: 'custom',
+  visionBaseUrl: '',
   visionApiKey: '',
-  visionModel: 'Qwen/Qwen2.5-VL-72B-Instruct',
+  visionModel: '',
   visionUseProxy: false,
-}
-
-export const PROVIDER_PRESETS: Record<
-  AiProviderConfig['provider'],
-  { label: string; baseUrl: string; defaultModel: string; models: string[] }
-> = {
-  deepseek: {
-    label: 'DeepSeek (深度求索)',
-    baseUrl: 'https://api.deepseek.com',
-    defaultModel: 'deepseek-chat',
-    models: ['deepseek-chat', 'deepseek-reasoner'],
-  },
-  openai: {
-    label: 'OpenAI 官方',
-    baseUrl: 'https://api.openai.com/v1',
-    defaultModel: 'gpt-4o-mini',
-    models: ['gpt-4o-mini', 'gpt-4o', 'o1-mini'],
-  },
-  siliconflow: {
-    label: 'SiliconFlow (硅基流动)',
-    baseUrl: 'https://api.siliconflow.cn/v1',
-    defaultModel: 'deepseek-ai/DeepSeek-V3',
-    models: [
-      'deepseek-ai/DeepSeek-V3',
-      'deepseek-ai/DeepSeek-R1',
-      'Qwen/Qwen2.5-7B-Instruct',
-      'Qwen/Qwen2.5-14B-Instruct',
-    ],
-  },
-  ollama: {
-    label: '本地 Ollama',
-    baseUrl: 'http://localhost:11434/v1',
-    defaultModel: 'qwen2.5:latest',
-    models: ['qwen2.5:latest', 'llama3.2:latest', 'deepseek-r1:latest'],
-  },
-  newapi: {
-    label: 'NewAPI / OneAPI 聚合平台',
-    baseUrl: '',
-    defaultModel: 'gpt-4o-mini',
-    models: ['gpt-4o-mini', 'deepseek-chat', 'claude-3-5-sonnet-20241022'],
-  },
-  custom: {
-    label: '自定义通用 OpenAI 接口',
-    baseUrl: '',
-    defaultModel: '',
-    models: [],
-  },
-}
-
-export const VISION_PROVIDER_PRESETS: Record<
-  AiProviderType,
-  { label: string; baseUrl: string; defaultModel: string; models: string[] }
-> = {
-  siliconflow: {
-    label: 'SiliconFlow (硅基流动)',
-    baseUrl: 'https://api.siliconflow.cn/v1',
-    defaultModel: 'Qwen/Qwen2.5-VL-72B-Instruct',
-    models: [
-      'Qwen/Qwen2.5-VL-72B-Instruct',
-      'Pro/Qwen/Qwen2.5-VL-7B-Instruct',
-    ],
-  },
-  openai: {
-    label: 'OpenAI 官方',
-    baseUrl: 'https://api.openai.com/v1',
-    defaultModel: 'gpt-4o-mini',
-    models: ['gpt-4o-mini', 'gpt-4o'],
-  },
-  ollama: {
-    label: '本地 Ollama',
-    baseUrl: 'http://localhost:11434/v1',
-    defaultModel: 'llama3.2-vision:latest',
-    models: ['llama3.2-vision:latest', 'llava:latest', 'qwen2.5-vl:latest'],
-  },
-  newapi: {
-    label: 'NewAPI / OneAPI 聚合平台',
-    baseUrl: '',
-    defaultModel: 'gpt-4o-mini',
-    models: ['gpt-4o-mini', 'gpt-4o', 'claude-3-5-sonnet-20241022'],
-  },
-  deepseek: {
-    label: 'DeepSeek (官方暂无视觉)',
-    baseUrl: 'https://api.deepseek.com',
-    defaultModel: 'deepseek-chat',
-    models: ['deepseek-chat', 'deepseek-reasoner'],
-  },
-  custom: {
-    label: '自定义通用视觉接口',
-    baseUrl: '',
-    defaultModel: '',
-    models: [],
-  },
 }
 
 /**
@@ -135,38 +43,32 @@ export const VISION_PROVIDER_PRESETS: Record<
  */
 export function getTextConfig(cfg: AiProviderConfig): SingleAiEndpointConfig {
   return {
-    provider: cfg.provider,
-    baseUrl: cfg.baseUrl,
-    apiKey: cfg.apiKey,
-    model: cfg.model,
+    provider: cfg.provider || 'custom',
+    baseUrl: cfg.baseUrl?.trim() || '',
+    apiKey: cfg.apiKey?.trim() || '',
+    model: cfg.model?.trim() || '',
     temperature: cfg.temperature ?? 0.3,
     useProxy: !!cfg.useProxy,
   }
 }
 
 /**
- * 提取图片识图端点配置：开启独立配置时返回视觉配置，否则优雅回退到主文字配置
+ * 提取图片识图端点配置：开启独立配置时由用户填写，未开启时直接复用文字模型口子
  */
 export function getVisionConfig(cfg: AiProviderConfig): SingleAiEndpointConfig {
   if (cfg.visionSeparate) {
     return {
-      provider: cfg.visionProvider || 'siliconflow',
-      baseUrl: cfg.visionBaseUrl || '',
-      apiKey: cfg.visionApiKey || '',
-      model: cfg.visionModel || '',
+      provider: cfg.visionProvider || 'custom',
+      baseUrl: cfg.visionBaseUrl?.trim() || cfg.baseUrl?.trim() || '',
+      apiKey: cfg.visionApiKey?.trim() || cfg.apiKey?.trim() || '',
+      model: cfg.visionModel?.trim() || cfg.model?.trim() || '',
       temperature: 0.1,
-      useProxy: !!cfg.visionUseProxy,
+      useProxy: cfg.visionUseProxy !== undefined ? !!cfg.visionUseProxy : !!cfg.useProxy,
     }
   }
-  // 未启用独立配置时回退使用主模型
-  return {
-    provider: cfg.provider,
-    baseUrl: cfg.baseUrl,
-    apiKey: cfg.apiKey,
-    model: cfg.model,
-    temperature: 0.1,
-    useProxy: !!cfg.useProxy,
-  }
+
+  // 未开启独立识图模型，直接复用文字模型
+  return getTextConfig(cfg)
 }
 
 let memoryAiConfig: AiProviderConfig | null = null
