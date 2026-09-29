@@ -138,7 +138,7 @@ const externalWeatherUrl = computed(() => {
 const copyToast = ref(false)
 let copyToastTimer: any = null
 
-// PWA 与普通浏览器通用的外部链接安全打开函数
+// 外部权威天气链接安全打开函数（确保单次点击仅弹出一个网页）
 function openExternalWeather(e?: MouseEvent) {
   if (e) {
     e.preventDefault()
@@ -147,40 +147,19 @@ function openExternalWeather(e?: MouseEvent) {
   const url = externalWeatherUrl.value
   if (!url) return
 
-  // 1. 针对 iOS / Android PWA Standalone 独立应用模式：
-  // 必须通过 window.open(url, '_blank') 唤醒系统原生浏览器（Mobile Safari / Chrome），防止被 PWA 沙盒截留
-  let opened = false
   try {
-    const win = window.open(url, '_blank', 'noopener,noreferrer')
-    if (win) {
-      opened = true
-    }
+    window.open(url, '_blank', 'noopener,noreferrer')
   } catch (err) {
-    console.warn('window.open failed in PWA mode', err)
-  }
-
-  // 2. 备用兜底：若受限环境拦截了 window.open，则动态模拟 a 标签点击
-  if (!opened) {
-    try {
-      const a = document.createElement('a')
-      a.href = url
-      a.target = '_blank'
-      a.rel = 'noopener noreferrer external'
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-    } catch {}
-  }
-
-  // 3. 同时提供剪贴板自动复制兜底，确保在严格受限的 PWA 环境中用户也可直接粘贴查看
-  if (navigator?.clipboard?.writeText) {
-    navigator.clipboard.writeText(url).then(() => {
-      copyToast.value = true
-      if (copyToastTimer) clearTimeout(copyToastTimer)
-      copyToastTimer = setTimeout(() => {
-        copyToast.value = false
-      }, 2500)
-    }).catch(() => {})
+    console.warn('window.open failed', err)
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(url).then(() => {
+        copyToast.value = true
+        if (copyToastTimer) clearTimeout(copyToastTimer)
+        copyToastTimer = setTimeout(() => {
+          copyToast.value = false
+        }, 2500)
+      }).catch(() => {})
+    }
   }
 }
 
@@ -458,19 +437,6 @@ onUnmounted(() => {
                   {{ weather.current.temp }}°
                 </span>
                 <span class="text-xs text-slate-400 font-medium">C</span>
-
-                <!-- 气温旁的外部权威全文预报按钮 -->
-                <a
-                  :href="externalWeatherUrl"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  @click.stop.prevent="openExternalWeather"
-                  class="inline-flex items-center gap-0.5 ml-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 border border-slate-200/60 dark:border-slate-800 transition-all cursor-pointer group/link"
-                  :title="t('weather.viewFullForecast')"
-                >
-                  <span>{{ t('weather.fullForecast') }}</span>
-                  <ExternalLink class="w-2.5 h-2.5 opacity-60 group-hover/link:opacity-100 transition-opacity" />
-                </a>
               </div>
               <p class="text-xs text-slate-500 dark:text-slate-400">
                 {{ t('weather.feelsLike') }} {{ weather.current.apparentTemp }}°C
