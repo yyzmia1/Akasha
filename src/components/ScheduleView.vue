@@ -103,7 +103,7 @@
         <div class="flex items-center gap-2">
           <CalendarDays class="w-4 h-4 text-blue-600 dark:text-blue-400" />
           <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">
-            {{ activeCategory === 'upcoming' ? '近期日程安排' : activeCategory === 'past' ? '历史日程' : '日程排期列表' }}
+            {{ activeCategory === 'upcoming' ? t('schedule.upcoming') : activeCategory === 'past' ? t('schedule.past') : t('schedule.all') }}
           </h3>
           <span class="text-xs px-2 py-0.2 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-mono font-medium">
             {{ displaySchedules.length }}
@@ -171,14 +171,14 @@
             <button
               @click.stop="openEditModal(s)"
               class="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors cursor-pointer"
-              title="编辑日程"
+              :title="t('common.edit')"
             >
               <Pencil class="w-3.5 h-3.5" />
             </button>
             <button
               @click.stop="handleDelete(s.id)"
               class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors cursor-pointer"
-              title="删除日程"
+              :title="t('common.delete')"
             >
               <Trash2 class="w-3.5 h-3.5" />
             </button>
@@ -191,8 +191,8 @@
         v-else
         class="text-center py-10 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl space-y-2"
       >
-        <p class="text-sm font-medium text-slate-600 dark:text-slate-300">暂无日程安排</p>
-        <p class="text-xs text-slate-400">点击右上角“新建日程”添加单次重要预约、考试或节点排期</p>
+        <p class="text-sm font-medium text-slate-600 dark:text-slate-300">{{ t('schedule.noSchedules') }}</p>
+        <p class="text-xs text-slate-400">{{ t('schedule.noSchedulesDesc') }}</p>
       </div>
     </div>
 
@@ -208,7 +208,7 @@
           <div class="flex items-center gap-2">
             <CalendarDays class="w-5 h-5 text-blue-600 dark:text-blue-400" />
             <h3 class="text-base font-bold text-slate-900 dark:text-slate-100">
-              {{ editingId ? '编辑日程' : '新建日程' }}
+              {{ editingId ? t('common.edit') : t('schedule.newSchedule') }}
             </h3>
           </div>
           <button
@@ -224,12 +224,12 @@
           <!-- Title -->
           <div class="space-y-1">
             <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              日程名称 <span class="text-rose-500">*</span>
+              {{ t('common.title') }} <span class="text-rose-500">*</span>
             </label>
             <input
               v-model="formTitle"
               type="text"
-              placeholder="例如：下午2点项目评审、周四体检、客户面谈..."
+              :placeholder="t('schedule.title')"
               class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               @keydown.enter="handleSubmit"
             />
@@ -238,13 +238,13 @@
           <!-- Project Select -->
           <div class="space-y-1">
             <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              所属项目 (可选)
+              {{ t('todo.project') }}
             </label>
             <select
               v-model="formProjectId"
               class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
             >
-              <option :value="null">无归属项目 (公共日常)</option>
+              <option :value="null">{{ t('common.none') }}</option>
               <option
                 v-for="p in projects"
                 :key="p.id"
@@ -259,7 +259,7 @@
             <div class="flex items-center justify-between">
               <label class="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                 <Clock class="w-3.5 h-3.5 text-blue-500" />
-                <span>时间安排 <span class="text-rose-500">*</span></span>
+                <span>{{ t('common.time') }} <span class="text-rose-500">*</span></span>
               </label>
               <label class="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 cursor-pointer select-none">
                 <input
@@ -268,7 +268,7 @@
                   @change="handleScheduleAllDayChange"
                   class="rounded border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-blue-500/20"
                 />
-                <span>全天日程</span>
+                <span>{{ t('common.all') }}</span>
               </label>
             </div>
 
@@ -277,7 +277,7 @@
               <div>
                 <div class="flex items-center justify-between mb-1">
                   <label class="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                    {{ isScheduleAllDay ? '开始日期' : '开始时间' }}
+                    {{ isScheduleAllDay ? t('common.date') : t('schedule.startTime') }}
                   </label>
                 </div>
                 <input
@@ -298,7 +298,7 @@
               <div>
                 <div class="flex items-center justify-between mb-1">
                   <label class="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                    {{ isScheduleAllDay ? '结束日期 (可选)' : '结束时间 (可选)' }}
+                    {{ isScheduleAllDay ? t('common.date') : t('schedule.endTime') }}
                   </label>
                   <button
                     v-if="isScheduleAllDay ? scheduleEndDateOnly : scheduleEndDateTime"
@@ -306,7 +306,7 @@
                     @click="clearScheduleEnd"
                     class="text-[10px] text-slate-400 hover:text-rose-500 cursor-pointer"
                   >
-                    清除
+                    {{ t('common.delete') }}
                   </button>
                 </div>
                 <input
@@ -333,14 +333,14 @@
             @click="closeModal"
             class="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
-            取消
+            {{ t('common.cancel') }}
           </button>
           <button
             type="button"
             @click="handleSubmit"
             class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-semibold transition-all shadow-xs cursor-pointer"
           >
-            {{ editingId ? '保存变更' : '立即创建' }}
+            {{ editingId ? t('common.save') : t('common.create') }}
           </button>
         </div>
       </div>
@@ -508,7 +508,7 @@ function formatDaysDiff(s: ScheduleItem): { text: string; urgentClass: string } 
 }
 
 function handleDelete(id: string) {
-  if (confirm('确定删除此日程吗？删除后日历中该事项也将同步移除。')) {
+  if (confirm(t('schedule.deleteConfirm'))) {
     emit('delete-schedule', id)
   }
 }

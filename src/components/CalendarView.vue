@@ -601,7 +601,7 @@
                   v-if="displayDays[0].isToday"
                   class="text-[11px] px-1.5 py-0.2 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-semibold"
                 >
-                  今日聚焦
+                  {{ t('calendar.todayFocus') }}
                 </span>
                 <span class="text-xs text-slate-400 font-mono">
                   {{ displayDays[0].dateStr }}
@@ -616,10 +616,10 @@
             <div
               @click="$emit('switch-tab', 'todos')"
               class="p-2 sm:p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/60 hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20 flex flex-col justify-between cursor-pointer transition-all group"
-              title="点击前往待办管理"
+              :title="t('calendar.goToTodos')"
             >
               <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-                <span class="truncate">待办</span>
+                <span class="truncate">{{ t('calendar.filterTodos') }}</span>
                 <CheckSquare class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
               </div>
               <div class="mt-1 flex items-baseline gap-1">
@@ -636,17 +636,17 @@
             <div
               @click="$emit('switch-tab', 'habits')"
               class="p-2 sm:p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700/60 hover:bg-amber-50/40 dark:hover:bg-amber-950/20 flex flex-col justify-between cursor-pointer transition-all group"
-              title="点击前往习惯管理"
+              :title="t('calendar.goToHabits')"
             >
               <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-                <span class="truncate">习惯</span>
+                <span class="truncate">{{ t('calendar.filterHabits') }}</span>
                 <Sparkles class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
               </div>
               <div class="mt-1 flex items-baseline gap-1">
                 <span class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">
                   {{ getDayHabitsCompleted(displayDays[0].dateStr) }}/{{ getHabitsForDay(displayDays[0].dateStr).length }}
                 </span>
-                <span class="text-[10px] text-slate-400 font-normal">已打卡</span>
+                <span class="text-[10px] text-slate-400 font-normal">{{ t('calendar.checkedIn') }}</span>
               </div>
             </div>
 
@@ -654,17 +654,17 @@
             <div
               @click="$emit('switch-tab', 'schedules')"
               class="p-2 sm:p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700/60 hover:bg-indigo-50/40 dark:hover:bg-indigo-950/20 flex flex-col justify-between cursor-pointer transition-all group"
-              title="点击前往日程管理"
+              :title="t('calendar.goToSchedules')"
             >
               <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-                <span class="truncate">日程</span>
+                <span class="truncate">{{ t('calendar.filterSchedules') }}</span>
                 <CalendarDays class="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
               </div>
               <div class="mt-1 flex items-baseline gap-1">
                 <span class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">
                   {{ getDayTotalScheduleCount(displayDays[0].dateStr) }}
                 </span>
-                <span class="text-[10px] text-slate-400 font-normal">个事项</span>
+                <span class="text-[10px] text-slate-400 font-normal">{{ t('calendar.itemsCount', { count: '' }) }}</span>
               </div>
             </div>
           </div>
@@ -678,13 +678,13 @@
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-1.5">
                 <BookOpen class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
-                <span class="text-[11px] font-bold text-amber-900 dark:text-amber-200">当日随笔</span>
+                <span class="text-[11px] font-bold text-amber-900 dark:text-amber-200">{{ t('journal.title') }}</span>
                 <span v-if="getJournalForDay(displayDays[0].dateStr)?.mood" class="text-xs">
                   {{ getJournalForDay(displayDays[0].dateStr)?.mood }}
                 </span>
               </div>
               <span class="text-[10px] text-amber-600 dark:text-amber-400 font-medium group-hover:underline flex items-center gap-0.5">
-                编辑
+                {{ t('common.edit') }}
                 <ChevronRight class="w-3 h-3" />
               </span>
             </div>
@@ -699,10 +699,10 @@
           >
             <div class="flex items-center gap-1.5 text-[11px] sm:text-xs text-slate-400 group-hover:text-amber-700 dark:group-hover:text-amber-300 truncate">
               <BookOpen class="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-500 transition-colors shrink-0" />
-              <span class="truncate">记录今日复盘心得、灵感或生活随笔...</span>
+              <span class="truncate">{{ t('calendar.quickNotePlaceholder') }}</span>
             </div>
             <span class="text-[11px] font-medium text-amber-600 dark:text-amber-400 group-hover:underline flex items-center gap-0.5 shrink-0 ml-2">
-              + 记随笔
+              {{ t('calendar.addQuickNote') }}
             </span>
           </div>
         </div>
@@ -716,14 +716,14 @@
             <div class="flex items-center gap-1.5">
               <CheckSquare class="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               <span class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
-                当日待办清单 ({{ getTodosForDay(displayDays[0].dateStr).length }})
+                {{ t('calendar.dailyTodoList', { count: getTodosForDay(displayDays[0].dateStr).length }) }}
               </span>
             </div>
             <button
               @click="$emit('switch-tab', 'todos')"
               class="text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-0.5 cursor-pointer"
             >
-              <span>前往待办</span>
+              <span>{{ t('calendar.goToTodoView') }}</span>
               <ChevronRight class="w-3.5 h-3.5" />
             </button>
           </div>
@@ -786,293 +786,392 @@
             @click="$emit('switch-tab', 'todos')"
             class="text-xs text-slate-400 py-3.5 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-xl hover:border-emerald-300 dark:hover:border-emerald-700/60 hover:text-emerald-600 dark:hover:text-emerald-400 cursor-pointer transition-all"
           >
-            本日暂无待办事项，点击前往待办管理
+            {{ t('calendar.emptyDailyTodo') }}
           </div>
         </div>
 
-        <!-- Day Card: Core Vertical Timeline Track -->
+        <!-- Day Card: Professional Continuous Time Grid & Adaptive Timeline -->
         <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 shadow-2xs space-y-4">
-          <!-- Timeline Header -->
-          <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-            <div class="flex items-center gap-2">
-              <Clock class="w-4 h-4 text-blue-600 dark:text-blue-400" />
-              <span class="text-sm font-bold text-slate-800 dark:text-slate-100">当日时段排期</span>
+          <!-- Timeline Header with Status, Jump-to-Now, and View Mode Switcher -->
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 flex-wrap gap-2">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-2xs">
+                <Clock class="w-4 h-4" />
+              </div>
+              <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-sm font-bold text-slate-800 dark:text-slate-100">{{ t('calendar.dayTimeline') }}</span>
+                  <span class="text-[11px] px-2 py-0.5 rounded-full font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                    {{ dayTimedEvents.length }}
+                  </span>
+                  <span
+                    v-if="hasOverlappingEvents"
+                    class="text-[10px] px-2 py-0.5 rounded-full font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-900/60 flex items-center gap-1"
+                    title="检测到同时段存在并行业务排期，已自动启用多栏防重叠并列视图"
+                  >
+                    <AlertCircle class="w-3 h-3 text-amber-500" />
+                    含时段重叠并列
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 ml-auto">
+              <!-- Jump to Now Button -->
+              <button
+                v-if="displayDays[0].isToday && dayTimelineMode === 'grid'"
+                type="button"
+                @click="scrollToCurrentTime(true)"
+                class="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-950/70 text-rose-600 dark:text-rose-400 font-semibold transition-all active:scale-95 shadow-2xs cursor-pointer"
+                title="在时间网格中平滑滚动并居中定位到当前时刻"
+              >
+                <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
+                <span>定位此时</span>
+              </button>
+
+              <!-- View Mode Toggle: Grid vs Agenda List -->
+              <div class="flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs">
+                <button
+                  type="button"
+                  @click="setDayTimelineMode('grid')"
+                  :class="[
+                    'px-2.5 py-1 rounded-md font-medium transition-all flex items-center gap-1 cursor-pointer',
+                    dayTimelineMode === 'grid'
+                      ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-2xs font-semibold'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                  ]"
+                  title="专业时间网格视图（真实时长比例与多栏防重叠布局）"
+                >
+                  <LayoutGrid class="w-3.5 h-3.5" />
+                  <span>网格</span>
+                </button>
+                <button
+                  type="button"
+                  @click="setDayTimelineMode('list')"
+                  :class="[
+                    'px-2.5 py-1 rounded-md font-medium transition-all flex items-center gap-1 cursor-pointer',
+                    dayTimelineMode === 'list'
+                      ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-2xs font-semibold'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                  ]"
+                  title="紧凑时序清单视图"
+                >
+                  <List class="w-3.5 h-3.5" />
+                  <span>清单</span>
+                </button>
+              </div>
             </div>
           </div>
 
-          <!-- Timeline Flow Container -->
-          <div class="relative pt-2 pb-2">
-            <!-- 1. Has Timeline Events: Render vertical track and items -->
-            <template v-if="hasTimelineEvents(displayDays[0].dateStr, displayDays[0].isToday)">
-              <!-- Continuous Vertical Track Line -->
-              <div class="absolute left-[6.5rem] sm:left-[7.5rem] -translate-x-1/2 top-4 bottom-4 w-0.5 bg-slate-200 dark:bg-slate-800"></div>
-
-              <!-- Timeline Items -->
-              <div class="space-y-4 sm:space-y-5">
-                <template
-                  v-for="item in getDayTimelineItems(displayDays[0].dateStr, displayDays[0].isToday)"
-                  :key="item.id"
+          <!-- All-day and Flexible section (if any) -->
+          <div
+            v-if="dayAllDayEvents.length > 0"
+            class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-850/60 border border-slate-200/80 dark:border-slate-800 flex-wrap"
+          >
+            <div class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-xs font-bold px-1 shrink-0">
+              <Calendar class="w-3.5 h-3.5 text-blue-500" />
+              <span>全天事项</span>
+            </div>
+            <div class="flex flex-wrap gap-2 flex-1 min-w-0">
+              <div
+                v-for="item in dayAllDayEvents"
+                :key="item.id"
+                @click="handleDayItemClick(item)"
+                class="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer transition-all hover:shadow-xs active:scale-95 border"
+                :class="[
+                  item.type === 'schedule'
+                    ? 'bg-indigo-50/80 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800'
+                    : item.completed
+                    ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                    : 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+                ]"
+              >
+                <button
+                  v-if="item.type === 'habit'"
+                  type="button"
+                  @click.stop="$emit('toggle-habit', { habitId: item.data.id, date: displayDays[0].dateStr })"
+                  class="w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0"
+                  :class="item.completed ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-amber-400 bg-white dark:bg-slate-800'"
                 >
-                <!-- Item Row -->
-                <div class="relative flex items-start group">
-                  <!-- In-progress proportional red indicator line (Slicing across track and card) -->
-                  <div
-                    v-if="item.inProgress"
-                    class="absolute left-0 right-0 z-20 pointer-events-none -translate-y-1/2 flex items-center"
-                    :style="{ top: `${item.progressPercent}%` }"
-                  >
-                    <!-- Track marker dot on vertical line -->
-                    <div class="absolute left-[6.5rem] sm:left-[7.5rem] -translate-x-1/2 flex items-center justify-center">
-                      <span class="w-3.5 h-3.5 rounded-full bg-rose-500 ring-4 ring-rose-200/90 dark:ring-rose-950 animate-pulse"></span>
-                      <span class="absolute w-1.5 h-1.5 rounded-full bg-white"></span>
-                    </div>
+                  <Check v-if="item.completed" class="w-2.5 h-2.5 stroke-[3]" />
+                </button>
+                <span class="truncate max-w-[180px]">{{ item.title }}</span>
+                <span class="text-[10px] opacity-75 font-mono">全天</span>
+              </div>
+            </div>
+          </div>
 
-                    <!-- Line slicing across track into and through the card -->
-                    <div class="ml-[6.5rem] sm:ml-[7.5rem] flex-1 flex items-center pl-2.5 sm:pl-3">
-                      <div class="h-[2px] bg-rose-500 dark:bg-rose-500 flex-1 rounded-full relative flex items-center justify-end pr-2.5 shadow-sm">
-                        <!-- Glow highlight -->
-                        <div class="absolute inset-0 bg-rose-500/30 blur-xs rounded-full"></div>
-                        <span class="relative inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500 text-white shadow-xs select-none">
-                          <span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
-                          进行中 {{ item.nowTimeFormatted }}
+          <!-- MODE 1: Continuous Time Grid (The Google Calendar / FullCalendar Model) -->
+          <div
+            v-if="dayTimelineMode === 'grid'"
+            ref="dayGridScrollContainer"
+            class="relative max-h-[580px] sm:max-h-[640px] overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-inner select-none scroll-smooth"
+          >
+            <!-- 24-Hour Continuous Canvas: 1 hour = 60px, total height = 1440px -->
+            <div class="relative w-full h-[1440px]">
+              <!-- Left Time Gutter (Hour Labels) -->
+              <div class="absolute left-0 top-0 bottom-0 w-12 sm:w-16 border-r border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/80 z-10 pointer-events-none select-none">
+                <template v-for="hour in 24" :key="`hour-lbl-${hour}`">
+                  <span
+                    class="absolute right-2 -translate-y-1/2 text-[10px] sm:text-[11px] font-mono font-medium text-slate-400 dark:text-slate-500"
+                    :style="{ top: `${(hour - 1) * 60}px` }"
+                  >
+                    {{ String(hour - 1).padStart(2, '0') }}:00
+                  </span>
+                </template>
+              </div>
+
+              <!-- Main Grid Lines (Across Content Canvas) -->
+              <div
+                class="absolute left-12 sm:left-16 right-0 top-0 bottom-0 cursor-pointer"
+                @dblclick="handleGridDoubleClick"
+                title="双击空白处可快捷新建该时刻日程"
+              >
+                <!-- Horizontal divider lines for each hour and half-hour -->
+                <template v-for="hour in 24" :key="`hour-line-${hour}`">
+                  <!-- Whole Hour Solid Line -->
+                  <div
+                    class="absolute left-0 right-0 h-[1px] bg-slate-100 dark:bg-slate-800/80 pointer-events-none"
+                    :style="{ top: `${(hour - 1) * 60}px` }"
+                  ></div>
+                  <!-- Half Hour Subtle Dashed Line -->
+                  <div
+                    class="absolute left-0 right-0 h-[1px] border-b border-dashed border-slate-100/70 dark:border-slate-800/40 pointer-events-none"
+                    :style="{ top: `${(hour - 1) * 60 + 30}px` }"
+                  ></div>
+                </template>
+
+                <!-- Single Global Physical Now Indicator Line (Only on Today) -->
+                <div
+                  v-if="displayDays[0].isToday"
+                  class="absolute -left-12 sm:-left-16 right-0 z-30 pointer-events-none flex items-center -translate-y-1/2 transition-all duration-300"
+                  :style="{ top: `${currentNowMinutes}px` }"
+                >
+                  <!-- Left time pill badge in gutter -->
+                  <div class="w-12 sm:w-16 pr-1.5 text-right shrink-0">
+                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-rose-500 text-white font-mono text-[9px] sm:text-[10px] font-bold shadow-xs">
+                      <span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
+                      {{ currentNowTimeFormatted }}
+                    </span>
+                  </div>
+                  <!-- Glowing Red Laser Bead at Axis Joint -->
+                  <div class="w-2.5 h-2.5 rounded-full bg-rose-500 ring-3 ring-rose-200 dark:ring-rose-950 -ml-1.25 z-40 shrink-0"></div>
+                  <!-- Slicing Red Laser Line (Continuous across all columns) -->
+                  <div class="flex-1 h-[2px] bg-rose-500 shadow-sm relative">
+                    <div class="absolute inset-0 bg-rose-500/40 blur-xs"></div>
+                  </div>
+                </div>
+
+                <!-- Event Cards (Positioned Absolutely with Multi-Column Overlap Allocation) -->
+                <template v-for="item in timedGridItems" :key="item.id">
+                  <div
+                    @click.stop="handleDayItemClick(item)"
+                    :class="[
+                      'absolute rounded-xl transition-all cursor-pointer shadow-2xs hover:shadow-md hover:z-20 p-2 sm:p-2.5 flex flex-col justify-between overflow-hidden group border select-none',
+                      item.type === 'schedule'
+                        ? 'bg-indigo-50/95 dark:bg-indigo-950/70 border-indigo-200/90 dark:border-indigo-800/80 hover:border-indigo-400 dark:hover:border-indigo-600'
+                        : item.type === 'habit'
+                        ? item.completed
+                          ? 'bg-emerald-50/90 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-800'
+                          : 'bg-amber-50/90 dark:bg-amber-950/50 border-amber-200 dark:border-amber-800 hover:border-amber-400'
+                        : item.completed
+                        ? 'opacity-60 bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700'
+                        : 'bg-blue-50/90 dark:bg-blue-950/60 border-blue-200/90 dark:border-blue-800/80 hover:border-blue-400'
+                    ]"
+                    :style="{
+                      top: `${item.top}px`,
+                      height: `${item.height}px`,
+                      left: `calc(${item.leftPercent}% + 2px)`,
+                      width: `calc(${item.widthPercent}% - 4px)`,
+                      borderLeftWidth: '4px',
+                      borderLeftColor: item.projectColor || (item.type === 'schedule' ? '#6366f1' : item.type === 'habit' ? '#f59e0b' : '#3b82f6')
+                    }"
+                    :title="`${item.timeStr} ${item.title} (${formatDuration(item.durationMinutes)})`"
+                  >
+                    <!-- Top Row: Time, Duration & Overlap Badge -->
+                    <div class="flex items-center justify-between gap-1 min-w-0">
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <CalendarDays v-if="item.type === 'schedule'" class="w-3 h-3 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                        <Sparkles v-else-if="item.type === 'habit'" class="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />
+                        <CheckSquare v-else class="w-3 h-3 text-blue-600 dark:text-blue-400 shrink-0" />
+
+                        <span class="font-mono text-[10px] sm:text-[11px] font-bold text-slate-800 dark:text-slate-200 truncate">
+                          {{ item.timeStr }}
+                        </span>
+                      </div>
+
+                      <div class="flex items-center gap-1 shrink-0">
+                        <span
+                          v-if="item.hasOverlap"
+                          class="text-[9px] px-1 py-0.2 rounded font-mono font-bold bg-amber-200/70 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200"
+                          title="此时段与并行业务存在重叠，已并列展示"
+                        >
+                          重叠
+                        </span>
+                        <span class="text-[9px] px-1.5 py-0.2 rounded font-medium bg-white/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700">
+                          {{ formatDuration(item.durationMinutes) }}
                         </span>
                       </div>
                     </div>
-                  </div>
 
-                  <!-- Left Timestamp (Guaranteed one line, no wrapping) -->
-                  <div class="w-[6.5rem] sm:w-[7.5rem] pr-2.5 sm:pr-3 pt-1 text-right shrink-0">
-                    <span
-                      :class="[
-                        'text-[11px] sm:text-xs font-mono select-none whitespace-nowrap block',
-                        item.inProgress
-                          ? 'text-rose-600 dark:text-rose-400 font-bold'
-                          : item.type === 'now'
-                          ? 'text-rose-600 dark:text-rose-400 font-bold'
-                          : 'text-slate-500 dark:text-slate-400 font-semibold'
-                      ]"
-                    >
-                      {{ item.time }}
-                    </span>
-                  </div>
-
-                  <!-- Node Dot (Precisely centered on track line) -->
-                  <div class="relative flex items-center justify-center shrink-0 w-3.5 h-3.5 mt-1.5 -ml-[7px] z-10">
-                    <!-- Now indicator dot -->
-                    <div
-                      v-if="item.type === 'now'"
-                      class="w-3.5 h-3.5 rounded-full bg-rose-500 ring-4 ring-rose-100 dark:ring-rose-950/80 animate-pulse"
-                    ></div>
-                    <!-- Schedule dot -->
-                    <div
-                      v-else-if="item.type === 'schedule'"
-                      class="w-3.5 h-3.5 rounded-full ring-4 ring-white dark:ring-slate-900 shadow-2xs"
-                      :style="{ backgroundColor: item.projectColor || '#4f46e5' }"
-                    ></div>
-                    <!-- Habit dot -->
-                    <div
-                      v-else-if="item.type === 'habit'"
-                      class="w-3.5 h-3.5 rounded-full ring-4 ring-white dark:ring-slate-900 shadow-2xs"
-                      :class="item.completed ? 'bg-emerald-500' : 'bg-amber-500'"
-                    ></div>
-                    <!-- Todo / Milestone dot -->
-                    <div
-                      v-else
-                      class="w-3.5 h-3.5 rounded-full ring-4 ring-white dark:ring-slate-900 shadow-2xs"
-                      :class="item.completed ? 'bg-emerald-500' : item.isScheduled ? 'bg-blue-500' : 'bg-rose-500'"
-                    ></div>
-                  </div>
-
-                  <!-- Right Card / Content -->
-                  <div class="flex-1 ml-3 sm:ml-4 min-w-0">
-                    <!-- 1. Real-time Now Line -->
-                    <div v-if="item.type === 'now'" class="flex items-center gap-2 py-1.5">
-                      <div class="h-[2px] bg-rose-500/80 dark:bg-rose-500/70 flex-1 rounded-full relative">
-                        <div class="absolute left-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-rose-500"></div>
-                      </div>
-                      <span class="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-500 text-white shadow-xs shrink-0 select-none">
-                        <span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
-                        现在 {{ item.time }}
-                      </span>
-                    </div>
-
-                    <!-- 2. Schedule Card (与习惯卡片完全统一的高质感结构) -->
-                    <div
-                      v-else-if="item.type === 'schedule'"
-                      @click="handleOpenSchedule(item.data)"
-                      :class="[
-                        'p-3 sm:p-3.5 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-xs flex items-center justify-between gap-3 group/sch relative',
-                        item.inProgress
-                          ? 'border-rose-300/90 dark:border-rose-800/80 bg-rose-50/20 dark:bg-rose-950/15 hover:border-rose-400 dark:hover:border-rose-700 shadow-xs'
-                          : 'border-indigo-200/80 dark:border-indigo-900/70 bg-indigo-50/40 dark:bg-indigo-950/20 hover:bg-indigo-50/80 dark:hover:bg-indigo-950/40 hover:border-indigo-300 dark:hover:border-indigo-800'
-                      ]"
-                      title="点击查看或编辑日程"
-                    >
-                      <div class="flex items-center gap-3 min-w-0">
-                        <div class="w-5 h-5 sm:w-5.5 sm:h-5.5 rounded-md bg-indigo-100 dark:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 shadow-2xs border border-indigo-200/80 dark:border-indigo-800">
-                          <CalendarDays class="w-3.5 h-3.5" />
-                        </div>
-                        <div class="min-w-0">
-                          <div class="flex items-center gap-1.5">
-                            <span class="font-semibold text-xs sm:text-sm text-slate-800 dark:text-slate-100 truncate group-hover/sch:text-indigo-700 dark:group-hover/sch:text-indigo-300 transition-colors">
-                              {{ item.title }}
-                            </span>
-                            <span
-                              class="text-[10px] px-1.5 py-0.2 rounded font-medium shrink-0 bg-indigo-100/80 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300"
-                            >
-                              日程
-                            </span>
-                          </div>
-                          <div v-if="item.projectName" class="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1.5">
-                            <span
-                              v-if="item.projectColor"
-                              class="w-1.5 h-1.5 rounded-full shrink-0"
-                              :style="{ backgroundColor: item.projectColor }"
-                            ></span>
-                            <span class="truncate">{{ item.projectName }}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <span class="text-[10px] px-2.5 py-1 rounded-full font-semibold shrink-0 select-none border border-indigo-200 dark:border-indigo-800 bg-indigo-100/70 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">
-                        日程
-                      </span>
-                    </div>
-
-                    <!-- 3. Habit Card -->
-                    <div
-                      v-else-if="item.type === 'habit'"
-                      @click="$emit('switch-tab', 'habits')"
-                      :class="[
-                        'p-3 sm:p-3.5 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-xs flex items-center justify-between gap-3 group/habit',
-                        item.completed
-                          ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/60 hover:border-emerald-300'
-                          : 'bg-amber-50/40 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/60 hover:border-amber-300'
-                      ]"
-                      title="点击前往习惯页面管理此习惯"
-                    >
-                      <div class="flex items-center gap-3 min-w-0">
+                    <!-- Middle / Main Content -->
+                    <div class="min-w-0 mt-0.5">
+                      <div class="flex items-center gap-1.5">
+                        <!-- Checkbox for todo/habit -->
                         <button
-                          type="button"
-                          @click.stop="$emit('toggle-habit', { habitId: item.data.id, date: displayDays[0].dateStr })"
-                          class="w-5 h-5 sm:w-5.5 sm:h-5.5 rounded-md border-1.5 flex items-center justify-center shrink-0 transition-all active:scale-90 cursor-pointer shadow-2xs"
-                          :class="[
-                            item.completed
-                              ? 'bg-emerald-600 border-emerald-600 text-white shadow-xs'
-                              : 'border-amber-400 dark:border-amber-600 bg-white/70 dark:bg-slate-800/60 hover:bg-amber-100 dark:hover:bg-amber-900/40 hover:border-amber-500'
-                          ]"
-                          :title="item.completed ? '点击取消打卡' : '点击打卡'"
-                        >
-                          <Check v-if="item.completed" class="w-3.5 h-3.5 stroke-[3]" />
-                        </button>
-                        <div class="min-w-0">
-                          <div class="flex items-center gap-1.5">
-                            <span
-                              :class="[
-                                'font-semibold text-xs sm:text-sm truncate transition-colors',
-                                item.completed
-                                  ? 'text-slate-400 dark:text-slate-500 line-through decoration-slate-300 dark:decoration-slate-600 decoration-1'
-                                  : 'text-slate-800 dark:text-slate-100 group-hover/habit:text-amber-800 dark:group-hover/habit:text-amber-200'
-                              ]"
-                            >
-                              {{ item.title }}
-                            </span>
-                            <span
-                              class="text-[10px] px-1.5 py-0.2 rounded bg-amber-100/70 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 shrink-0 font-medium"
-                            >
-                              {{ item.timeSlotLabel }}
-                            </span>
-                          </div>
-                          <div v-if="item.projectName" class="text-[11px] text-slate-400 mt-0.5">
-                            {{ item.projectName }}
-                          </div>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        @click.stop="$emit('toggle-habit', { habitId: item.data.id, date: displayDays[0].dateStr })"
-                        :class="[
-                          'text-[10px] px-2.5 py-1 rounded-full font-semibold shrink-0 active:scale-95 transition-all cursor-pointer select-none border',
-                          item.completed
-                            ? 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-200'
-                            : 'bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800 hover:bg-amber-200'
-                        ]"
-                      >
-                        {{ item.completed ? '已打卡' : '打卡' }}
-                      </button>
-                    </div>
-
-                    <!-- 4. Due / High Priority Todo Milestone Card (与日程习惯完全统一的结构) -->
-                    <div
-                      v-else-if="item.type === 'todo'"
-                      @click="$emit('open-todo', item.data)"
-                      :class="[
-                        'p-3 sm:p-3.5 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-xs flex items-center justify-between gap-3 group/todo',
-                        item.completed
-                          ? 'opacity-60 bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800'
-                          : item.isScheduled
-                          ? 'bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/60 hover:border-blue-300'
-                          : 'bg-rose-50/40 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/60 hover:border-rose-300'
-                      ]"
-                    >
-                      <div class="flex items-center gap-3 min-w-0">
-                        <button
+                          v-if="item.type === 'todo'"
                           type="button"
                           @click.stop="$emit('toggle-todo', item.data.id)"
-                          class="w-5 h-5 sm:w-5.5 sm:h-5.5 rounded-md border-1.5 flex items-center justify-center shrink-0 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shadow-2xs cursor-pointer"
-                          :class="item.completed ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-400 dark:border-slate-600'"
+                          class="w-3.5 h-3.5 rounded border border-slate-400 dark:border-slate-600 flex items-center justify-center shrink-0 hover:bg-slate-200 dark:hover:bg-slate-700"
+                          :class="item.completed ? 'bg-emerald-600 border-emerald-600 text-white' : ''"
                         >
-                          <Check v-if="item.completed" class="w-3.5 h-3.5 stroke-[3]" />
+                          <Check v-if="item.completed" class="w-2.5 h-2.5 stroke-[3]" />
                         </button>
-                        <div class="min-w-0">
-                          <div class="flex items-center gap-1.5">
-                            <span :class="['font-semibold text-xs sm:text-sm truncate transition-colors', item.completed ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-800 dark:text-slate-100 group-hover/todo:text-blue-700 dark:group-hover/todo:text-blue-300']">
-                              {{ item.title }}
-                            </span>
-                            <span
-                              v-if="item.timeSlotLabel"
-                              class="text-[10px] px-1.5 py-0.2 rounded shrink-0 font-medium"
-                              :class="item.isScheduled ? 'bg-blue-100/80 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300' : 'bg-rose-100/80 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300'"
-                            >
-                              {{ item.timeSlotLabel }}
-                            </span>
-                            <span
-                              v-if="item.data?.importance"
-                              :class="['text-[10px] font-mono font-bold px-1.5 py-0.2 rounded border shrink-0', getPriorityStyle(item.data.importance).badgeClass]"
-                            >
-                              P{{ item.data.importance }}
-                            </span>
-                          </div>
-                          <div v-if="item.projectName" class="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1.5">
-                            <span
-                              v-if="item.projectColor"
-                              class="w-1.5 h-1.5 rounded-full shrink-0"
-                              :style="{ backgroundColor: item.projectColor }"
-                            ></span>
-                            <span class="truncate">{{ item.projectName }}</span>
-                          </div>
-                        </div>
+                        <button
+                          v-else-if="item.type === 'habit'"
+                          type="button"
+                          @click.stop="$emit('toggle-habit', { habitId: item.data.id, date: displayDays[0].dateStr })"
+                          class="w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0"
+                          :class="item.completed ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-amber-400 bg-white dark:bg-slate-800'"
+                        >
+                          <Check v-if="item.completed" class="w-2.5 h-2.5 stroke-[3]" />
+                        </button>
+
+                        <span
+                          :class="[
+                            'font-bold text-xs text-slate-900 dark:text-slate-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors',
+                            item.completed ? 'line-through text-slate-400 dark:text-slate-500' : ''
+                          ]"
+                        >
+                          {{ item.title }}
+                        </span>
                       </div>
 
-                      <span
-                        class="text-[10px] px-2.5 py-1 rounded-full font-semibold shrink-0 select-none border"
-                        :class="item.completed
-                          ? 'border-slate-200 dark:border-slate-700 text-slate-400 bg-slate-100 dark:bg-slate-800'
-                          : item.isScheduled
-                          ? 'border-blue-200 dark:border-blue-800 bg-blue-100/70 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
-                          : 'border-rose-200 dark:border-rose-800 bg-rose-100/70 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300'"
+                      <!-- Subtitle info if card height >= 48px -->
+                      <div
+                        v-if="item.height >= 48 && (item.projectName || item.data?.location)"
+                        class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1.5 truncate"
                       >
-                        {{ item.completed ? '已完成' : (item.isScheduled ? '日程排期' : '重要里程碑') }}
-                      </span>
+                        <span
+                          v-if="item.projectColor"
+                          class="w-1.5 h-1.5 rounded-full shrink-0"
+                          :style="{ backgroundColor: item.projectColor }"
+                        ></span>
+                        <span v-if="item.projectName" class="truncate">{{ item.projectName }}</span>
+                        <span v-if="item.data?.location" class="truncate text-slate-400">📍 {{ item.data.location }}</span>
+                      </div>
                     </div>
                   </div>
+                </template>
+
+                <!-- Empty overlay prompt if no timed events -->
+                <div
+                  v-if="timedGridItems.length === 0"
+                  class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-slate-300 dark:text-slate-700 space-y-2 select-none"
+                >
+                  <Clock class="w-8 h-8 stroke-1" />
+                  <span class="text-xs">今日暂无固定时段排期，双击任意时段可新建日程</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- MODE 2: Chronological Agenda List View (with Clear Overlap Warnings) -->
+          <div v-else class="space-y-3">
+            <template v-if="agendaListItems.length > 0">
+              <template v-for="(item, idx) in agendaListItems" :key="item.id">
+                <!-- If Today and current time lies between previous item and this item, render Single Now Divider -->
+                <div
+                  v-if="displayDays[0].isToday && shouldRenderNowDividerBefore(idx)"
+                  class="flex items-center gap-2 py-1.5"
+                >
+                  <div class="h-[2px] bg-rose-500/80 flex-1 rounded-full relative">
+                    <div class="absolute left-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-rose-500"></div>
+                  </div>
+                  <span class="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-500 text-white shadow-xs shrink-0 select-none">
+                    <span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
+                    当前时间 {{ currentNowTimeFormatted }}
+                  </span>
+                  <div class="h-[2px] bg-rose-500/80 w-8 rounded-full"></div>
+                </div>
+
+                <!-- Agenda Item Card -->
+                <div
+                  @click="handleDayItemClick(item)"
+                  :class="[
+                    'p-3 sm:p-3.5 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-xs flex items-center justify-between gap-3 group relative select-none',
+                    item.type === 'schedule'
+                      ? 'border-indigo-200/80 dark:border-indigo-900/70 bg-indigo-50/40 dark:bg-indigo-950/20 hover:border-indigo-300'
+                      : item.type === 'habit'
+                      ? item.completed
+                        ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/60'
+                        : 'bg-amber-50/40 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/60'
+                      : item.completed
+                      ? 'opacity-60 bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800'
+                      : 'bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/60'
+                  ]"
+                  :style="{
+                    borderLeftWidth: '4px',
+                    borderLeftColor: item.projectColor || (item.type === 'schedule' ? '#6366f1' : item.type === 'habit' ? '#f59e0b' : '#3b82f6')
+                  }"
+                >
+                  <div class="flex items-center gap-3 min-w-0">
+                    <!-- Action checkbox or icon -->
+                    <button
+                      v-if="item.type === 'todo'"
+                      type="button"
+                      @click.stop="$emit('toggle-todo', item.data.id)"
+                      class="w-5 h-5 rounded-md border flex items-center justify-center shrink-0 hover:bg-slate-200 dark:hover:bg-slate-700"
+                      :class="item.completed ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-400 dark:border-slate-600'"
+                    >
+                      <Check v-if="item.completed" class="w-3.5 h-3.5 stroke-[3]" />
+                    </button>
+                    <button
+                      v-else-if="item.type === 'habit'"
+                      type="button"
+                      @click.stop="$emit('toggle-habit', { habitId: item.data.id, date: displayDays[0].dateStr })"
+                      class="w-5 h-5 rounded-md border flex items-center justify-center shrink-0"
+                      :class="item.completed ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-amber-400 bg-white dark:bg-slate-800'"
+                    >
+                      <Check v-if="item.completed" class="w-3.5 h-3.5 stroke-[3]" />
+                    </button>
+                    <div
+                      v-else
+                      class="w-5 h-5 rounded-md bg-indigo-100 dark:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0"
+                    >
+                      <CalendarDays class="w-3.5 h-3.5" />
+                    </div>
+
+                    <div class="min-w-0">
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <span class="font-mono text-xs font-bold text-slate-500 dark:text-slate-400 shrink-0">
+                          {{ item.timeStr }}
+                        </span>
+                        <span :class="['font-semibold text-xs sm:text-sm truncate text-slate-800 dark:text-slate-100', item.completed ? 'line-through text-slate-400' : '']">
+                          {{ item.title }}
+                        </span>
+                        <span
+                          v-if="item.overlapWithNext > 0"
+                          class="text-[10px] px-1.5 py-0.2 rounded font-medium bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200/80 dark:border-amber-900/60"
+                        >
+                          与下项重叠 {{ item.overlapWithNext }} 分钟
+                        </span>
+                      </div>
+                      <div v-if="item.projectName || item.data?.location" class="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1.5 truncate">
+                        <span v-if="item.projectName" class="truncate">{{ item.projectName }}</span>
+                        <span v-if="item.data?.location" class="truncate">📍 {{ item.data.location }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold shrink-0 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                    {{ formatDuration(item.durationMinutes) }}
+                  </span>
                 </div>
               </template>
-            </div>
-          </template>
+            </template>
 
-            <!-- 2. Empty State when no timeline events (Clean, no track line overlap, removed useless buttons) -->
+            <!-- Empty State for List Mode -->
             <div
               v-else
               class="py-8 text-center space-y-2.5"
@@ -1082,10 +1181,10 @@
               </div>
               <div class="space-y-1">
                 <div class="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  {{ displayDays[0].isToday ? '今日暂无时段排期' : '该日暂无时段排期' }}
+                  {{ t('calendar.emptyTimeline') }}
                 </div>
                 <div class="text-xs text-slate-400 max-w-sm mx-auto px-4">
-                  没有固定日程或打卡习惯，享受自由专注的一天。
+                  {{ t('calendar.emptyTimelineDesc') }}
                 </div>
               </div>
             </div>
@@ -2086,7 +2185,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { t } from '@/utils/i18n'
 import {
   ChevronLeft,
@@ -2105,6 +2204,9 @@ import {
   Clock,
   Pencil,
   ExternalLink,
+  LayoutGrid,
+  List,
+  AlertCircle,
 } from 'lucide-vue-next'
 import type { TodoItem, JournalEntry, ScheduleItem, Project, Habit, HabitLog, CalendarViewMode } from '@/types'
 import type { ScheduleDraft } from '@/types/copilot'
@@ -2119,6 +2221,14 @@ import {
 } from '@/utils/date'
 import { getPriorityStyle } from '@/utils/priority'
 import { isHabitScheduledForDay } from '@/utils/habit'
+import {
+  parseMinutes,
+  formatDuration,
+  computeGridEventLayout,
+  computeAgendaList,
+  type RawDayTimelineItem,
+  type TimedGridItem,
+} from '@/utils/timelineLayout'
 
 const props = defineProps<{
   todos: TodoItem[]
@@ -2148,6 +2258,7 @@ const emit = defineEmits<{
   (e: 'delete-schedule', id: string): void
   (e: 'save-schedule', payload: Partial<ScheduleItem>): void
   (e: 'toggle-habit', payload: { habitId: string; date: string }): void
+  (e: 'open-schedule', schedule: ScheduleItem): void
 }>()
 
 const VIEW_STORAGE_KEY = 'akasha_calendar_view_mode'
@@ -2758,76 +2869,88 @@ function handleSaveQuickTodoSubmit() {
   closeQuickTodoModal()
 }
 
-// --- 单日视角时间轴辅助函数 ---
-interface TimelineItem {
-  id: string
-  type: 'schedule' | 'habit' | 'todo' | 'now'
-  time: string
-  timeLabel: string
-  timeSlotLabel?: string
-  sortMinutes: number
-  title?: string
-  completed?: boolean
-  projectColor?: string
-  projectName?: string
-  isScheduled?: boolean
-  data?: any
-  inProgress?: boolean
-  progressPercent?: number
-  nowTimeFormatted?: string
+// --- 单日视角专业连续时间网格与智能多栏防重叠排期系统 ---
+const dayTimelineMode = ref<'grid' | 'list'>(
+  (typeof localStorage !== 'undefined' && (localStorage.getItem('akasha_day_timeline_mode') as 'grid' | 'list')) || 'grid'
+)
+
+function setDayTimelineMode(mode: 'grid' | 'list') {
+  dayTimelineMode.value = mode
+  try {
+    localStorage.setItem('akasha_day_timeline_mode', mode)
+  } catch {}
+  if (mode === 'grid') {
+    nextTick(() => {
+      scrollToInitialPosition(false)
+    })
+  }
 }
 
-function parseMinutes(t?: string): number | null {
-  if (!t || !t.includes(':')) return null
-  const [h, m] = t.split(':').map(Number)
-  if (isNaN(h) || isNaN(m)) return null
-  return h * 60 + m
+const dayGridScrollContainer = ref<HTMLElement | null>(null)
+
+const currentNowMinutes = computed(() => {
+  return currentNowTime.value.getHours() * 60 + currentNowTime.value.getMinutes()
+})
+
+const currentNowTimeFormatted = computed(() => {
+  const h = String(currentNowTime.value.getHours()).padStart(2, '0')
+  const m = String(currentNowTime.value.getMinutes()).padStart(2, '0')
+  return `${h}:${m}`
+})
+
+function scrollToCurrentTime(smooth = true) {
+  if (!dayGridScrollContainer.value) return
+  const nowMins = currentNowMinutes.value
+  const target = Math.max(0, nowMins - 120)
+  dayGridScrollContainer.value.scrollTo({
+    top: target,
+    behavior: smooth ? 'smooth' : 'auto',
+  })
 }
 
-function getItemTimeRange(item: TimelineItem): { startMinutes: number; endMinutes: number } | null {
-  if (item.type === 'now') return null
-
-  // 1. 固定日程
-  if (item.type === 'schedule' && item.data) {
-    const s = item.data
-    const start = parseMinutes(s.time)
-    const end = parseMinutes(s.endTime)
-    if (start !== null && end !== null && end > start) {
-      return { startMinutes: start, endMinutes: end }
-    }
-    if (start !== null) {
-      return { startMinutes: start, endMinutes: start + 60 }
-    }
+function scrollToInitialPosition(smooth = false) {
+  if (!dayGridScrollContainer.value) return
+  const activeDay = displayDays.value?.[0]
+  if (activeDay?.isToday) {
+    scrollToCurrentTime(smooth)
+  } else {
+    const timed = dayTimedEvents.value
+    const earliest = timed.length > 0 ? timed[0].startMinutes : 8 * 60
+    const target = Math.max(0, earliest - 60)
+    dayGridScrollContainer.value.scrollTo({
+      top: target,
+      behavior: smooth ? 'smooth' : 'auto',
+    })
   }
-
-  // 2. 待办事项
-  if (item.type === 'todo' && item.data) {
-    const t = item.data
-    const start = parseMinutes(t.startTime)
-    const end = parseMinutes(t.dueTime)
-    if (start !== null && end !== null && end > start) {
-      return { startMinutes: start, endMinutes: end }
-    }
-    if (start !== null) {
-      return { startMinutes: start, endMinutes: start + 60 }
-    }
-  }
-
-  // 3. 通用格式解析 (如 time 字符串形如 "10:20 ~ 12:00")
-  if (item.time && item.time.includes('~')) {
-    const [p1, p2] = item.time.split('~').map((s) => s.trim())
-    const start = parseMinutes(p1)
-    const end = parseMinutes(p2)
-    if (start !== null && end !== null && end > start) {
-      return { startMinutes: start, endMinutes: end }
-    }
-  }
-
-  return null
 }
 
-function getDayTimelineItems(dateStr: string, isToday: boolean): TimelineItem[] {
-  const items: TimelineItem[] = []
+watch(
+  () => [displayDays.value?.[0]?.dateStr, dayTimelineMode.value],
+  () => {
+    if (dayTimelineMode.value === 'grid') {
+      nextTick(() => {
+        scrollToInitialPosition(false)
+      })
+    }
+  }
+)
+
+onMounted(() => {
+  if (dayTimelineMode.value === 'grid') {
+    nextTick(() => {
+      scrollToInitialPosition(false)
+    })
+  }
+})
+
+// 提取当前单日视图中的所有排期条目并分类（时段项 vs 全天项）
+const dayEventsBundle = computed(() => {
+  const activeDay = displayDays.value?.[0]
+  if (!activeDay) return { timed: [] as RawDayTimelineItem[], allDay: [] as RawDayTimelineItem[] }
+  const dateStr = activeDay.dateStr
+
+  const timed: RawDayTimelineItem[] = []
+  const allDay: RawDayTimelineItem[] = []
 
   // 1. 固定日程
   if (typeFilters.value.schedules) {
@@ -2837,263 +2960,250 @@ function getDayTimelineItems(dateStr: string, isToday: boolean): TimelineItem[] 
       const isEndDay = s.endDate ? s.endDate === dateStr : true
       const isMultiDay = !!(s.endDate && s.endDate !== s.date)
 
-      let sortMinutes = 9 * 60
-      let timeStr = s.time || '09:00'
-      let slotLabel = '日程'
+      const isExplicitAllDay = s.time === '全天' || (!s.time && !s.endTime)
+      const isIntermediateDay = isMultiDay && !isStartDay && !isEndDay
 
-      if (isMultiDay) {
-        if (isStartDay) {
-          timeStr = s.time || '09:00'
-          slotLabel = s.time ? `${s.time} 日程开始` : '跨日日程开始'
-        } else if (isEndDay) {
-          timeStr = s.endTime || s.time || '18:00'
-          slotLabel = (s.endTime || s.time) ? `${s.endTime || s.time} 日程截止` : '跨日日程截止'
-        } else {
-          timeStr = '全天'
-          slotLabel = '跨日日程进行中'
-          sortMinutes = 0
-        }
+      if (isExplicitAllDay || isIntermediateDay) {
+        allDay.push({
+          id: `schedule-${s.id}-${dateStr}`,
+          type: 'schedule',
+          title: s.title,
+          timeStr: '全天',
+          startMinutes: 0,
+          endMinutes: 1440,
+          durationMinutes: 1440,
+          isAllDay: true,
+          projectColor: getProjectColor(s.projectId),
+          projectName: getProjectName(s.projectId),
+          data: s,
+          slotLabel: isIntermediateDay ? '跨日进行中' : '全天日程',
+        })
       } else {
-        if (s.time && s.endTime) {
-          timeStr = `${s.time} ~ ${s.endTime}`
-          slotLabel = '日程时段'
-        } else if (s.time) {
-          timeStr = s.time
-          slotLabel = '日程'
-        } else {
-          timeStr = '全天'
-          slotLabel = '全天日程'
-          sortMinutes = 0
-        }
-      }
-
-      if (timeStr !== '全天' && timeStr.includes(':')) {
-        const firstTime = timeStr.includes('~') ? timeStr.split('~')[0].trim() : timeStr
-        const parts = firstTime.split(':').map(Number)
-        if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-          sortMinutes = parts[0] * 60 + parts[1]
-        }
-      }
-
-      items.push({
-        id: `schedule-${s.id}-${dateStr}`,
-        type: 'schedule',
-        time: timeStr,
-        timeLabel: timeStr,
-        timeSlotLabel: slotLabel,
-        sortMinutes,
-        title: s.title,
-        projectColor: getProjectColor(s.projectId),
-        projectName: getProjectName(s.projectId),
-        data: s,
-      })
-    }
-  }
-
-  // 2. 习惯打卡 (若有具体时间点则使用具体时间，否则依时间段分配)
-  if (typeFilters.value.habits) {
-    const habitsList = getHabitsForDay(dateStr)
-    for (const h of habitsList) {
-      let sortMinutes = 10 * 60
-      let timeStr = '10:00'
-      let slotLabel = '习惯打卡'
-
-      if (h.time) {
-        const parts = h.time.split(':').map(Number)
-        if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-          sortMinutes = parts[0] * 60 + parts[1]
-          timeStr = h.time
-          slotLabel = '定时习惯'
-        }
-      } else if (h.timeSlot === 'morning') {
-        sortMinutes = 8 * 60
-        timeStr = '08:00'
-        slotLabel = '晨间习惯'
-      } else if (h.timeSlot === 'afternoon') {
-        sortMinutes = 13 * 60 + 30
-        timeStr = '13:30'
-        slotLabel = '午后习惯'
-      } else if (h.timeSlot === 'evening') {
-        sortMinutes = 20 * 60
-        timeStr = '20:00'
-        slotLabel = '晚间习惯'
-      } else {
-        sortMinutes = 9 * 60 + 30
-        timeStr = '09:30'
-        slotLabel = '全天习惯'
-      }
-
-      items.push({
-        id: `habit-${h.id}`,
-        type: 'habit',
-        time: timeStr,
-        timeLabel: timeStr,
-        timeSlotLabel: slotLabel,
-        sortMinutes,
-        title: h.title,
-        completed: isHabitDoneOnDate(h.id, dateStr),
-        projectColor: getProjectColor(h.projectId),
-        projectName: getProjectName(h.projectId),
-        data: h,
-      })
-    }
-  }
-
-  // 3. 待办事项 (包含设定了具体时间的定时待办、跨日日程排期待办，以及未设置时间的高优截止里程碑)
-  if (typeFilters.value.todos) {
-    const dayTodos = getTodosForDay(dateStr)
-
-    // 3.1 设定了具体时间点或跨日覆盖期内的所有日程化待办
-    for (const t of dayTodos) {
-      const isStartDay = t.startDate === dateStr
-      const isDueDay = t.dueDate === dateStr
-      const isMultiDay = !!(t.startDate && t.dueDate && t.startDate !== t.dueDate)
-      const isIntermediate = isMultiDay && !isStartDay && !isDueDay && isDateInRange(dateStr, t.startDate!, t.dueDate!)
-
-      // 判断是否具备时间/日程属性
-      const hasTime = !!(t.startTime || t.dueTime)
-      const isScheduledTodo = hasTime || isMultiDay
-
-      if (isScheduledTodo) {
-        let timeStr = '09:00'
-        let slotLabel = '日程排期'
-        let sortMinutes = 9 * 60
+        let startMins = 9 * 60
+        let endMins = 10 * 60
+        let timeDisplay = s.time || '09:00'
 
         if (isMultiDay) {
-          if (isStartDay) {
-            timeStr = t.startTime || '09:00'
-            slotLabel = t.startTime ? `${t.startTime} 日程开始` : '跨日日程开始'
-          } else if (isDueDay) {
-            timeStr = t.dueTime || '18:00'
-            slotLabel = t.dueTime ? `${t.dueTime} 日程截止` : '跨日日程截止'
-          } else if (isIntermediate) {
-            timeStr = '全天'
-            slotLabel = '跨日日程进行中'
-            sortMinutes = 0
+          if (isStartDay && s.time) {
+            startMins = parseMinutes(s.time) ?? 9 * 60
+            endMins = Math.min(1440, startMins + 120)
+            timeDisplay = `${s.time} 开始`
+          } else if (isEndDay && (s.endTime || s.time)) {
+            const rawEnd = parseMinutes(s.endTime || s.time) ?? 18 * 60
+            endMins = rawEnd
+            startMins = Math.max(0, endMins - 120)
+            timeDisplay = `${s.endTime || s.time} 截止`
           }
         } else {
-          // 单日日程待办
-          if (t.startTime && t.dueTime) {
-            timeStr = `${t.startTime} ~ ${t.dueTime}`
-            slotLabel = '日程时段'
-          } else if (t.startTime) {
-            timeStr = t.startTime
-            slotLabel = '日程开始'
-          } else if (t.dueTime) {
-            timeStr = t.dueTime
-            slotLabel = '截止待办'
+          if (s.time && s.endTime) {
+            const p1 = parseMinutes(s.time)
+            const p2 = parseMinutes(s.endTime)
+            if (p1 !== null && p2 !== null && p2 > p1) {
+              startMins = p1
+              endMins = p2
+            } else if (p1 !== null) {
+              startMins = p1
+              endMins = p1 + 60
+            }
+            timeDisplay = `${s.time} ~ ${s.endTime}`
+          } else if (s.time && s.time.includes('~')) {
+            const [t1, t2] = s.time.split('~').map(x => x.trim())
+            const p1 = parseMinutes(t1)
+            const p2 = parseMinutes(t2)
+            if (p1 !== null && p2 !== null && p2 > p1) {
+              startMins = p1
+              endMins = p2
+            } else if (p1 !== null) {
+              startMins = p1
+              endMins = p1 + 60
+            }
+            timeDisplay = s.time
+          } else if (s.time) {
+            const p1 = parseMinutes(s.time)
+            if (p1 !== null) {
+              startMins = p1
+              endMins = p1 + 60
+            }
+            timeDisplay = s.time
           }
         }
 
-        if (timeStr !== '全天' && timeStr.includes(':')) {
-          const firstTime = timeStr.includes('~') ? timeStr.split('~')[0].trim() : timeStr
-          const parts = firstTime.split(':').map(Number)
-          if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-            sortMinutes = parts[0] * 60 + parts[1]
-          }
-        }
+        endMins = Math.min(1440, Math.max(startMins + 15, endMins))
 
-        items.push({
-          id: `todo-sched-${t.id}-${dateStr}`,
-          type: 'todo',
-          time: timeStr,
-          timeLabel: timeStr,
-          timeSlotLabel: slotLabel,
-          sortMinutes,
-          title: t.title,
-          completed: t.completed,
-          projectColor: getProjectColor(t.projectId),
-          projectName: getProjectName(t.projectId),
-          isScheduled: true,
-          data: t,
+        timed.push({
+          id: `schedule-${s.id}-${dateStr}`,
+          type: 'schedule',
+          title: s.title,
+          timeStr: timeDisplay,
+          startMinutes: startMins,
+          endMinutes: endMins,
+          durationMinutes: endMins - startMins,
+          isAllDay: false,
+          projectColor: getProjectColor(s.projectId),
+          projectName: getProjectName(s.projectId),
+          data: s,
+          slotLabel: '日程',
         })
       }
     }
+  }
 
-    // 3.2 未设定具体时间的紧急高优待办 (P9/P8) 默认作为 18:00 里程碑
-    const untimedHighPriority = dayTodos
-      .filter((t) => !t.startTime && !t.dueTime && !(t.startDate && t.dueDate && t.startDate !== t.dueDate) && !t.completed && t.importance && t.importance >= 8)
-      .slice(0, 2)
-    for (const t of untimedHighPriority) {
-      items.push({
-        id: `todo-milestone-${t.id}`,
-        type: 'todo',
-        time: '18:00',
-        timeLabel: '18:00',
-        timeSlotLabel: '重点里程碑',
-        sortMinutes: 18 * 60,
-        title: t.title,
-        completed: t.completed,
-        projectColor: getProjectColor(t.projectId),
-        projectName: getProjectName(t.projectId),
-        isScheduled: false,
-        data: t,
+  // 2. 习惯打卡
+  if (typeFilters.value.habits) {
+    const habitsList = getHabitsForDay(dateStr)
+    for (const h of habitsList) {
+      const isDone = isHabitDoneOnDate(h.id, dateStr)
+      if (h.time) {
+        const parsed = parseMinutes(h.time)
+        if (parsed !== null) {
+          const startMins = parsed
+          const endMins = Math.min(1440, startMins + 30)
+          timed.push({
+            id: `habit-${h.id}`,
+            type: 'habit',
+            title: h.title,
+            timeStr: h.time,
+            startMinutes: startMins,
+            endMinutes: endMins,
+            durationMinutes: 30,
+            isAllDay: false,
+            completed: isDone,
+            projectColor: getProjectColor(h.projectId),
+            projectName: getProjectName(h.projectId),
+            data: h,
+            slotLabel: '习惯打卡',
+          })
+          continue
+        }
+      }
+
+      allDay.push({
+        id: `habit-${h.id}`,
+        type: 'habit',
+        title: h.title,
+        timeStr: h.timeSlot === 'morning' ? '晨间' : h.timeSlot === 'afternoon' ? '午后' : h.timeSlot === 'evening' ? '晚间' : '全天',
+        startMinutes: 0,
+        endMinutes: 0,
+        durationMinutes: 0,
+        isAllDay: true,
+        completed: isDone,
+        projectColor: getProjectColor(h.projectId),
+        projectName: getProjectName(h.projectId),
+        data: h,
+        slotLabel: '习惯打卡',
       })
     }
   }
 
-  // 4. 判断并注入进行中状态或实时时间红线指示器（仅在所看日期为“今日”时计算）
-  if (isToday) {
-    const nowHours = currentNowTime.value.getHours()
-    const nowMinutes = currentNowTime.value.getMinutes()
-    const currentMins = nowHours * 60 + nowMinutes
-    const timeFormatted = `${String(nowHours).padStart(2, '0')}:${String(nowMinutes).padStart(2, '0')}`
+  // 3. 待办事项（含设定具体时间的日程化待办）
+  if (typeFilters.value.todos) {
+    const dayTodos = getTodosForDay(dateStr)
+    for (const t of dayTodos) {
+      const hasSpecificTime = !!(t.startTime || t.dueTime)
+      if (hasSpecificTime) {
+        const startParsed = parseMinutes(t.startTime)
+        const dueParsed = parseMinutes(t.dueTime)
 
-    let hasInProgressItem = false
+        let startMins = 9 * 60
+        let endMins = 10 * 60
+        let timeDisplay = '09:00'
 
-    for (const item of items) {
-      const range = getItemTimeRange(item)
-      if (range && currentMins >= range.startMinutes && currentMins < range.endMinutes) {
-        const duration = range.endMinutes - range.startMinutes
-        const elapsed = currentMins - range.startMinutes
-        const rawRatio = duration > 0 ? elapsed / duration : 0.5
-        // 将红线穿透比例限制在卡片主体 15% ~ 85% 之间，防止顶边或底边溢出
-        const progressPercent = Math.min(85, Math.max(15, Math.round(rawRatio * 100)))
-        item.inProgress = true
-        item.progressPercent = progressPercent
-        item.nowTimeFormatted = timeFormatted
-        hasInProgressItem = true
+        if (startParsed !== null && dueParsed !== null && dueParsed > startParsed) {
+          startMins = startParsed
+          endMins = dueParsed
+          timeDisplay = `${t.startTime} ~ ${t.dueTime}`
+        } else if (startParsed !== null) {
+          startMins = startParsed
+          endMins = startParsed + 45
+          timeDisplay = `${t.startTime}`
+        } else if (dueParsed !== null) {
+          startMins = Math.max(0, dueParsed - 45)
+          endMins = dueParsed
+          timeDisplay = `截止 ${t.dueTime}`
+        }
+
+        endMins = Math.min(1440, Math.max(startMins + 15, endMins))
+
+        timed.push({
+          id: `todo-sched-${t.id}-${dateStr}`,
+          type: 'todo',
+          title: t.title,
+          timeStr: timeDisplay,
+          startMinutes: startMins,
+          endMinutes: endMins,
+          durationMinutes: endMins - startMins,
+          isAllDay: false,
+          completed: t.completed,
+          projectColor: getProjectColor(t.projectId),
+          projectName: getProjectName(t.projectId),
+          importance: t.importance,
+          isScheduled: true,
+          data: t,
+          slotLabel: '待办排期',
+        })
       }
     }
-
-    // 若当前没有任何排期正在进行中，则在两日程之间或空档处正常插入独立的现在时间红线
-    if (!hasInProgressItem) {
-      items.push({
-        id: '__timeline_now_indicator__',
-        type: 'now',
-        time: timeFormatted,
-        timeLabel: `${timeFormatted} 现在`,
-        sortMinutes: currentMins,
-      })
-    }
   }
 
-  // 按时间先后升序排序
-  items.sort((a, b) => {
-    if (a.sortMinutes !== b.sortMinutes) {
-      return a.sortMinutes - b.sortMinutes
+  return { timed, allDay }
+})
+
+const dayTimedEvents = computed(() => dayEventsBundle.value.timed)
+const dayAllDayEvents = computed(() => dayEventsBundle.value.allDay)
+const timedGridItems = computed<TimedGridItem[]>(() => {
+  return computeGridEventLayout(dayTimedEvents.value, 1)
+})
+
+const hasOverlappingEvents = computed(() => {
+  return timedGridItems.value.some((it) => it.hasOverlap)
+})
+
+// 紧凑时序清单视图数据源（按时序排列，并精确计算与相邻项的重叠分钟数）
+const agendaListItems = computed(() => {
+  return computeAgendaList(dayTimedEvents.value)
+})
+
+// 清单模式中，计算唯一现在指示分割线的插入索引
+const nowAgendaInsertIndex = computed(() => {
+  const nowMins = currentNowMinutes.value
+  const list = agendaListItems.value
+  for (let i = 0; i < list.length; i++) {
+    if (nowMins < list[i].startMinutes) {
+      return i
     }
-    const typeOrder = { schedule: 1, habit: 2, todo: 3, now: 4 }
-    return (typeOrder[a.type] || 0) - (typeOrder[b.type] || 0)
-  })
+  }
+  return list.length
+})
 
-  return items
+function shouldRenderNowDividerBefore(idx: number): boolean {
+  return idx === nowAgendaInsertIndex.value
 }
 
-function hasTimelineEvents(dateStr: string, isToday = false): boolean {
-  const timelineItems = getDayTimelineItems(dateStr, isToday)
-  return timelineItems.some((it) => it.type !== 'now')
+function handleDayItemClick(item: RawDayTimelineItem) {
+  if (item.type === 'schedule') {
+    handleOpenSchedule(item.data)
+  } else if (item.type === 'todo') {
+    emit('open-todo', item.data)
+  } else if (item.type === 'habit') {
+    emit('switch-tab', 'habits')
+  }
 }
 
-function shouldShowGap(current: TimelineItem, next?: TimelineItem): boolean {
-  if (!next) return false
-  if (current.type === 'now' || next.type === 'now') return false
-  const diff = next.sortMinutes - current.sortMinutes
-  return diff >= 210
-}
+function handleGridDoubleClick(e: MouseEvent) {
+  const target = e.currentTarget as HTMLElement
+  const rect = target.getBoundingClientRect()
+  const offsetY = e.clientY - rect.top
+  const hour = Math.min(23, Math.max(0, Math.floor(offsetY / 60)))
+  const timeStr = `${String(hour).padStart(2, '0')}:00`
+  const dateStr = displayDays.value?.[0]?.dateStr || formatDate(new Date())
 
-function getGapHours(current: TimelineItem, next: TimelineItem): number {
-  return Math.round((next.sortMinutes - current.sortMinutes) / 60)
+  scheduleEditId.value = null
+  scheduleFormTitle.value = ''
+  scheduleFormProjectId.value = null
+  scheduleFormRecurringType.value = 'none'
+  scheduleFormDate.value = dateStr
+  scheduleFormTime.value = timeStr
+  showScheduleEditModal.value = true
 }
 
 function getDayTodosCompleted(dateStr: string): number {
