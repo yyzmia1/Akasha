@@ -817,7 +817,7 @@
                 class="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-950/70 text-rose-600 dark:text-rose-400 font-semibold transition-all active:scale-95 shadow-2xs cursor-pointer"
                 :title="t('calendar.jumpToNowTip')"
               >
-                <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
+                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
                 <span>{{ t('calendar.jumpToNow') }}</span>
               </button>
 
@@ -942,7 +942,7 @@
                   <!-- Left time pill badge in gutter -->
                   <div class="w-12 sm:w-16 pr-1.5 text-right shrink-0">
                     <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-rose-500 text-white font-mono text-[9px] sm:text-[10px] font-bold shadow-xs">
-                      <span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
+                      <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
                       {{ currentNowTimeFormatted }}
                     </span>
                   </div>
@@ -1052,10 +1052,12 @@
                 <!-- Empty overlay prompt if no timed events -->
                 <div
                   v-if="timedGridItems.length === 0"
-                  class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-slate-300 dark:text-slate-700 space-y-2 select-none"
+                  class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none space-y-2 select-none px-4 text-center"
                 >
-                  <Clock class="w-8 h-8 stroke-1" />
-                  <span class="text-xs">{{ t('calendar.emptyTimelineDesc') }}</span>
+                  <div class="w-10 h-10 rounded-full bg-slate-100/90 dark:bg-slate-800/90 flex items-center justify-center text-slate-400 dark:text-slate-500 mb-0.5">
+                    <Clock class="w-5 h-5 stroke-[1.5]" />
+                  </div>
+                  <span class="text-xs font-medium text-slate-400 dark:text-slate-500 tracking-wide">{{ t('calendar.emptyTimelineDesc') }}</span>
                 </div>
               </div>
             </div>
@@ -1074,7 +1076,7 @@
                     <div class="absolute left-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-rose-500"></div>
                   </div>
                   <span class="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-500 text-white shadow-xs shrink-0 select-none">
-                    <span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
                     {{ t('calendar.currentTime', { time: currentNowTimeFormatted }) }}
                   </span>
                   <div class="h-[2px] bg-rose-500/80 w-8 rounded-full"></div>
