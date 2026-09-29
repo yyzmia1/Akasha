@@ -20,8 +20,8 @@
       <!-- 头部：品牌标题 + 模式选择药丸 + 操作图标 -->
       <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2 bg-slate-50/70 dark:bg-slate-950/60 select-none">
         <div class="flex items-center gap-2">
-          <div class="w-6 h-6 rounded-full bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-200/80 dark:border-emerald-800/60 flex items-center justify-center shadow-2xs">
-            <Sparkles class="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 animate-pulse" />
+          <div class="w-6 h-6 rounded-full bg-blue-50 dark:bg-blue-950/80 border border-blue-200/80 dark:border-blue-800/60 flex items-center justify-center shadow-2xs">
+            <Sparkles class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 animate-pulse" />
           </div>
           <span class="text-xs sm:text-sm font-bold tracking-tight text-slate-800 dark:text-slate-100 font-mono">
             Akasha Copilot

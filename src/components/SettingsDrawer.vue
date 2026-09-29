@@ -384,8 +384,8 @@
               :aria-expanded="isAiSettingsExpanded"
             >
               <div class="flex items-center gap-2.5 min-w-0">
-                <div class="p-2 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40 shrink-0">
-                  <Sparkles class="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+                <div class="p-2 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/40 shrink-0">
+                  <Sparkles class="w-4 h-4 text-blue-500 dark:text-blue-400" />
                 </div>
                 <div class="min-w-0">
                   <div class="text-xs font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
