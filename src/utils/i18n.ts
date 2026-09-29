@@ -109,6 +109,14 @@ export const messages: Record<SupportedLocale, Record<string, any>> = {
       locationAuto: '定位',
       locationManual: '手动'
     },
+    syncStatus: {
+      local: '本地模式',
+      synced: '云端已同步',
+      syncing: '同步中...',
+      error: '同步异常',
+      offline: '离线模式',
+      notSynced: '未同步'
+    },
     weather: {
       refresh: '刷新天气',
       redetect: '重新自动定位 (IP/GPS)',
@@ -119,7 +127,41 @@ export const messages: Record<SupportedLocale, Record<string, any>> = {
       windSpeed: '风速',
       feelsLike: '体感',
       fullForecast: '全文预报',
-      viewFullForecast: '查看外部权威全文气象预报 (Windy 气象中心)'
+      viewFullForecast: '查看外部权威全文气象预报 (Windy 气象中心)',
+      weatherTip: '气象提示：',
+      peakHour: '(重点时段 ~{hour}:00)',
+      copiedLink: '已复制权威预报链接',
+      condition: {
+        clear: '晴天',
+        mostlyClear: '晴间多云',
+        partlyCloudy: '多云',
+        overcast: '阴天',
+        fog: '雾',
+        drizzle: '毛毛雨',
+        rainLight: '小雨',
+        rainModerate: '中雨',
+        rainHeavy: '大雨',
+        thunderstorm: '雷阵雨',
+        snow: '雪'
+      }
+    },
+    calendar: {
+      today: '今天',
+      prevPeriod: '上个周期',
+      nextPeriod: '下个周期',
+      selectView: '选择日历视角',
+      viewDay: '单日视图',
+      viewDayDesc: '1天',
+      view2Days: '双日聚焦',
+      view2DaysDesc: '2天',
+      view3Days: '三日看板',
+      view3DaysDesc: '3天',
+      viewWeek: '周视图',
+      viewWeekDesc: '7天自然周',
+      view2Weeks: '两周中程',
+      view2WeeksDesc: '14天',
+      viewMonth: '月历全景',
+      viewMonthDesc: '完整月份'
     },
     schedule: {
       title: '固定日程安排',
@@ -220,6 +262,14 @@ export const messages: Record<SupportedLocale, Record<string, any>> = {
       locationAuto: 'Auto',
       locationManual: 'Manual'
     },
+    syncStatus: {
+      local: 'Local Mode',
+      synced: 'Cloud Synced',
+      syncing: 'Syncing...',
+      error: 'Sync Error',
+      offline: 'Offline Mode',
+      notSynced: 'Not Synced'
+    },
     weather: {
       refresh: 'Refresh weather',
       redetect: 'Re-detect Location (IP/GPS)',
@@ -230,7 +280,41 @@ export const messages: Record<SupportedLocale, Record<string, any>> = {
       windSpeed: 'Wind Speed',
       feelsLike: 'Feels like',
       fullForecast: 'Full Forecast',
-      viewFullForecast: 'View Authoritative Full Weather Forecast (Windy)'
+      viewFullForecast: 'View Authoritative Full Weather Forecast (Windy)',
+      weatherTip: 'Weather Note:',
+      peakHour: '(Peak ~{hour}:00)',
+      copiedLink: 'Forecast link copied',
+      condition: {
+        clear: 'Clear',
+        mostlyClear: 'Mostly Clear',
+        partlyCloudy: 'Partly Cloudy',
+        overcast: 'Overcast',
+        fog: 'Foggy',
+        drizzle: 'Drizzle',
+        rainLight: 'Light Rain',
+        rainModerate: 'Moderate Rain',
+        rainHeavy: 'Heavy Rain',
+        thunderstorm: 'Thunderstorm',
+        snow: 'Snow'
+      }
+    },
+    calendar: {
+      today: 'Today',
+      prevPeriod: 'Previous Period',
+      nextPeriod: 'Next Period',
+      selectView: 'Select View',
+      viewDay: 'Day View',
+      viewDayDesc: '1 Day',
+      view2Days: '2 Days View',
+      view2DaysDesc: '2 Days',
+      view3Days: '3 Days View',
+      view3DaysDesc: '3 Days',
+      viewWeek: 'Week View',
+      viewWeekDesc: '7 Days',
+      view2Weeks: '2 Weeks View',
+      view2WeeksDesc: '14 Days',
+      viewMonth: 'Month View',
+      viewMonthDesc: 'Full Month'
     },
     schedule: {
       title: 'Fixed Schedules',
@@ -331,6 +415,14 @@ export const messages: Record<SupportedLocale, Record<string, any>> = {
       locationAuto: '自動',
       locationManual: '手動'
     },
+    syncStatus: {
+      local: 'ローカル',
+      synced: '同期済み',
+      syncing: '同期中...',
+      error: '同期エラー',
+      offline: 'オフライン',
+      notSynced: '未同期'
+    },
     weather: {
       refresh: '天気を更新',
       redetect: '再自動測位 (IP/GPS)',
@@ -341,7 +433,41 @@ export const messages: Record<SupportedLocale, Record<string, any>> = {
       windSpeed: '風速',
       feelsLike: '体感',
       fullForecast: '詳細予報',
-      viewFullForecast: '外部の公式気象詳細を見る (Windy)'
+      viewFullForecast: '外部の公式気象詳細を見る (Windy)',
+      weatherTip: '気象メモ：',
+      peakHour: '(注目時間帯 ~{hour}:00)',
+      copiedLink: '予報リンクをコピーしました',
+      condition: {
+        clear: '晴れ',
+        mostlyClear: '晴れ時々曇り',
+        partlyCloudy: '曇り',
+        overcast: '本曇り',
+        fog: '霧',
+        drizzle: '小雨・霧雨',
+        rainLight: '小雨',
+        rainModerate: '雨',
+        rainHeavy: '大雨',
+        thunderstorm: '雷雨',
+        snow: '雪'
+      }
+    },
+    calendar: {
+      today: '今日',
+      prevPeriod: '前の期間',
+      nextPeriod: '次の期間',
+      selectView: '表示切替',
+      viewDay: '1日表示',
+      viewDayDesc: '1日',
+      view2Days: '2日表示',
+      view2DaysDesc: '2日',
+      view3Days: '3日表示',
+      view3DaysDesc: '3日',
+      viewWeek: '週表示',
+      viewWeekDesc: '7日間',
+      view2Weeks: '2週間',
+      view2WeeksDesc: '14日間',
+      viewMonth: '月間表示',
+      viewMonthDesc: '全月'
     },
     schedule: {
       title: 'スケジュール予定',
@@ -442,6 +568,14 @@ export const messages: Record<SupportedLocale, Record<string, any>> = {
       locationAuto: 'Auto',
       locationManual: 'Manuel'
     },
+    syncStatus: {
+      local: 'Mode local',
+      synced: 'Synchronisé',
+      syncing: 'Synchronisation...',
+      error: 'Erreur synchro',
+      offline: 'Hors ligne',
+      notSynced: 'Non synchronisé'
+    },
     weather: {
       refresh: 'Actualiser la météo',
       redetect: 'Relocaliser automatiquement (IP/GPS)',
@@ -452,7 +586,41 @@ export const messages: Record<SupportedLocale, Record<string, any>> = {
       windSpeed: 'Vitesse du vent',
       feelsLike: 'Ressenti',
       fullForecast: 'Prévisions',
-      viewFullForecast: 'Consulter les prévisions météorologiques détaillées (Windy)'
+      viewFullForecast: 'Consulter les prévisions météorologiques détaillées (Windy)',
+      weatherTip: 'Note météo :',
+      peakHour: '(Période clé ~{hour}:00)',
+      copiedLink: 'Lien prévisions copié',
+      condition: {
+        clear: 'Ensoleillé',
+        mostlyClear: 'Éclaircies',
+        partlyCloudy: 'Partiellement nuageux',
+        overcast: 'Couvert',
+        fog: 'Brouillard',
+        drizzle: 'Bruine',
+        rainLight: 'Pluie faible',
+        rainModerate: 'Pluie modérée',
+        rainHeavy: 'Forte pluie',
+        thunderstorm: 'Orage',
+        snow: 'Neige'
+      }
+    },
+    calendar: {
+      today: 'Aujourd’hui',
+      prevPeriod: 'Période précédente',
+      nextPeriod: 'Période suivante',
+      selectView: 'Changer de vue',
+      viewDay: 'Vue Jour',
+      viewDayDesc: '1 Jour',
+      view2Days: 'Vue 2 Jours',
+      view2DaysDesc: '2 Jours',
+      view3Days: 'Vue 3 Jours',
+      view3DaysDesc: '3 Jours',
+      viewWeek: 'Vue Semaine',
+      viewWeekDesc: '7 Jours',
+      view2Weeks: 'Vue 2 Semaines',
+      view2WeeksDesc: '14 Jours',
+      viewMonth: 'Vue Mois',
+      viewMonthDesc: 'Mois complet'
     },
     schedule: {
       title: 'Planning fixe',
@@ -553,6 +721,14 @@ export const messages: Record<SupportedLocale, Record<string, any>> = {
       locationAuto: 'Auto',
       locationManual: 'Manuell'
     },
+    syncStatus: {
+      local: 'Lokaler Modus',
+      synced: 'Synchronisiert',
+      syncing: 'Synchronisieren...',
+      error: 'Sync-Fehler',
+      offline: 'Offline-Modus',
+      notSynced: 'Nicht synchronisiert'
+    },
     weather: {
       refresh: 'Wetter aktualisieren',
       redetect: 'Standort neu ermitteln (IP/GPS)',
@@ -563,7 +739,41 @@ export const messages: Record<SupportedLocale, Record<string, any>> = {
       windSpeed: 'Windgeschwindigkeit',
       feelsLike: 'Gefühlt',
       fullForecast: 'Vorhersage',
-      viewFullForecast: 'Ausführliche meteorologische Vorhersage öffnen (Windy)'
+      viewFullForecast: 'Ausführliche meteorologische Vorhersage öffnen (Windy)',
+      weatherTip: 'Wetterhinweis:',
+      peakHour: '(Schwerpunkt ~{hour}:00)',
+      copiedLink: 'Wetter-Link kopiert',
+      condition: {
+        clear: 'Klar',
+        mostlyClear: 'Überwiegend heiter',
+        partlyCloudy: 'Teilweise bewölkt',
+        overcast: 'Bedeckt',
+        fog: 'Nebel',
+        drizzle: 'Nieselregen',
+        rainLight: 'Leichter Regen',
+        rainModerate: 'Mäßiger Regen',
+        rainHeavy: 'Starker Regen',
+        thunderstorm: 'Gewitter',
+        snow: 'Schnee'
+      }
+    },
+    calendar: {
+      today: 'Heute',
+      prevPeriod: 'Vorheriger Zeitraum',
+      nextPeriod: 'Nächster Zeitraum',
+      selectView: 'Ansicht wählen',
+      viewDay: 'Tagesansicht',
+      viewDayDesc: '1 Tag',
+      view2Days: '2-Tage-Ansicht',
+      view2DaysDesc: '2 Tage',
+      view3Days: '3-Tage-Ansicht',
+      view3DaysDesc: '3 Tage',
+      viewWeek: 'Wochenansicht',
+      viewWeekDesc: '7 Tage',
+      view2Weeks: '2-Wochen-Ansicht',
+      view2WeeksDesc: '14 Tage',
+      viewMonth: 'Monatsansicht',
+      viewMonthDesc: 'Ganzer Monat'
     },
     schedule: {
       title: 'Feste Termine',

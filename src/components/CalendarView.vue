@@ -8,7 +8,7 @@
           <button
             @click="prevPeriod"
             class="p-1.5 rounded-md text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-700 transition-colors"
-            title="上个周期"
+            :title="t('calendar.prevPeriod')"
           >
             <ChevronLeft class="w-4 h-4" />
           </button>
@@ -18,7 +18,7 @@
           <button
             @click="nextPeriod"
             class="p-1.5 rounded-md text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-700 transition-colors"
-            title="下个周期"
+            :title="t('calendar.nextPeriod')"
           >
             <ChevronRight class="w-4 h-4" />
           </button>
@@ -28,7 +28,7 @@
           @click="goToToday"
           class="px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-all active:scale-95 shrink-0"
         >
-          今天
+          {{ t('calendar.today') }}
         </button>
       </div>
 
@@ -40,7 +40,7 @@
             @click="toggleDropdown"
             class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-all active:scale-95 select-none shadow-2xs"
             :aria-expanded="isDropdownOpen"
-            title="选择日历视角"
+            :title="t('calendar.selectView')"
           >
             <Calendar class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
             <span class="font-semibold">{{ currentViewOption.label }}</span>
@@ -2055,6 +2055,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { t } from '@/utils/i18n'
 import {
   ChevronLeft,
   ChevronRight,
@@ -2125,14 +2126,14 @@ interface ViewOption {
   desc: string
 }
 
-const viewOptions: ViewOption[] = [
-  { mode: 'day', label: '单日视图', desc: '1天' },
-  { mode: '2days', label: '双日聚焦', desc: '2天' },
-  { mode: '3days', label: '三日看板', desc: '3天' },
-  { mode: 'week', label: '周视图', desc: '7天自然周' },
-  { mode: '2weeks', label: '两周中程', desc: '14天' },
-  { mode: 'month', label: '月历全景', desc: '完整月份' },
-]
+const viewOptions = computed<ViewOption[]>(() => [
+  { mode: 'day', label: t('calendar.viewDay'), desc: t('calendar.viewDayDesc') },
+  { mode: '2days', label: t('calendar.view2Days'), desc: t('calendar.view2DaysDesc') },
+  { mode: '3days', label: t('calendar.view3Days'), desc: t('calendar.view3DaysDesc') },
+  { mode: 'week', label: t('calendar.viewWeek'), desc: t('calendar.viewWeekDesc') },
+  { mode: '2weeks', label: t('calendar.view2Weeks'), desc: t('calendar.view2WeeksDesc') },
+  { mode: 'month', label: t('calendar.viewMonth'), desc: t('calendar.viewMonthDesc') },
+])
 
 function getInitialViewMode(): CalendarViewMode {
   if (typeof window === 'undefined') return 'day'
@@ -2144,7 +2145,7 @@ function getInitialViewMode(): CalendarViewMode {
 const viewMode = ref<CalendarViewMode>(getInitialViewMode())
 
 const currentViewOption = computed(() => {
-  return viewOptions.find((o) => o.mode === viewMode.value) || viewOptions[0]
+  return viewOptions.value.find((o) => o.mode === viewMode.value) || viewOptions.value[0]
 })
 
 const isDropdownOpen = ref(false)

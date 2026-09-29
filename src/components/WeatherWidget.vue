@@ -126,6 +126,104 @@ const iconColorClass = computed(() => {
   }
 })
 
+// 外部权威气象网站链接 (Windy 气象中心，包含雷达卫星、ECMWF数值模式与 10 天全文预报)
+const externalWeatherUrl = computed(() => {
+  if (!weather.value?.location) return 'https://www.windy.com'
+  const { lat, lon } = weather.value.location
+  return `https://www.windy.com/?${lat},${lon},11`
+})
+
+// 复制链接状态气泡
+const copyToast = ref(false)
+let copyToastTimer: any = null
+
+// PWA 与普通浏览器通用的外部链接安全打开函数
+function openExternalWeather(e?: MouseEvent) {
+  if (e) {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+  const url = externalWeatherUrl.value
+  if (!url) return
+
+  // 1. 针对 iOS / Android PWA Standalone 独立应用模式：
+  // 必须通过 window.open(url, '_blank') 唤醒系统原生浏览器（Mobile Safari / Chrome），防止被 PWA 沙盒截留
+  let opened = false
+  try {
+    const win = window.open(url, '_blank', 'noopener,noreferrer')
+    if (win) {
+      opened = true
+    }
+  } catch (err) {
+    console.warn('window.open failed in PWA mode', err)
+  }
+
+  // 2. 备用兜底：若受限环境拦截了 window.open，则动态模拟 a 标签点击
+  if (!opened) {
+    try {
+      const a = document.createElement('a')
+      a.href = url
+      a.target = '_blank'
+      a.rel = 'noopener noreferrer external'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+    } catch {}
+  }
+
+  // 3. 同时提供剪贴板自动复制兜底，确保在严格受限的 PWA 环境中用户也可直接粘贴查看
+  if (navigator?.clipboard?.writeText) {
+    navigator.clipboard.writeText(url).then(() => {
+      copyToast.value = true
+      if (copyToastTimer) clearTimeout(copyToastTimer)
+      copyToastTimer = setTimeout(() => {
+        copyToast.value = false
+      }, 2500)
+    }).catch(() => {})
+  }
+}
+
+// 天气状态多语言文本转换
+function getWeatherLabel(label: string, code?: number): string {
+  if (!label) return ''
+  const codeMap: Record<number, string> = {
+    0: 'clear',
+    1: 'mostlyClear',
+    2: 'partlyCloudy',
+    3: 'overcast',
+    45: 'fog',
+    48: 'fog',
+    51: 'drizzle',
+    53: 'drizzle',
+    55: 'drizzle',
+    61: 'rainLight',
+    63: 'rainModerate',
+    65: 'rainHeavy',
+    71: 'snow',
+    73: 'snow',
+    75: 'snow',
+    80: 'rainLight',
+    81: 'rainModerate',
+    82: 'rainHeavy',
+    95: 'thunderstorm',
+    96: 'thunderstorm',
+    99: 'thunderstorm'
+  }
+  if (code !== undefined && codeMap[code]) {
+    const key = `weather.condition.${codeMap[code]}`
+    const translated = t(key)
+    if (translated && translated !== key) return translated
+  }
+  if (label.includes('晴') && label.includes('云')) return t('weather.condition.partlyCloudy')
+  if (label.includes('晴')) return t('weather.condition.clear')
+  if (label.includes('云') || label.includes('阴')) return t('weather.condition.overcast')
+  if (label.includes('雷')) return t('weather.condition.thunderstorm')
+  if (label.includes('雪')) return t('weather.condition.snow')
+  if (label.includes('雨')) return t('weather.condition.rainModerate')
+  if (label.includes('雾') || label.includes('霾')) return t('weather.condition.fog')
+  return label
+}
+
 // 加载天气数据 (优先读取手动保存的常驻城市)
 async function loadWeatherData(force: boolean = false) {
   isLoading.value = true
@@ -246,7 +344,7 @@ onUnmounted(() => {
         v-if="weather"
         class="hidden sm:inline font-normal text-slate-600 dark:text-slate-300 max-w-[80px] truncate"
       >
-        {{ weather.characteristic.displayLabel }}
+        {{ getWeatherLabel(weather.characteristic.displayLabel, weather.characteristic.code) }}
       </span>
 
       <!-- 实时温度 -->
@@ -300,11 +398,12 @@ onUnmounted(() => {
               <LocateFixed class="w-3.5 h-3.5" />
             </button>
 
-            <!-- 外部权威全文预报按钮 -->
+            <!-- 外部权威全文预报按钮 (支持 PWA 唤起与点击复制) -->
             <a
               :href="externalWeatherUrl"
               target="_blank"
               rel="noopener noreferrer"
+              @click.stop.prevent="openExternalWeather"
               class="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               :title="t('weather.viewFullForecast')"
             >
@@ -330,14 +429,24 @@ onUnmounted(() => {
           </div>
         </div>
 
+        <!-- 复制成功反馈浮层 (若 PWA 拦截弹出窗口，提示已写入剪贴板) -->
+        <div
+          v-if="copyToast"
+          class="mt-2 mb-1 px-3 py-1.5 rounded-lg text-xs flex items-center justify-between bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 transition-all"
+        >
+          <span>{{ t('weather.copiedLink') }}</span>
+          <span class="text-[10px] opacity-75 font-mono">Windy.com</span>
+        </div>
+
         <!-- 中部：实时大温度与天气现象 -->
         <div class="py-3 flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <!-- 天气 Logo（点击直达外部权威全文气象预报） -->
+            <!-- 天气 Logo（点击直达外部权威全文气象预报，支持 PWA 唤醒原生浏览器） -->
             <a
               :href="externalWeatherUrl"
               target="_blank"
               rel="noopener noreferrer"
+              @click.stop.prevent="openExternalWeather"
               class="group/logo relative p-1 -m-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all cursor-pointer block"
               :title="t('weather.viewFullForecast')"
             >
@@ -360,6 +469,7 @@ onUnmounted(() => {
                   :href="externalWeatherUrl"
                   target="_blank"
                   rel="noopener noreferrer"
+                  @click.stop.prevent="openExternalWeather"
                   class="inline-flex items-center gap-0.5 ml-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 border border-slate-200/60 dark:border-slate-800 transition-all cursor-pointer group/link"
                   :title="t('weather.viewFullForecast')"
                 >
@@ -368,14 +478,14 @@ onUnmounted(() => {
                 </a>
               </div>
               <p class="text-xs text-slate-500 dark:text-slate-400">
-                体感 {{ weather.current.apparentTemp }}°C
+                {{ t('weather.feelsLike') }} {{ weather.current.apparentTemp }}°C
               </p>
             </div>
           </div>
 
           <div class="text-right">
             <span class="inline-block px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-              {{ weather.characteristic.displayLabel }}
+              {{ getWeatherLabel(weather.characteristic.displayLabel, weather.characteristic.code) }}
             </span>
             <p class="text-[11px] text-slate-400 mt-1 tabular-nums">
               {{ weather.daily.tempMin }}° ~ {{ weather.daily.tempMax }}°C
@@ -390,10 +500,10 @@ onUnmounted(() => {
         >
           <Umbrella class="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
           <div class="leading-relaxed">
-            <span class="font-semibold">气象提示：</span>
+            <span class="font-semibold">{{ t('weather.weatherTip') }}</span>
             <span>{{ weather.characteristic.advice }}</span>
             <span v-if="weather.characteristic.peakHour" class="opacity-80 ml-1 text-[11px]">
-              (重点时段 ~{{ weather.characteristic.peakHour }}:00)
+              {{ t('weather.peakHour', { hour: weather.characteristic.peakHour }) }}
             </span>
           </div>
         </div>
