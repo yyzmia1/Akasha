@@ -537,20 +537,6 @@
                     : 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300'
                 ]"
               >
-                {{ aiTestResult.message }}
-              </div>
-
-              <!-- 快捷功能入库 -->
-              <div class="pt-2 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-xs">
-                <span class="text-slate-400 text-[11px]">快捷功能</span>
-                <button
-                  type="button"
-                  @click="$emit('open-academic'); $emit('close')"
-                  class="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
-                >
-                  <GraduationCap class="w-3.5 h-3.5" />
-                  <span>打开 AI 识图导入课表</span>
-                </button>
               </div>
             </div>
           </section>
@@ -931,7 +917,6 @@ import {
   LogOut,
   Languages,
   ChevronDown,
-  GraduationCap,
   Info,
   GitBranch,
 } from 'lucide-vue-next'
@@ -996,7 +981,6 @@ const emit = defineEmits<{
   (e: 'import-data', jsonData: string): void
   (e: 'clear-all'): void
   (e: 'reload-data'): void
-  (e: 'open-academic'): void
 }>()
 
 function handleSelectTheme(dark: boolean) {

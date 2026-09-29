@@ -7,7 +7,6 @@
       @open-settings="isSettingsOpen = true"
       @open-search="isSearchOpen = true"
       @open-copilot="isCopilotOpen = true"
-      @open-academic="isAcademicModalOpen = true"
       @toggle-theme="toggleTheme"
     />
 
@@ -63,7 +62,6 @@
         :target-schedule-id="targetScheduleId"
         @save-schedule="handleSaveSchedule"
         @delete-schedule="handleDeleteSchedule"
-        @open-academic="isAcademicModalOpen = true"
         @clear-target-id="targetScheduleId = null"
       />
 
@@ -124,7 +122,6 @@
       @import-data="handleImportData"
       @clear-all="handleClearAll"
       @reload-data="loadAllData"
-      @open-academic="isAcademicModalOpen = true"
     />
 
     <GlobalSearch
@@ -152,17 +149,8 @@
       :active-hours="{ start: themeAutoStart, end: themeAutoEnd }"
       @close="isCopilotOpen = false"
       @open-settings="isSettingsOpen = true"
-      @open-academic="isAcademicModalOpen = true"
       @update-ghosts="ghostSchedules = $event"
       @apply-plan="handleApplyCopilotPlan"
-    />
-
-    <AcademicScheduleModal
-      :is-open="isAcademicModalOpen"
-      :areas="areas"
-      @close="isAcademicModalOpen = false"
-      @open-settings="isSettingsOpen = true"
-      @apply-academic-schedule="handleApplyAcademicSchedule"
     />
 
     <!-- 10秒浮动撤销条 (Undo Toast) -->
@@ -211,7 +199,6 @@ import JournalView from '@/components/JournalView.vue'
 import SettingsDrawer from '@/components/SettingsDrawer.vue'
 import GlobalSearch from '@/components/GlobalSearch.vue'
 import CopilotModal from '@/components/copilot/CopilotModal.vue'
-import AcademicScheduleModal from '@/components/academic/AcademicScheduleModal.vue'
 import { Sparkles, X } from 'lucide-vue-next'
 import type { CopilotPlanResult, ScheduleDraft } from '@/types/copilot'
 
@@ -383,7 +370,6 @@ const journals = ref<JournalEntry[]>([])
 const isSettingsOpen = ref(false)
 const isSearchOpen = ref(false)
 const isCopilotOpen = ref(false)
-const isAcademicModalOpen = ref(false)
 const ghostSchedules = ref<ScheduleDraft[]>([])
 const undoToast = ref<{
   show: boolean
@@ -594,82 +580,6 @@ async function handleApplyCopilotPlan(plan: CopilotPlanResult) {
       for (const id of createdProjectIds) {
         await db.projects.delete(id)
         enqueueChange('project', id, null, true)
-      }
-      await loadAllData()
-    },
-  }
-}
-
-async function handleApplyAcademicSchedule(payload: {
-  project: Project
-  schedules: ScheduleItem[]
-  areaId?: string
-  summary: string
-}) {
-  let createdAreaId: string | null = null
-  let areaId = payload.areaId
-
-  // 如果需要自动创建「学业」领域
-  if (!areaId) {
-    const existingArea = areas.value.find((a) => a.title === '学业' || a.title === '学习')
-    if (existingArea) {
-      areaId = existingArea.id
-    } else {
-      const newArea: Area = {
-        id: `area-academic-${Date.now()}`,
-        title: '学业',
-        color: '#6366f1',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }
-      await db.areas.add(newArea)
-      enqueueChange('area', newArea.id, newArea)
-      createdAreaId = newArea.id
-      areaId = newArea.id
-    }
-  }
-
-  // 绑定项目到该领域
-  const targetProject: Project = {
-    ...payload.project,
-    areaId,
-  }
-  await db.projects.add(targetProject)
-  enqueueChange('project', targetProject.id, targetProject)
-
-  const createdScheduleIds: string[] = []
-  for (const s of payload.schedules) {
-    const item: ScheduleItem = {
-      ...s,
-      projectId: targetProject.id,
-    }
-    await db.schedules.add(item)
-    enqueueChange('schedule', item.id, item)
-    createdScheduleIds.push(item.id)
-  }
-
-  await loadAllData()
-
-  // 10秒撤销机制
-  dismissUndoToast()
-  const timer = setTimeout(() => {
-    dismissUndoToast()
-  }, 10000)
-
-  undoToast.value = {
-    show: true,
-    message: `🎓 ${payload.summary}`,
-    timer,
-    rollbackFn: async () => {
-      for (const id of createdScheduleIds) {
-        await db.schedules.delete(id)
-        enqueueChange('schedule', id, null, true)
-      }
-      await db.projects.delete(targetProject.id)
-      enqueueChange('project', targetProject.id, null, true)
-      if (createdAreaId) {
-        await db.areas.delete(createdAreaId)
-        enqueueChange('area', createdAreaId, null, true)
       }
       await loadAllData()
     },
