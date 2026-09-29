@@ -30,7 +30,6 @@ import {
   type WeatherSummary,
   type WeatherLocation
 } from '../utils/weather'
-import { t } from '../utils/i18n'
 
 const weather = ref<WeatherSummary | null>(null)
 const isLoading = ref(false)
@@ -183,45 +182,9 @@ function openExternalWeather(e?: MouseEvent) {
   }
 }
 
-// 天气状态多语言文本转换
-function getWeatherLabel(label: string, code?: number): string {
-  if (!label) return ''
-  const codeMap: Record<number, string> = {
-    0: 'clear',
-    1: 'mostlyClear',
-    2: 'partlyCloudy',
-    3: 'overcast',
-    45: 'fog',
-    48: 'fog',
-    51: 'drizzle',
-    53: 'drizzle',
-    55: 'drizzle',
-    61: 'rainLight',
-    63: 'rainModerate',
-    65: 'rainHeavy',
-    71: 'snow',
-    73: 'snow',
-    75: 'snow',
-    80: 'rainLight',
-    81: 'rainModerate',
-    82: 'rainHeavy',
-    95: 'thunderstorm',
-    96: 'thunderstorm',
-    99: 'thunderstorm'
-  }
-  if (code !== undefined && codeMap[code]) {
-    const key = `weather.condition.${codeMap[code]}`
-    const translated = t(key)
-    if (translated && translated !== key) return translated
-  }
-  if (label.includes('晴') && label.includes('云')) return t('weather.condition.partlyCloudy')
-  if (label.includes('晴')) return t('weather.condition.clear')
-  if (label.includes('云') || label.includes('阴')) return t('weather.condition.overcast')
-  if (label.includes('雷')) return t('weather.condition.thunderstorm')
-  if (label.includes('雪')) return t('weather.condition.snow')
-  if (label.includes('雨')) return t('weather.condition.rainModerate')
-  if (label.includes('雾') || label.includes('霾')) return t('weather.condition.fog')
-  return label
+// 天气状态文本
+function getWeatherLabel(label: string, _code?: number): string {
+  return label || ''
 }
 
 // 加载天气数据 (优先读取手动保存的常驻城市)
@@ -384,7 +347,7 @@ onUnmounted(() => {
                 ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
                 : 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/40'"
             >
-              {{ weather.location.isAuto ? t('common.locationAuto') : t('common.locationManual') }}
+              {{ weather.location.isAuto ? '定位' : '手动' }}
             </span>
           </div>
 
@@ -393,7 +356,7 @@ onUnmounted(() => {
             <button
               @click="handleRedetectLocation"
               class="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-              :title="t('weather.redetect')"
+              title="重新自动定位 (IP/GPS)"
             >
               <LocateFixed class="w-3.5 h-3.5" />
             </button>
@@ -405,7 +368,7 @@ onUnmounted(() => {
               rel="noopener noreferrer"
               @click.stop.prevent="openExternalWeather"
               class="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-              :title="t('weather.viewFullForecast')"
+              title="查看外部权威全文气象预报 (Windy 气象中心)"
             >
               <ExternalLink class="w-3.5 h-3.5" />
             </a>
@@ -414,7 +377,7 @@ onUnmounted(() => {
             <button
               @click="loadWeatherData(true)"
               class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-              :title="t('weather.refresh')"
+              title="刷新天气"
             >
               <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': isLoading }" />
             </button>
@@ -434,7 +397,7 @@ onUnmounted(() => {
           v-if="copyToast"
           class="mt-2 mb-1 px-3 py-1.5 rounded-lg text-xs flex items-center justify-between bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 transition-all"
         >
-          <span>{{ t('weather.copiedLink') }}</span>
+          <span>已复制权威预报链接</span>
           <span class="text-[10px] opacity-75 font-mono">Windy.com</span>
         </div>
 
@@ -448,7 +411,7 @@ onUnmounted(() => {
               rel="noopener noreferrer"
               @click.stop.prevent="openExternalWeather"
               class="group/logo relative p-1 -m-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all cursor-pointer block"
-              :title="t('weather.viewFullForecast')"
+              title="查看外部权威全文气象预报 (Windy 气象中心)"
             >
               <component
                 :is="weatherIconComponent"
@@ -471,14 +434,14 @@ onUnmounted(() => {
                   rel="noopener noreferrer"
                   @click.stop.prevent="openExternalWeather"
                   class="inline-flex items-center gap-0.5 ml-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 border border-slate-200/60 dark:border-slate-800 transition-all cursor-pointer group/link"
-                  :title="t('weather.viewFullForecast')"
+                  title="查看外部权威全文气象预报 (Windy 气象中心)"
                 >
-                  <span>{{ t('weather.fullForecast') }}</span>
+                  <span>全文预报</span>
                   <ExternalLink class="w-2.5 h-2.5 opacity-60 group-hover/link:opacity-100 transition-opacity" />
                 </a>
               </div>
               <p class="text-xs text-slate-500 dark:text-slate-400">
-                {{ t('weather.feelsLike') }} {{ weather.current.apparentTemp }}°C
+                体感 {{ weather.current.apparentTemp }}°C
               </p>
             </div>
           </div>
@@ -500,10 +463,10 @@ onUnmounted(() => {
         >
           <Umbrella class="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
           <div class="leading-relaxed">
-            <span class="font-semibold">{{ t('weather.weatherTip') }}</span>
+            <span class="font-semibold">气象提示：</span>
             <span>{{ weather.characteristic.advice }}</span>
             <span v-if="weather.characteristic.peakHour" class="opacity-80 ml-1 text-[11px]">
-              {{ t('weather.peakHour', { hour: weather.characteristic.peakHour }) }}
+              (重点时段 ~{{ weather.characteristic.peakHour }}:00)
             </span>
           </div>
         </div>
@@ -521,7 +484,7 @@ onUnmounted(() => {
           <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/40">
             <Droplets class="w-3.5 h-3.5 text-sky-500" />
             <div>
-              <div class="text-[10px] text-slate-400">{{ t('weather.humidity') }}</div>
+              <div class="text-[10px] text-slate-400">空气湿度</div>
               <div class="font-semibold text-slate-700 dark:text-slate-200">{{ weather.current.humidity }}%</div>
             </div>
           </div>
@@ -529,7 +492,7 @@ onUnmounted(() => {
           <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/40">
             <Wind class="w-3.5 h-3.5 text-teal-500" />
             <div>
-              <div class="text-[10px] text-slate-400">{{ t('weather.windSpeed') }}</div>
+              <div class="text-[10px] text-slate-400">风速</div>
               <div class="font-semibold text-slate-700 dark:text-slate-200">{{ weather.current.windSpeed }} km/h</div>
             </div>
           </div>
@@ -546,7 +509,7 @@ onUnmounted(() => {
                 @input="onSearchInput"
                 @keydown.enter.prevent="onSearchEnter"
                 type="text"
-                :placeholder="t('weather.searchPlaceholder')"
+                placeholder="搜索任意城市 (如: 苏州、大连、青岛...)"
                 class="w-full pl-8 pr-7 py-1.5 text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-lg text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
               />
               <Loader2 v-if="isSearching" class="w-3.5 h-3.5 text-blue-500 animate-spin absolute right-2.5" />
@@ -595,14 +558,14 @@ onUnmounted(() => {
           <!-- 热门城市快捷点选 -->
           <div>
             <div class="flex items-center justify-between mb-1.5">
-              <span class="text-[11px] font-medium text-slate-400">{{ t('weather.popularCities') }}</span>
+              <span class="text-[11px] font-medium text-slate-400">热门城市</span>
               <button
                 @click="handleRedetectLocation"
                 class="text-[11px] text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
-                :title="t('weather.redetect')"
+                title="重新自动定位 (IP/GPS)"
               >
                 <LocateFixed class="w-3 h-3" />
-                {{ t('weather.redetectBtn') }}
+                重新自动定位
               </button>
             </div>
 

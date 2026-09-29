@@ -9,7 +9,7 @@
         </div>
         <div>
           <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
-            {{ t('schedule.title') }}
+            固定日程安排
           </h2>
         </div>
       </div>
@@ -22,7 +22,7 @@
             v-model="selectedProjectId"
             class="h-9 pl-3 pr-8 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           >
-            <option value="all">{{ t('schedule.allProjects') }}</option>
+            <option value="all">所有所属项目</option>
             <option
               v-for="p in projects"
               :key="p.id"
@@ -50,7 +50,7 @@
           class="h-9 px-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer shrink-0"
         >
           <Plus class="w-4 h-4 stroke-[2.5]" />
-          <span>{{ t('schedule.newSchedule') }}</span>
+          <span>新建日程</span>
         </button>
       </div>
     </div>
@@ -68,7 +68,7 @@
         ]"
       >
         <Clock class="w-3.5 h-3.5" />
-        <span>{{ t('schedule.upcoming') }}</span>
+        <span>近期日程</span>
         <span class="text-[10px] px-1.5 py-0.2 rounded-full font-mono" :class="activeCategory === 'upcoming' ? 'bg-blue-50 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300' : 'bg-slate-200/60 dark:bg-slate-800 text-slate-500'">
           {{ upcomingSchedules.length }}
         </span>
@@ -84,7 +84,7 @@
             : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
         ]"
       >
-        <span>{{ t('schedule.past') }}</span>
+        <span>已过日程</span>
         <span class="text-[10px] px-1.5 py-0.2 rounded-full font-mono" :class="activeCategory === 'past' ? 'bg-blue-50 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300' : 'bg-slate-200/60 dark:bg-slate-800 text-slate-500'">
           {{ pastSchedules.length }}
         </span>
@@ -100,7 +100,7 @@
             : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
         ]"
       >
-        <span>{{ t('schedule.all') }}</span>
+        <span>全部日程</span>
         <span class="text-[10px] px-1.5 py-0.2 rounded-full font-mono" :class="activeCategory === 'all' ? 'bg-blue-50 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300' : 'bg-slate-200/60 dark:bg-slate-800 text-slate-500'">
           {{ filteredSchedules.length }}
         </span>
@@ -372,7 +372,6 @@ import {
 } from 'lucide-vue-next'
 import type { ScheduleItem, Project } from '@/types'
 import { formatDate, parseDate, isDateInRange } from '@/utils/date'
-import { t } from '@/utils/i18n'
 
 const props = defineProps<{
   schedules: ScheduleItem[]

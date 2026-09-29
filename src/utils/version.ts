@@ -16,9 +16,9 @@ export interface AppVersionInfo {
 }
 
 export function getAppVersionInfo(): AppVersionInfo {
-  const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.9.6'
-  const branch = typeof __GIT_BRANCH__ !== 'undefined' ? __GIT_BRANCH__ : 'feat/ai-copilot'
-  const commit = typeof __GIT_COMMIT__ !== 'undefined' ? __GIT_COMMIT__ : 'b14edae'
+  const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.9.7'
+  const branch = typeof __GIT_BRANCH__ !== 'undefined' ? __GIT_BRANCH__ : 'main'
+  const commit = typeof __GIT_COMMIT__ !== 'undefined' ? __GIT_COMMIT__ : ''
   const isBranch = typeof __IS_BRANCH__ !== 'undefined' ? __IS_BRANCH__ : (branch !== 'main' && branch !== 'master')
   const buildTime = typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__ : new Date().toISOString()
 
