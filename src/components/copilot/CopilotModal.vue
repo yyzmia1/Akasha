@@ -1,13 +1,20 @@
 <template>
   <div
     v-if="isOpen"
-    class="fixed inset-0 z-50 flex items-start justify-center pt-3 sm:pt-14 px-2 sm:px-4 bg-black/60 backdrop-blur-md transition-all duration-200"
+    :class="[
+      'fixed inset-0 z-50 flex justify-center bg-black/60 backdrop-blur-md transition-all duration-300',
+      isExpanded
+        ? 'items-center p-2 sm:p-4 lg:p-6'
+        : 'items-start pt-3 sm:pt-12 px-2 sm:px-4 pb-4'
+    ]"
     @click.self="handleClose"
   >
     <div
       :class="[
         'w-full bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200/90 dark:border-slate-800 flex flex-col overflow-hidden transition-all duration-300 animate-in zoom-in-95',
-        isExpanded ? 'max-w-4xl max-h-[92vh]' : 'max-w-2xl max-h-[88vh]'
+        isExpanded
+          ? 'w-[96vw] max-w-5xl xl:max-w-6xl h-[92vh] max-h-[96vh]'
+          : 'max-w-2xl max-h-[88vh]'
       ]"
     >
       <!-- 头部：品牌标题 + 模式选择药丸 + 操作图标 -->
@@ -50,11 +57,11 @@
             <span class="max-w-[120px] truncate">{{ currentModelBadgeText }}</span>
           </button>
 
-          <!-- 展开/收起伴侣面板 -->
+          <!-- 展开/收起全景工作台 -->
           <button
             @click="isExpanded = !isExpanded"
             class="hidden sm:flex p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-            :title="isExpanded ? '收起紧凑模式' : '展开伴侣面板'"
+            :title="isExpanded ? '还原紧凑视图' : '最大化全景工作台（沉浸自适应）'"
           >
             <Minimize2 v-if="isExpanded" class="w-4 h-4" />
             <Maximize2 v-else class="w-4 h-4" />
@@ -295,7 +302,7 @@
       </div>
 
       <!-- 主体输入与对话/草稿区 -->
-      <div v-else ref="mainScrollRef" @scroll="handleMainScroll" class="flex-1 overflow-y-auto p-4 space-y-4">
+      <div v-else ref="mainScrollRef" @scroll="handleMainScroll" :class="['flex-1 overflow-y-auto space-y-4', isExpanded ? 'p-5 sm:p-6 space-y-5' : 'p-4']">
         <!-- 未配置 API Key 的提示横幅 -->
         <div
           v-if="!isCurrentActiveModelConfigured"
@@ -366,9 +373,14 @@
           <textarea
             ref="inputRef"
             v-model="inputPrompt"
-            rows="3"
+            :rows="isExpanded ? (currentPlan ? 4 : 8) : 3"
             :placeholder="selectedImageBase64 ? '可选输入对图片的补充要求（如「提取为周排程」、「只识别下周日程」），或直接点击【开始视觉解析】...' : '告诉 Copilot 你的计划，例如：「明天下午3点跟团队开上线会，周五前完成PPT，每天早晨阅读20分钟」...（支持直接粘贴截图）'"
-            class="w-full p-3 bg-transparent text-xs sm:text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 resize-none focus:outline-hidden"
+            :class="[
+              'w-full p-3 sm:p-4 bg-transparent text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden leading-relaxed transition-all',
+              isExpanded
+                ? (currentPlan ? 'text-xs sm:text-sm min-h-[110px] max-h-[35vh] resize-y' : 'text-sm sm:text-base min-h-[190px] sm:min-h-[240px] max-h-[50vh] resize-y')
+                : 'text-xs sm:text-sm resize-none'
+            ]"
             @keydown="handleKeyDown"
             @paste="handlePaste"
           ></textarea>
@@ -437,7 +449,10 @@
           <div
             ref="thinkingBoxRef"
             @scroll="handleThinkingScroll"
-            class="text-xs text-slate-600 dark:text-slate-300 font-mono whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto"
+            :class="[
+              'text-xs text-slate-600 dark:text-slate-300 font-mono whitespace-pre-wrap leading-relaxed overflow-y-auto',
+              isExpanded ? 'max-h-72 sm:max-h-88' : 'max-h-48'
+            ]"
           >
             {{ streamingText || '正在解析时间线与碰撞检测...' }}
           </div>
@@ -484,7 +499,7 @@
               </button>
             </div>
 
-            <div class="space-y-2">
+            <div :class="isExpanded ? 'grid grid-cols-1 md:grid-cols-2 gap-2.5' : 'space-y-2'">
               <div
                 v-for="s in currentPlan.schedules"
                 :key="s.id"
@@ -552,7 +567,7 @@
               </button>
             </div>
 
-            <div class="space-y-2">
+            <div :class="isExpanded ? 'grid grid-cols-1 md:grid-cols-2 gap-2.5' : 'space-y-2'">
               <div
                 v-for="t in currentPlan.todos"
                 :key="t.id"
@@ -616,7 +631,7 @@
               </button>
             </div>
 
-            <div class="space-y-2">
+            <div :class="isExpanded ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5' : 'space-y-2'">
               <div
                 v-for="h in currentPlan.habits"
                 :key="h.id"
@@ -739,7 +754,12 @@ const emit = defineEmits<{
 const inputRef = ref<HTMLTextAreaElement | null>(null)
 const inputPrompt = ref('')
 const activeMode = ref<CopilotMode>('smart')
-const isExpanded = ref(false)
+const isExpanded = ref(localStorage.getItem('akasha_copilot_expanded') === 'true')
+watch(isExpanded, (val) => {
+  try {
+    localStorage.setItem('akasha_copilot_expanded', String(val))
+  } catch {}
+})
 const isLoading = ref(false)
 const streamingText = ref('')
 const currentPlan = ref<CopilotPlanResult | null>(null)
