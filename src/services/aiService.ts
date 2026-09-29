@@ -1,5 +1,5 @@
 import type { Project, ScheduleItem, Habit, Area } from '@/types'
-import type { AiProviderConfig, CopilotMode, CopilotPlanResult } from '@/types/copilot'
+import type { AiProviderConfig, CopilotMode, CopilotPlanResult, SingleAiEndpointConfig, AiProviderType } from '@/types/copilot'
 export interface VisionCourseItem {
   id: string
   name: string
@@ -21,12 +21,21 @@ export const VISION_COLOR_PALETTE = [
 export const AI_CONFIG_KEY = 'flow_os_ai_config'
 
 export const DEFAULT_AI_CONFIG: AiProviderConfig = {
+  // === 主文字模式 API ===
   provider: 'deepseek',
   baseUrl: 'https://api.deepseek.com',
   apiKey: '',
   model: 'deepseek-chat',
   temperature: 0.3,
   useProxy: false,
+
+  // === 独立图片识别 API ===
+  visionSeparate: false,
+  visionProvider: 'siliconflow',
+  visionBaseUrl: 'https://api.siliconflow.cn/v1',
+  visionApiKey: '',
+  visionModel: 'Qwen/Qwen2.5-VL-72B-Instruct',
+  visionUseProxy: false,
 }
 
 export const PROVIDER_PRESETS: Record<
@@ -76,6 +85,90 @@ export const PROVIDER_PRESETS: Record<
   },
 }
 
+export const VISION_PROVIDER_PRESETS: Record<
+  AiProviderType,
+  { label: string; baseUrl: string; defaultModel: string; models: string[] }
+> = {
+  siliconflow: {
+    label: 'SiliconFlow (硅基流动)',
+    baseUrl: 'https://api.siliconflow.cn/v1',
+    defaultModel: 'Qwen/Qwen2.5-VL-72B-Instruct',
+    models: [
+      'Qwen/Qwen2.5-VL-72B-Instruct',
+      'Pro/Qwen/Qwen2.5-VL-7B-Instruct',
+    ],
+  },
+  openai: {
+    label: 'OpenAI 官方',
+    baseUrl: 'https://api.openai.com/v1',
+    defaultModel: 'gpt-4o-mini',
+    models: ['gpt-4o-mini', 'gpt-4o'],
+  },
+  ollama: {
+    label: '本地 Ollama',
+    baseUrl: 'http://localhost:11434/v1',
+    defaultModel: 'llama3.2-vision:latest',
+    models: ['llama3.2-vision:latest', 'llava:latest', 'qwen2.5-vl:latest'],
+  },
+  newapi: {
+    label: 'NewAPI / OneAPI 聚合平台',
+    baseUrl: '',
+    defaultModel: 'gpt-4o-mini',
+    models: ['gpt-4o-mini', 'gpt-4o', 'claude-3-5-sonnet-20241022'],
+  },
+  deepseek: {
+    label: 'DeepSeek (官方暂无视觉)',
+    baseUrl: 'https://api.deepseek.com',
+    defaultModel: 'deepseek-chat',
+    models: ['deepseek-chat', 'deepseek-reasoner'],
+  },
+  custom: {
+    label: '自定义通用视觉接口',
+    baseUrl: '',
+    defaultModel: '',
+    models: [],
+  },
+}
+
+/**
+ * 提取主文字模式端点配置
+ */
+export function getTextConfig(cfg: AiProviderConfig): SingleAiEndpointConfig {
+  return {
+    provider: cfg.provider,
+    baseUrl: cfg.baseUrl,
+    apiKey: cfg.apiKey,
+    model: cfg.model,
+    temperature: cfg.temperature ?? 0.3,
+    useProxy: !!cfg.useProxy,
+  }
+}
+
+/**
+ * 提取图片识图端点配置：开启独立配置时返回视觉配置，否则优雅回退到主文字配置
+ */
+export function getVisionConfig(cfg: AiProviderConfig): SingleAiEndpointConfig {
+  if (cfg.visionSeparate) {
+    return {
+      provider: cfg.visionProvider || 'siliconflow',
+      baseUrl: cfg.visionBaseUrl || '',
+      apiKey: cfg.visionApiKey || '',
+      model: cfg.visionModel || '',
+      temperature: 0.1,
+      useProxy: !!cfg.visionUseProxy,
+    }
+  }
+  // 未启用独立配置时回退使用主模型
+  return {
+    provider: cfg.provider,
+    baseUrl: cfg.baseUrl,
+    apiKey: cfg.apiKey,
+    model: cfg.model,
+    temperature: 0.1,
+    useProxy: !!cfg.useProxy,
+  }
+}
+
 let memoryAiConfig: AiProviderConfig | null = null
 
 export function loadAiConfig(): AiProviderConfig {
@@ -120,7 +213,10 @@ export function saveAiConfig(cfg: AiProviderConfig) {
   notifyAiConfigChanged(cfg)
 }
 
-function resolveEndpoint(cfg: AiProviderConfig, path: string): { url: string; headers: Record<string, string> } {
+function resolveEndpoint(
+  cfg: { baseUrl: string; apiKey?: string; useProxy?: boolean; provider?: string },
+  path: string
+): { url: string; headers: Record<string, string> } {
   let target = cfg.baseUrl.replace(/\/+$/, '')
   if (!target.endsWith('/v1') && cfg.provider !== 'deepseek') {
     // 很多代理平台如未带 /v1 则补全
@@ -153,10 +249,10 @@ function resolveEndpoint(cfg: AiProviderConfig, path: string): { url: string; he
 }
 
 /**
- * 测试大模型连通性与响应延时
+ * 测试大模型连通性与响应延时 (支持主文字配置与独立图片识别配置)
  */
 export async function testAiConnection(
-  cfg: AiProviderConfig
+  cfg: { baseUrl: string; apiKey?: string; model: string; useProxy?: boolean; provider?: string }
 ): Promise<{ success: boolean; latencyMs: number; message: string }> {
   const startTime = Date.now()
   try {
@@ -310,7 +406,7 @@ JSON 输出协议结构如下：
 export async function streamPlanGeneration(
   prompt: string,
   systemPrompt: string,
-  cfg: AiProviderConfig,
+  cfg: AiProviderConfig | SingleAiEndpointConfig,
   onChunk: (accumulatedText: string) => void
 ): Promise<CopilotPlanResult> {
   const { url, headers } = resolveEndpoint(cfg, '/chat/completions')
@@ -602,12 +698,26 @@ export function convertVisionDataToPlanResult(parsed: any): CopilotPlanResult {
 export async function recognizeScheduleFromImage(
   base64Image: string,
   userInstruction?: string,
-  configOverride?: AiProviderConfig
+  configOverride?: AiProviderConfig | SingleAiEndpointConfig
 ): Promise<CopilotPlanResult> {
-  const cfg = configOverride || loadAiConfig()
+  const fullCfg = loadAiConfig()
+  let cfg: SingleAiEndpointConfig
+  if (configOverride) {
+    if ('visionSeparate' in configOverride) {
+      cfg = getVisionConfig(configOverride as AiProviderConfig)
+    } else {
+      cfg = configOverride as SingleAiEndpointConfig
+    }
+  } else {
+    cfg = getVisionConfig(fullCfg)
+  }
 
   if (!cfg.apiKey && cfg.provider !== 'ollama') {
-    throw new Error('未检测到有效的 AI 接口密钥，请先在【AI 个人效能配置】中配置 API Key。建议使用支持视觉识别的模型（如 OpenAI gpt-4o-mini 或 SiliconFlow Qwen2.5-VL）。')
+    if (fullCfg.visionSeparate) {
+      throw new Error('未检测到有效的【图片识别 API 密钥】，请先在【设置】->【AI 配置】->【图片识图 API】中填写 API Key。')
+    } else {
+      throw new Error('未检测到有效的 AI 接口密钥。如果主模型不支持图片输入（如 DeepSeek），请在【设置】->【AI 配置】中开启【独立图片识别 API】，配置支持视觉的模型（如 OpenAI gpt-4o-mini 或 硅基流动 Qwen2.5-VL）。')
+    }
   }
 
   // 格式化 Data URI
@@ -702,7 +812,7 @@ export async function recognizeScheduleFromImage(
   if (!res.ok) {
     const errorBody = await res.text().catch(() => '')
     if (res.status === 400 || errorBody.toLowerCase().includes('vision') || errorBody.toLowerCase().includes('image') || errorBody.toLowerCase().includes('multimodal')) {
-      throw new Error(`当前配置的模型 (${cfg.model}) 无法接收图像输入。\n建议在【AI 个人效能配置】中切换为支持视觉识别的模型（例如 OpenAI gpt-4o-mini / gpt-4o，或 SiliconFlow Qwen2.5-VL 等）。\n服务器返回: ${errorBody.substring(0, 200)}`)
+      throw new Error(`当前图片识别模型 (${cfg.model}) 无法接收图像输入。\n建议在【AI 配置】->【图片识图 API】中单独配置支持视觉识别的多模态模型（例如 OpenAI gpt-4o-mini 或 硅基流动 Qwen2.5-VL 等），无需替换文字主模型。\n服务器返回: ${errorBody.substring(0, 200)}`)
     }
     throw new Error(`AI 视觉识图接口返回异常 (${res.status}): ${errorBody.substring(0, 300)}`)
   }

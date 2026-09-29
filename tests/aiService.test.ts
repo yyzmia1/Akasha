@@ -6,6 +6,8 @@ import {
   loadAiConfig,
   onAiConfigChange,
   parseRecognizedScheduleContent,
+  getTextConfig,
+  getVisionConfig,
 } from '@/services/aiService'
 
 describe('aiService (AI 规划解析与上下文构建)', () => {
@@ -172,6 +174,64 @@ describe('aiService (AI 规划解析与上下文构建)', () => {
 
     expect(result.semesterInfo?.semesterName).toBe('2026年秋季学期')
     expect(result.semesterInfo?.totalWeeks).toBe(16)
+  })
+
+  it('getTextConfig 与 getVisionConfig 在未开启独立视觉配置时自动回退主模型', () => {
+    const configWithFallback = {
+      provider: 'deepseek' as const,
+      baseUrl: 'https://api.deepseek.com',
+      apiKey: 'sk-deepseek-text-key',
+      model: 'deepseek-chat',
+      temperature: 0.3,
+      useProxy: false,
+      visionSeparate: false,
+      visionProvider: 'siliconflow' as const,
+      visionBaseUrl: 'https://api.siliconflow.cn/v1',
+      visionApiKey: 'sk-silicon-key',
+      visionModel: 'Qwen/Qwen2.5-VL-72B-Instruct',
+      visionUseProxy: false,
+    }
+
+    const textCfg = getTextConfig(configWithFallback)
+    expect(textCfg.model).toBe('deepseek-chat')
+    expect(textCfg.apiKey).toBe('sk-deepseek-text-key')
+
+    // 未开启独立时，视觉配置自动回退使用文字主模型
+    const visionCfg = getVisionConfig(configWithFallback)
+    expect(visionCfg.model).toBe('deepseek-chat')
+    expect(visionCfg.apiKey).toBe('sk-deepseek-text-key')
+    expect(visionCfg.baseUrl).toBe('https://api.deepseek.com')
+  })
+
+  it('getVisionConfig 在开启独立视觉配置时正确使用独立视觉 AI 接口', () => {
+    const configWithSeparateVision = {
+      provider: 'deepseek' as const,
+      baseUrl: 'https://api.deepseek.com',
+      apiKey: 'sk-deepseek-text-key',
+      model: 'deepseek-chat',
+      temperature: 0.3,
+      useProxy: false,
+      // 开启独立视觉接口
+      visionSeparate: true,
+      visionProvider: 'siliconflow' as const,
+      visionBaseUrl: 'https://api.siliconflow.cn/v1',
+      visionApiKey: 'sk-siliconflow-vision-key',
+      visionModel: 'Qwen/Qwen2.5-VL-72B-Instruct',
+      visionUseProxy: true,
+    }
+
+    const textCfg = getTextConfig(configWithSeparateVision)
+    expect(textCfg.model).toBe('deepseek-chat')
+    expect(textCfg.apiKey).toBe('sk-deepseek-text-key')
+    expect(textCfg.useProxy).toBe(false)
+
+    // 开启独立配置后，视觉配置使用独立视觉 AI 参数
+    const visionCfg = getVisionConfig(configWithSeparateVision)
+    expect(visionCfg.provider).toBe('siliconflow')
+    expect(visionCfg.model).toBe('Qwen/Qwen2.5-VL-72B-Instruct')
+    expect(visionCfg.apiKey).toBe('sk-siliconflow-vision-key')
+    expect(visionCfg.baseUrl).toBe('https://api.siliconflow.cn/v1')
+    expect(visionCfg.useProxy).toBe(true)
   })
 })
 

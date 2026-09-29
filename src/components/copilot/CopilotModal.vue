@@ -40,14 +40,14 @@
         </div>
 
         <div class="flex items-center gap-1">
-          <!-- 当前模型状态提示 / 点击切换或配置模型 -->
+          <!-- 当前模型状态提示 / 点击切换或配置模型 (支持文字和识图双配置显示) -->
           <button
             @click="showConfigView = !showConfigView"
             class="text-[11px] px-2 py-1 rounded-md border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1 transition-colors cursor-pointer"
-            :title="aiConfig.apiKey ? `当前模型: ${aiConfig.model} (点击配置/切换)` : '未配置 API Key，点击配置'"
+            :title="currentModelTooltip"
           >
-            <span :class="['w-1.5 h-1.5 rounded-full', aiConfig.apiKey ? 'bg-emerald-500' : 'bg-amber-500']"></span>
-            <span class="max-w-[100px] truncate">{{ aiConfig.apiKey ? aiConfig.model : '配置模型' }}</span>
+            <span :class="['w-1.5 h-1.5 rounded-full', isCurrentActiveModelConfigured ? 'bg-emerald-500' : 'bg-amber-500']"></span>
+            <span class="max-w-[120px] truncate">{{ currentModelBadgeText }}</span>
           </button>
 
           <!-- 展开/收起伴侣面板 -->
@@ -88,7 +88,7 @@
         </button>
       </div>
 
-      <!-- 内嵌 AI 配置视图 (无需离开 Copilot，就地设置) -->
+      <!-- 内嵌 AI 配置视图 (无需离开 Copilot，就地设置两个独立 API 口子) -->
       <div v-if="showConfigView" class="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 animate-in fade-in">
         <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
           <button
@@ -99,14 +99,59 @@
             <span>返回计划生成</span>
           </button>
           <span class="text-xs font-bold text-slate-700 dark:text-slate-300">
-            AI 模型与连接配置
+            AI 模型与连接配置 (文字 / 识图)
           </span>
         </div>
 
-        <div class="space-y-3.5 max-w-xl mx-auto py-1">
+        <!-- 顶部两个 API 口子切换 Tab 药丸 -->
+        <div class="flex items-center p-1 bg-slate-200/70 dark:bg-slate-800 rounded-lg text-xs max-w-xl mx-auto w-full">
+          <button
+            type="button"
+            @click="configActiveTab = 'text'"
+            :class="[
+              'flex-1 py-1.5 rounded-md font-medium transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer text-xs',
+              configActiveTab === 'text'
+                ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-white shadow-2xs font-semibold'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+            ]"
+          >
+            <MessageSquare class="w-3.5 h-3.5" />
+            <span>主文字模式 API</span>
+            <span v-if="aiConfig.apiKey" class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          </button>
+          <button
+            type="button"
+            @click="configActiveTab = 'vision'"
+            :class="[
+              'flex-1 py-1.5 rounded-md font-medium transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer text-xs',
+              configActiveTab === 'vision'
+                ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-white shadow-2xs font-semibold'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+            ]"
+          >
+            <Camera class="w-3.5 h-3.5" />
+            <span>图片识图 API</span>
+            <span
+              :class="[
+                'w-1.5 h-1.5 rounded-full',
+                (aiConfig.visionSeparate ? aiConfig.visionApiKey : aiConfig.apiKey) ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'
+              ]"
+            ></span>
+          </button>
+        </div>
+
+        <!-- 1. 主文字模式配置面板 -->
+        <div v-show="configActiveTab === 'text'" class="space-y-3.5 max-w-xl mx-auto py-1 animate-in fade-in duration-150">
+          <div class="p-2.5 rounded-lg bg-blue-50/70 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/40 text-[11px] text-blue-700 dark:text-blue-300 flex items-start gap-2">
+            <Info class="w-3.5 h-3.5 mt-0.5 shrink-0" />
+            <span class="leading-relaxed">
+              负责自然语言计划排期与任务拆解。推荐使用 <strong>DeepSeek-V3 / R1</strong>、Claude、OpenAI 等大模型。
+            </span>
+          </div>
+
           <!-- 快捷预设供应商选择 -->
           <div class="space-y-1.5">
-            <div class="text-xs font-medium text-slate-800 dark:text-slate-200">推荐服务商预设</div>
+            <div class="text-xs font-medium text-slate-800 dark:text-slate-200">推荐文字模型预设</div>
             <div class="grid grid-cols-3 gap-1.5 text-xs">
               <button
                 v-for="(preset, pKey) in providerPresets"
@@ -197,42 +242,218 @@
             </button>
             <button
               type="button"
-              @click="handleTestConnectionInModal"
-              :disabled="isTestingAi"
+              @click="handleTestTextConnection"
+              :disabled="isTestingTextAi"
               class="py-2.5 px-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-750 active:scale-98 text-slate-700 dark:text-slate-200 text-xs font-medium transition-all cursor-pointer text-center"
             >
-              {{ isTestingAi ? '正在测试...' : '⚡ 测试连通性' }}
+              {{ isTestingTextAi ? '正在测试...' : '⚡ 测试文字接口' }}
             </button>
           </div>
 
           <!-- Test feedback -->
           <div
-            v-if="aiTestResult"
+            v-if="textAiTestResult"
             :class="[
               'p-2.5 rounded-lg border text-[11px] leading-relaxed',
-              aiTestResult.success
+              textAiTestResult.success
                 ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300'
                 : 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300'
             ]"
           >
-            {{ aiTestResult.message }}
+            {{ textAiTestResult.message }}
+          </div>
+        </div>
+
+        <!-- 2. 图片识图模式配置面板 -->
+        <div v-show="configActiveTab === 'vision'" class="space-y-3.5 max-w-xl mx-auto py-1 animate-in fade-in duration-150">
+          <div class="p-2.5 rounded-lg bg-purple-50/70 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/40 text-[11px] text-purple-700 dark:text-purple-300 flex items-start gap-2">
+            <Camera class="w-3.5 h-3.5 mt-0.5 shrink-0" />
+            <span class="leading-relaxed">
+              专用于课表、作息表、日程清单、会议截图等多模态视觉识别。推荐使用 <strong>SiliconFlow Qwen2.5-VL</strong>、<strong>OpenAI gpt-4o-mini</strong> 或本地 <strong>llama3.2-vision</strong>。
+            </span>
+          </div>
+
+          <!-- 独立视觉配置开关 -->
+          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+            <div>
+              <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">独立图片识别 API 口子</div>
+              <div class="text-[11px] text-slate-400 mt-0.5">
+                {{ aiConfig.visionSeparate ? '已开启，识图排程将调用下方专用视觉 AI' : '当前未开启，识图排程将直接复用主文字模型' }}
+              </div>
+            </div>
+            <button
+              type="button"
+              @click="aiConfig.visionSeparate = !aiConfig.visionSeparate"
+              :class="[
+                'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden',
+                aiConfig.visionSeparate ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-700'
+              ]"
+              role="switch"
+              :aria-checked="aiConfig.visionSeparate"
+            >
+              <span
+                :class="[
+                  'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out',
+                  aiConfig.visionSeparate ? 'translate-x-4' : 'translate-x-0'
+                ]"
+              />
+            </button>
+          </div>
+
+          <!-- 未开启时的提示卡片 -->
+          <div
+            v-if="!aiConfig.visionSeparate"
+            class="p-3 rounded-xl bg-slate-50/80 dark:bg-slate-850/50 border border-slate-200/60 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-300 space-y-2"
+          >
+            <div class="flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-200">
+              <Info class="w-3.5 h-3.5 text-blue-500" />
+              <span>当前复用文字模型：{{ aiConfig.model || '未配置' }}</span>
+            </div>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              若主文字模型为 DeepSeek-V3 / R1 等纯文本模型，将无法识别图片。开启独立配置后，文字和识图即可各自使用不同的大模型。
+            </p>
+            <button
+              type="button"
+              @click="aiConfig.visionSeparate = true"
+              class="text-[11px] font-medium text-blue-600 dark:text-blue-400 hover:underline cursor-pointer flex items-center gap-1"
+            >
+              <span>开启独立图片识别配置 →</span>
+            </button>
+          </div>
+
+          <!-- 开启时的表单 -->
+          <div v-else class="space-y-3 pt-1">
+            <!-- 视觉推荐预设 -->
+            <div class="space-y-1.5">
+              <div class="text-xs font-medium text-slate-800 dark:text-slate-200">推荐视觉服务商预设</div>
+              <div class="grid grid-cols-3 gap-1.5 text-xs">
+                <button
+                  v-for="(preset, pKey) in visionProviderPresets"
+                  :key="pKey"
+                  type="button"
+                  @click="applyVisionProviderPreset(pKey)"
+                  :class="[
+                    'p-2 rounded-lg border text-center transition-all truncate text-[11px] cursor-pointer',
+                    aiConfig.visionProvider === pKey
+                      ? 'bg-blue-50 dark:bg-slate-700 border-blue-500 text-blue-600 dark:text-white font-semibold shadow-2xs'
+                      : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-750'
+                  ]"
+                >
+                  {{ preset.label.split(' ')[0] }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Vision Base URL -->
+            <div class="space-y-1">
+              <label class="text-[11px] font-medium text-slate-700 dark:text-slate-300">识图 API 接口地址 (Base URL)</label>
+              <input
+                v-model="aiConfig.visionBaseUrl"
+                type="text"
+                placeholder="如 https://api.siliconflow.cn/v1 或 https://api.openai.com/v1"
+                class="w-full px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-mono focus:outline-hidden focus:border-blue-500"
+              />
+            </div>
+
+            <!-- Vision API Key -->
+            <div class="space-y-1">
+              <div class="flex items-center justify-between">
+                <label class="text-[11px] font-medium text-slate-700 dark:text-slate-300">识图 API 密钥 (API Key)</label>
+                <span class="text-[10px] text-slate-400">独立保存在本地浏览器</span>
+              </div>
+              <input
+                v-model="aiConfig.visionApiKey"
+                type="password"
+                placeholder="sk-..."
+                class="w-full px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-mono focus:outline-hidden focus:border-blue-500"
+              />
+            </div>
+
+            <!-- Vision Model Name -->
+            <div class="space-y-1">
+              <label class="text-[11px] font-medium text-slate-700 dark:text-slate-300">识图模型名称 (Model)</label>
+              <input
+                v-model="aiConfig.visionModel"
+                type="text"
+                placeholder="如 Qwen/Qwen2.5-VL-72B-Instruct 或 gpt-4o-mini"
+                class="w-full px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-mono focus:outline-hidden focus:border-blue-500"
+              />
+            </div>
+
+            <!-- Vision Nginx Proxy Switch -->
+            <div class="pt-2 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between">
+              <div>
+                <div class="text-xs font-medium text-slate-800 dark:text-slate-200">识图接口使用反向代理</div>
+                <div class="text-[11px] text-slate-400">解决跨域拦截或局域网模型访问问题</div>
+              </div>
+              <button
+                type="button"
+                @click="aiConfig.visionUseProxy = !aiConfig.visionUseProxy"
+                :class="[
+                  'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden',
+                  aiConfig.visionUseProxy ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-700'
+                ]"
+                role="switch"
+                :aria-checked="aiConfig.visionUseProxy"
+              >
+                <span
+                  :class="[
+                    'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out',
+                    aiConfig.visionUseProxy ? 'translate-x-4' : 'translate-x-0'
+                  ]"
+                />
+              </button>
+            </div>
+
+            <!-- Action buttons: Save & Ping Test -->
+            <div class="grid grid-cols-2 gap-2 pt-2">
+              <button
+                type="button"
+                @click="handleSaveAndReturn"
+                class="py-2.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-98 text-white text-xs font-semibold transition-all shadow-xs cursor-pointer text-center"
+              >
+                保存并返回
+              </button>
+              <button
+                type="button"
+                @click="handleTestVisionConnection"
+                :disabled="isTestingVisionAi"
+                class="py-2.5 px-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-750 active:scale-98 text-slate-700 dark:text-slate-200 text-xs font-medium transition-all cursor-pointer text-center"
+              >
+                {{ isTestingVisionAi ? '正在测试...' : '⚡ 测试识图接口' }}
+              </button>
+            </div>
+
+            <!-- Test feedback -->
+            <div
+              v-if="visionAiTestResult"
+              :class="[
+                'p-2.5 rounded-lg border text-[11px] leading-relaxed',
+                visionAiTestResult.success
+                  ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300'
+                  : 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300'
+              ]"
+            >
+              {{ visionAiTestResult.message }}
+            </div>
           </div>
         </div>
       </div>
 
       <!-- 主体输入与对话/草稿区 -->
       <div v-else ref="mainScrollRef" @scroll="handleMainScroll" class="flex-1 overflow-y-auto p-4 space-y-4">
-        <!-- 未配置 API Key 的温馨提示横幅 -->
+        <!-- 未配置 API Key 的温馨提示横幅 (自适应感知当前模式是文字还是图片识别) -->
         <div
-          v-if="!aiConfig.apiKey && aiConfig.provider !== 'ollama'"
+          v-if="!isCurrentActiveModelConfigured"
           class="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 flex items-center justify-between gap-3 text-xs text-amber-800 dark:text-amber-300"
         >
           <div class="flex items-center gap-2">
             <AlertTriangle class="w-4 h-4 shrink-0 text-amber-500" />
-            <span>尚未配置大模型 API Key。系统支持 DeepSeek、OpenAI、硅基流动、Ollama 等。</span>
+            <span v-if="selectedImageBase64">尚未配置【图片识别 API Key】。请配置支持视觉的模型（如 Qwen2.5-VL 或 gpt-4o-mini）。</span>
+            <span v-else>尚未配置大模型 API Key。系统支持 DeepSeek、OpenAI、硅基流动、Ollama 等。</span>
           </div>
           <button
-            @click="showConfigView = true"
+            @click="selectedImageBase64 ? (configActiveTab = 'vision', showConfigView = true) : (configActiveTab = 'text', showConfigView = true)"
             class="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-medium shrink-0 transition-colors cursor-pointer"
           >
             就地配置
@@ -628,6 +849,8 @@ import {
   RefreshCw,
   ArrowLeft,
   Camera,
+  MessageSquare,
+  Info,
 } from 'lucide-vue-next'
 import type { Area, Project, ScheduleItem, Habit } from '@/types'
 import type { CopilotMode, CopilotPlanResult, AiProviderConfig, AiProviderType } from '@/types/copilot'
@@ -640,6 +863,9 @@ import {
   streamPlanGeneration,
   recognizeScheduleFromImage,
   PROVIDER_PRESETS,
+  VISION_PROVIDER_PRESETS,
+  getTextConfig,
+  getVisionConfig,
 } from '@/services/aiService'
 import { annotateConflicts } from '@/services/conflictDetector'
 
@@ -735,9 +961,46 @@ function clearImage() {
 }
 
 const showConfigView = ref(false)
-const isTestingAi = ref(false)
-const aiTestResult = ref<{ success: boolean; message: string } | null>(null)
+const configActiveTab = ref<'text' | 'vision'>('text')
 const providerPresets = PROVIDER_PRESETS
+const visionProviderPresets = VISION_PROVIDER_PRESETS
+
+const isTestingTextAi = ref(false)
+const textAiTestResult = ref<{ success: boolean; message: string } | null>(null)
+
+const isTestingVisionAi = ref(false)
+const visionAiTestResult = ref<{ success: boolean; message: string } | null>(null)
+
+const effectiveVisionConfig = computed(() => getVisionConfig(aiConfig.value))
+const effectiveTextConfig = computed(() => getTextConfig(aiConfig.value))
+
+const currentModelBadgeText = computed(() => {
+  if (selectedImageBase64.value) {
+    const vCfg = effectiveVisionConfig.value
+    return vCfg.apiKey || vCfg.provider === 'ollama' ? `📷 ${vCfg.model || '视觉模型'}` : '配置识图 AI'
+  }
+  const tCfg = effectiveTextConfig.value
+  return tCfg.apiKey || tCfg.provider === 'ollama' ? tCfg.model : '配置模型'
+})
+
+const isCurrentActiveModelConfigured = computed(() => {
+  if (selectedImageBase64.value) {
+    const vCfg = effectiveVisionConfig.value
+    return !!(vCfg.apiKey || vCfg.provider === 'ollama')
+  }
+  const tCfg = effectiveTextConfig.value
+  return !!(tCfg.apiKey || tCfg.provider === 'ollama')
+})
+
+const currentModelTooltip = computed(() => {
+  const tCfg = effectiveTextConfig.value
+  const vCfg = effectiveVisionConfig.value
+  const textDesc = tCfg.apiKey ? `文字: ${tCfg.model}` : '文字: 未配Key'
+  const visionDesc = aiConfig.value.visionSeparate
+    ? (vCfg.apiKey ? `识图: ${vCfg.model}` : '识图: 未配Key')
+    : `识图: 跟随文字模型`
+  return `${textDesc} | ${visionDesc} (点击配置/切换)`
+})
 
 const mainScrollRef = ref<HTMLElement | null>(null)
 const thinkingBoxRef = ref<HTMLElement | null>(null)
@@ -789,32 +1052,64 @@ function applyProviderPreset(presetKey: AiProviderType) {
   if (p) {
     aiConfig.value.provider = presetKey
     aiConfig.value.baseUrl = p.baseUrl
-    aiConfig.value.model = p.model
-    aiConfig.value.useProxy = p.useProxy
+    aiConfig.value.model = p.defaultModel || p.models[0] || ''
+  }
+}
+
+function applyVisionProviderPreset(presetKey: AiProviderType) {
+  const p = visionProviderPresets[presetKey]
+  if (p) {
+    aiConfig.value.visionProvider = presetKey
+    aiConfig.value.visionBaseUrl = p.baseUrl
+    aiConfig.value.visionModel = p.defaultModel || p.models[0] || ''
   }
 }
 
 function handleSaveAndReturn() {
   saveAiConfig(aiConfig.value)
   showConfigView.value = false
-  aiTestResult.value = null
+  textAiTestResult.value = null
+  visionAiTestResult.value = null
 }
 
-async function handleTestConnectionInModal() {
-  isTestingAi.value = true
-  aiTestResult.value = null
+async function handleTestTextConnection() {
+  isTestingTextAi.value = true
+  textAiTestResult.value = null
   try {
-    const res = await testAiConnection(aiConfig.value)
-    aiTestResult.value = res
+    const textCfg = getTextConfig(aiConfig.value)
+    const res = await testAiConnection(textCfg)
+    textAiTestResult.value = res
   } catch (err: any) {
-    aiTestResult.value = {
+    textAiTestResult.value = {
       success: false,
       message: err.message || '网络连接异常'
     }
   } finally {
-    isTestingAi.value = false
+    isTestingTextAi.value = false
   }
 }
+
+async function handleTestVisionConnection() {
+  isTestingVisionAi.value = true
+  visionAiTestResult.value = null
+  try {
+    const visionCfg = getVisionConfig(aiConfig.value)
+    const res = await testAiConnection(visionCfg)
+    visionAiTestResult.value = res
+  } catch (err: any) {
+    visionAiTestResult.value = {
+      success: false,
+      message: err.message || '网络连接异常'
+    }
+  } finally {
+    isTestingVisionAi.value = false
+  }
+}
+
+// 兼容别名
+const isTestingAi = isTestingTextAi
+const aiTestResult = textAiTestResult
+const handleTestConnectionInModal = handleTestTextConnection
 
 const modeOptions = computed<{ label: string; value: CopilotMode; icon: any }[]>(() => [
   { label: '智能', value: 'smart', icon: Sparkles },
@@ -900,9 +1195,21 @@ async function handleStartGenerate() {
   if (isLoading.value) return
   if (!selectedImageBase64.value && !inputPrompt.value.trim()) return
 
-  if (!aiConfig.value.apiKey && aiConfig.value.provider !== 'ollama') {
-    showConfigView.value = true
-    return
+  // 根据当前是图片识图还是纯文字交互，分别检验对应的 API 接口密钥
+  if (selectedImageBase64.value) {
+    const vCfg = effectiveVisionConfig.value
+    if (!vCfg.apiKey && vCfg.provider !== 'ollama') {
+      configActiveTab.value = 'vision'
+      showConfigView.value = true
+      return
+    }
+  } else {
+    const tCfg = effectiveTextConfig.value
+    if (!tCfg.apiKey && tCfg.provider !== 'ollama') {
+      configActiveTab.value = 'text'
+      showConfigView.value = true
+      return
+    }
   }
 
   isLoading.value = true
@@ -936,7 +1243,7 @@ async function handleStartGenerate() {
       result = await streamPlanGeneration(
         inputPrompt.value.trim(),
         sysPrompt,
-        aiConfig.value,
+        getTextConfig(aiConfig.value),
         (textChunk) => {
           streamingText.value = textChunk
         }

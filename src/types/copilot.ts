@@ -2,13 +2,32 @@ import type { Project, ScheduleItem, TodoItem, Habit } from '@/types'
 
 export type AiProviderType = 'deepseek' | 'openai' | 'siliconflow' | 'ollama' | 'newapi' | 'custom'
 
+// 单个 AI 接口端点配置定义（供文字或识图复用）
+export interface SingleAiEndpointConfig {
+  provider: AiProviderType
+  baseUrl: string
+  apiKey: string
+  model: string
+  temperature?: number
+  useProxy: boolean // 是否使用后端 Nginx 反向代理
+}
+
 export interface AiProviderConfig {
+  // === 主文字模式 API (Text / Chat Copilot) ===
   provider: AiProviderType
   baseUrl: string
   apiKey: string
   model: string
   temperature: number
   useProxy: boolean // 是否使用后端 Nginx 反向代理
+
+  // === 独立图片识别 API (Vision / Multimodal API) ===
+  visionSeparate?: boolean // 是否开启独立的图片识别配置 (true: 使用专用视觉API; false: 复用主文字API)
+  visionProvider?: AiProviderType
+  visionBaseUrl?: string
+  visionApiKey?: string
+  visionModel?: string
+  visionUseProxy?: boolean
 }
 
 export type CopilotMode = 'smart' | 'schedule' | 'todo' | 'habit'
