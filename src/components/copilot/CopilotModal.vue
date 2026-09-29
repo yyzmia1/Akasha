@@ -374,7 +374,7 @@
             ref="inputRef"
             v-model="inputPrompt"
             :rows="isExpanded ? (currentPlan ? 4 : 8) : 3"
-            :placeholder="selectedImageBase64 ? '可选输入对图片的补充要求（如「提取为周排程」、「只识别下周日程」），或直接点击【开始视觉解析】...' : '告诉 Copilot 你的计划，例如：「明天下午3点跟团队开上线会，周五前完成PPT，每天早晨阅读20分钟」...（支持直接粘贴截图）'"
+            :placeholder="placeholderText"
             :class="[
               'w-full p-3 sm:p-4 bg-transparent text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden leading-relaxed transition-all',
               isExpanded
@@ -397,6 +397,22 @@
                 <Camera class="w-3.5 h-3.5 text-indigo-500" />
                 <span>{{ selectedImageBase64 ? '更换图片' : 'AI 识图排期' }}</span>
               </button>
+
+              <!-- 场景启发灵感开关按钮（轻量小灯泡，不常驻，按需唤出） -->
+              <button
+                type="button"
+                @click="togglePromptChips"
+                :class="[
+                  'flex items-center gap-1 px-2 py-1 rounded-md transition-colors cursor-pointer',
+                  showPromptChips
+                    ? 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 font-medium'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50/60 dark:hover:bg-amber-950/30'
+                ]"
+                :title="showPromptChips ? '收起场景启发' : '展开场景启发灵感'"
+              >
+                <Lightbulb class="w-3.5 h-3.5" :class="showPromptChips ? 'text-amber-500' : 'text-slate-400'" />
+                <span>场景启发</span>
+              </button>
             </div>
 
             <button
@@ -411,9 +427,23 @@
           </div>
         </div>
 
-        <!-- 常用推荐 Prompt 胶囊 -->
-        <div v-if="!currentPlan && !isLoading" class="space-y-1.5">
-          <div class="text-[11px] font-medium text-slate-400">试试这些场景启发：</div>
+        <!-- 常用推荐 Prompt 胶囊 (仅初次或手动展开时展示，不常驻) -->
+        <div v-if="!currentPlan && !isLoading && showPromptChips" class="space-y-1.5 animate-in fade-in duration-200">
+          <div class="flex items-center justify-between text-[11px] font-medium text-slate-400">
+            <span class="flex items-center gap-1">
+              <Lightbulb class="w-3.5 h-3.5 text-amber-500" />
+              <span>试试这些场景启发：</span>
+            </span>
+            <button
+              type="button"
+              @click="dismissPromptChips"
+              class="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:underline cursor-pointer flex items-center gap-0.5"
+              title="收起后将保持纯净极简输入框，可随时点击工具栏「场景启发」重新唤出"
+            >
+              <span>不再常驻</span>
+              <X class="w-3 h-3" />
+            </button>
+          </div>
           <div class="flex flex-wrap gap-1.5">
             <button
               v-for="chip in promptChips"
@@ -719,6 +749,7 @@ import {
   Camera,
   MessageSquare,
   Info,
+  Lightbulb,
 } from 'lucide-vue-next'
 import type { Area, Project, ScheduleItem, Habit } from '@/types'
 import type { CopilotMode, CopilotPlanResult, AiProviderConfig, AiProviderType } from '@/types/copilot'
@@ -764,6 +795,31 @@ const isLoading = ref(false)
 const streamingText = ref('')
 const currentPlan = ref<CopilotPlanResult | null>(null)
 const aiConfig = ref<AiProviderConfig>(loadAiConfig())
+
+const HAS_SEEN_HINTS_KEY = 'akasha_copilot_seen_hints'
+const showPromptChips = ref(localStorage.getItem(HAS_SEEN_HINTS_KEY) !== 'true')
+
+function togglePromptChips() {
+  showPromptChips.value = !showPromptChips.value
+}
+
+function dismissPromptChips() {
+  showPromptChips.value = false
+  try {
+    localStorage.setItem(HAS_SEEN_HINTS_KEY, 'true')
+  } catch {}
+}
+
+const placeholderText = computed(() => {
+  if (selectedImageBase64.value) {
+    return '可选输入对图片的补充要求，或直接点击【开始视觉解析】...'
+  }
+  // 首次打开未关闭引导时展示带详尽示例的引导提示；关闭或后续使用后展示极简无冗余的高级占位符
+  if (showPromptChips.value) {
+    return '告诉 Copilot 你的计划，例如：「明天下午3点开上线会，周五前完成PPT」...（支持直接粘贴截图）'
+  }
+  return '输入你的计划与安排，支持直接粘贴截图...'
+})
 
 const imageInputRef = ref<HTMLInputElement | null>(null)
 const selectedImageBase64 = ref<string | null>(null)
@@ -982,6 +1038,7 @@ const promptChips = [
 ]
 
 function applyChip(chipText: string) {
+  dismissPromptChips()
   if (chipText.includes('识图排程')) {
     triggerImageSelect()
     return
@@ -1049,6 +1106,8 @@ function toggleGroupSelection(group: 'schedules' | 'todos' | 'habits') {
 async function handleStartGenerate() {
   if (isLoading.value) return
   if (!selectedImageBase64.value && !inputPrompt.value.trim()) return
+
+  dismissPromptChips()
 
   // 检验 API 接口密钥
   if (selectedImageBase64.value) {
