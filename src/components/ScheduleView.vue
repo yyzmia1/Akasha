@@ -45,23 +45,9 @@
       </div>
     </div>
 
-    <!-- Category Filter Tabs -->
+    <!-- Category Filter Tabs (近期日程 - 已过日程 - 全部日程) -->
     <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200/80 dark:border-slate-700/80 overflow-x-auto no-scrollbar select-none">
-      <button
-        @click="activeCategory = 'all'"
-        :class="[
-          'px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer',
-          activeCategory === 'all'
-            ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-white shadow-2xs font-semibold'
-            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-        ]"
-      >
-        <span>{{ t('schedule.all') }}</span>
-        <span class="text-[10px] px-1.5 py-0.2 rounded-full font-mono" :class="activeCategory === 'all' ? 'bg-blue-50 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300' : 'bg-slate-200/60 dark:bg-slate-800 text-slate-500'">
-          {{ filteredSchedules.length }}
-        </span>
-      </button>
-
+      <!-- 1. 近期日程 -->
       <button
         @click="activeCategory = 'upcoming'"
         :class="[
@@ -78,6 +64,7 @@
         </span>
       </button>
 
+      <!-- 2. 已过日程 -->
       <button
         @click="activeCategory = 'past'"
         :class="[
@@ -90,6 +77,22 @@
         <span>{{ t('schedule.past') }}</span>
         <span class="text-[10px] px-1.5 py-0.2 rounded-full font-mono" :class="activeCategory === 'past' ? 'bg-blue-50 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300' : 'bg-slate-200/60 dark:bg-slate-800 text-slate-500'">
           {{ pastSchedules.length }}
+        </span>
+      </button>
+
+      <!-- 3. 全部日程 -->
+      <button
+        @click="activeCategory = 'all'"
+        :class="[
+          'px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer',
+          activeCategory === 'all'
+            ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-white shadow-2xs font-semibold'
+            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+        ]"
+      >
+        <span>{{ t('schedule.all') }}</span>
+        <span class="text-[10px] px-1.5 py-0.2 rounded-full font-mono" :class="activeCategory === 'all' ? 'bg-blue-50 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300' : 'bg-slate-200/60 dark:bg-slate-800 text-slate-500'">
+          {{ filteredSchedules.length }}
         </span>
       </button>
     </div>
@@ -374,7 +377,7 @@ const emit = defineEmits<{
 
 const highlightedScheduleId = ref<string | null>(null)
 const selectedProjectId = ref<string>('all')
-const activeCategory = ref<'all' | 'upcoming' | 'past'>('all')
+const activeCategory = ref<'upcoming' | 'past' | 'all'>('upcoming')
 
 watch(
   () => props.targetScheduleId,

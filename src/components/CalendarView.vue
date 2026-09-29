@@ -805,7 +805,7 @@
             <!-- 1. Has Timeline Events: Render vertical track and items -->
             <template v-if="hasTimelineEvents(displayDays[0].dateStr, displayDays[0].isToday)">
               <!-- Continuous Vertical Track Line -->
-              <div class="absolute left-[4rem] sm:left-[4.5rem] -translate-x-1/2 top-4 bottom-4 w-0.5 bg-slate-200 dark:bg-slate-800"></div>
+              <div class="absolute left-[6.5rem] sm:left-[7.5rem] -translate-x-1/2 top-4 bottom-4 w-0.5 bg-slate-200 dark:bg-slate-800"></div>
 
               <!-- Timeline Items -->
               <div class="space-y-4 sm:space-y-5">
@@ -815,12 +815,39 @@
                 >
                 <!-- Item Row -->
                 <div class="relative flex items-start group">
-                  <!-- Left Timestamp -->
-                  <div class="w-16 sm:w-18 pr-3 sm:pr-4 pt-1 text-right shrink-0">
+                  <!-- In-progress proportional red indicator line (Slicing across track and card) -->
+                  <div
+                    v-if="item.inProgress"
+                    class="absolute left-0 right-0 z-20 pointer-events-none -translate-y-1/2 flex items-center"
+                    :style="{ top: `${item.progressPercent}%` }"
+                  >
+                    <!-- Track marker dot on vertical line -->
+                    <div class="absolute left-[6.5rem] sm:left-[7.5rem] -translate-x-1/2 flex items-center justify-center">
+                      <span class="w-3.5 h-3.5 rounded-full bg-rose-500 ring-4 ring-rose-200/90 dark:ring-rose-950 animate-pulse"></span>
+                      <span class="absolute w-1.5 h-1.5 rounded-full bg-white"></span>
+                    </div>
+
+                    <!-- Line slicing across track into and through the card -->
+                    <div class="ml-[6.5rem] sm:ml-[7.5rem] flex-1 flex items-center pl-2.5 sm:pl-3">
+                      <div class="h-[2px] bg-rose-500 dark:bg-rose-500 flex-1 rounded-full relative flex items-center justify-end pr-2.5 shadow-sm">
+                        <!-- Glow highlight -->
+                        <div class="absolute inset-0 bg-rose-500/30 blur-xs rounded-full"></div>
+                        <span class="relative inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500 text-white shadow-xs select-none">
+                          <span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
+                          进行中 {{ item.nowTimeFormatted }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Left Timestamp (Guaranteed one line, no wrapping) -->
+                  <div class="w-[6.5rem] sm:w-[7.5rem] pr-2.5 sm:pr-3 pt-1 text-right shrink-0">
                     <span
                       :class="[
-                        'text-xs font-mono select-none',
-                        item.type === 'now'
+                        'text-[11px] sm:text-xs font-mono select-none whitespace-nowrap block',
+                        item.inProgress
+                          ? 'text-rose-600 dark:text-rose-400 font-bold'
+                          : item.type === 'now'
                           ? 'text-rose-600 dark:text-rose-400 font-bold'
                           : 'text-slate-500 dark:text-slate-400 font-semibold'
                       ]"
@@ -873,7 +900,12 @@
                     <div
                       v-else-if="item.type === 'schedule'"
                       @click="handleOpenSchedule(item.data)"
-                      class="p-3 sm:p-3.5 rounded-xl border border-indigo-200/80 dark:border-indigo-900/70 bg-indigo-50/40 dark:bg-indigo-950/20 hover:bg-indigo-50/80 dark:hover:bg-indigo-950/40 hover:border-indigo-300 dark:hover:border-indigo-800 transition-all cursor-pointer shadow-2xs hover:shadow-xs flex items-center justify-between gap-3 group/sch"
+                      :class="[
+                        'p-3 sm:p-3.5 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-xs flex items-center justify-between gap-3 group/sch relative',
+                        item.inProgress
+                          ? 'border-rose-300/90 dark:border-rose-800/80 bg-rose-50/20 dark:bg-rose-950/15 hover:border-rose-400 dark:hover:border-rose-700 shadow-xs'
+                          : 'border-indigo-200/80 dark:border-indigo-900/70 bg-indigo-50/40 dark:bg-indigo-950/20 hover:bg-indigo-50/80 dark:hover:bg-indigo-950/40 hover:border-indigo-300 dark:hover:border-indigo-800'
+                      ]"
                       title="点击查看或编辑日程"
                     >
                       <div class="flex items-center gap-3 min-w-0">
@@ -2740,6 +2772,58 @@ interface TimelineItem {
   projectName?: string
   isScheduled?: boolean
   data?: any
+  inProgress?: boolean
+  progressPercent?: number
+  nowTimeFormatted?: string
+}
+
+function parseMinutes(t?: string): number | null {
+  if (!t || !t.includes(':')) return null
+  const [h, m] = t.split(':').map(Number)
+  if (isNaN(h) || isNaN(m)) return null
+  return h * 60 + m
+}
+
+function getItemTimeRange(item: TimelineItem): { startMinutes: number; endMinutes: number } | null {
+  if (item.type === 'now') return null
+
+  // 1. 固定日程
+  if (item.type === 'schedule' && item.data) {
+    const s = item.data
+    const start = parseMinutes(s.time)
+    const end = parseMinutes(s.endTime)
+    if (start !== null && end !== null && end > start) {
+      return { startMinutes: start, endMinutes: end }
+    }
+    if (start !== null) {
+      return { startMinutes: start, endMinutes: start + 60 }
+    }
+  }
+
+  // 2. 待办事项
+  if (item.type === 'todo' && item.data) {
+    const t = item.data
+    const start = parseMinutes(t.startTime)
+    const end = parseMinutes(t.dueTime)
+    if (start !== null && end !== null && end > start) {
+      return { startMinutes: start, endMinutes: end }
+    }
+    if (start !== null) {
+      return { startMinutes: start, endMinutes: start + 60 }
+    }
+  }
+
+  // 3. 通用格式解析 (如 time 字符串形如 "10:20 ~ 12:00")
+  if (item.time && item.time.includes('~')) {
+    const [p1, p2] = item.time.split('~').map((s) => s.trim())
+    const start = parseMinutes(p1)
+    const end = parseMinutes(p2)
+    if (start !== null && end !== null && end > start) {
+      return { startMinutes: start, endMinutes: end }
+    }
+  }
+
+  return null
 }
 
 function getDayTimelineItems(dateStr: string, isToday: boolean): TimelineItem[] {
@@ -2948,20 +3032,40 @@ function getDayTimelineItems(dateStr: string, isToday: boolean): TimelineItem[] 
     }
   }
 
-  // 4. Now 实时时间红线指示器（仅在所看日期为“今日”时注入）
+  // 4. 判断并注入进行中状态或实时时间红线指示器（仅在所看日期为“今日”时计算）
   if (isToday) {
     const nowHours = currentNowTime.value.getHours()
     const nowMinutes = currentNowTime.value.getMinutes()
     const currentMins = nowHours * 60 + nowMinutes
     const timeFormatted = `${String(nowHours).padStart(2, '0')}:${String(nowMinutes).padStart(2, '0')}`
 
-    items.push({
-      id: '__timeline_now_indicator__',
-      type: 'now',
-      time: timeFormatted,
-      timeLabel: `${timeFormatted} 现在`,
-      sortMinutes: currentMins,
-    })
+    let hasInProgressItem = false
+
+    for (const item of items) {
+      const range = getItemTimeRange(item)
+      if (range && currentMins >= range.startMinutes && currentMins < range.endMinutes) {
+        const duration = range.endMinutes - range.startMinutes
+        const elapsed = currentMins - range.startMinutes
+        const rawRatio = duration > 0 ? elapsed / duration : 0.5
+        // 将红线穿透比例限制在卡片主体 15% ~ 85% 之间，防止顶边或底边溢出
+        const progressPercent = Math.min(85, Math.max(15, Math.round(rawRatio * 100)))
+        item.inProgress = true
+        item.progressPercent = progressPercent
+        item.nowTimeFormatted = timeFormatted
+        hasInProgressItem = true
+      }
+    }
+
+    // 若当前没有任何排期正在进行中，则在两日程之间或空档处正常插入独立的现在时间红线
+    if (!hasInProgressItem) {
+      items.push({
+        id: '__timeline_now_indicator__',
+        type: 'now',
+        time: timeFormatted,
+        timeLabel: `${timeFormatted} 现在`,
+        sortMinutes: currentMins,
+      })
+    }
   }
 
   // 按时间先后升序排序

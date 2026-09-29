@@ -761,6 +761,67 @@
             </div>
           </section>
 
+          <!-- 系统与版本信息 (内测版从 0. 开始，包含分支信息) -->
+          <section class="space-y-3">
+            <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+              <span class="flex items-center gap-1.5">
+                <Info class="w-3.5 h-3.5 text-blue-500" />
+                <span>系统与版本信息</span>
+              </span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full font-medium bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200/50 dark:border-indigo-800/40">
+                内测阶段 (Beta)
+              </span>
+            </h3>
+
+            <div class="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850/40 space-y-2.5 text-xs">
+              <!-- 版本号 (从 0. 开始的内测版) -->
+              <div class="flex items-center justify-between">
+                <span class="text-slate-500 dark:text-slate-400">系统版本</span>
+                <span class="font-bold text-slate-800 dark:text-slate-100 font-mono flex items-center gap-1.5">
+                  <span>{{ versionInfo.fullVersionString }}</span>
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                </span>
+              </div>
+
+              <!-- 分支信息与是否分支 -->
+              <div class="flex items-center justify-between">
+                <span class="text-slate-500 dark:text-slate-400">代码分支</span>
+                <div class="flex items-center gap-1.5 font-mono text-[11px]">
+                  <GitBranch class="w-3.5 h-3.5 text-indigo-500" />
+                  <span :class="versionInfo.isBranch ? 'text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-slate-700 dark:text-slate-300'">
+                    {{ versionInfo.branch }}
+                  </span>
+                  <span
+                    :class="[
+                      'text-[9px] px-1.5 py-0.2 rounded font-sans font-medium',
+                      versionInfo.isBranch
+                        ? 'bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300'
+                        : 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300'
+                    ]"
+                  >
+                    {{ versionInfo.isBranch ? '独立分支' : '主线稳定' }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Commit 提交节点 -->
+              <div v-if="versionInfo.commit" class="flex items-center justify-between">
+                <span class="text-slate-500 dark:text-slate-400">代码节点</span>
+                <span class="font-mono text-[11px] text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-slate-700/60">
+                  {{ versionInfo.commit }}
+                </span>
+              </div>
+
+              <!-- 存储引擎 -->
+              <div class="flex items-center justify-between">
+                <span class="text-slate-500 dark:text-slate-400">离线存储</span>
+                <span class="text-slate-600 dark:text-slate-300 font-medium">
+                  IndexedDB 本地强隔离 · 离线全功能
+                </span>
+              </div>
+            </div>
+          </section>
+
           <section class="space-y-3">
             <h3 class="text-xs font-semibold text-rose-500 uppercase tracking-wider flex items-center gap-1.5">
               <AlertTriangle class="w-3.5 h-3.5 text-rose-500" />
@@ -782,10 +843,14 @@
         </div>
 
         <div class="px-4 sm:px-6 py-3.5 pb-safe border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 flex items-center justify-between text-xs text-slate-400">
-          <span>Akasha · 本地存储</span>
+          <div class="flex items-center gap-1.5 truncate">
+            <span class="font-mono font-medium text-slate-600 dark:text-slate-300">Akasha {{ versionInfo.version }} 内测版</span>
+            <span class="text-slate-300 dark:text-slate-700">·</span>
+            <span class="text-[11px] font-mono text-indigo-500 dark:text-indigo-400 truncate">{{ versionInfo.branch }}</span>
+          </div>
           <button
             @click="$emit('close')"
-            class="px-4 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 font-medium transition-colors"
+            class="px-4 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 font-medium transition-colors cursor-pointer shrink-0 ml-2"
           >
             完成
           </button>
@@ -814,7 +879,10 @@ import {
   RefreshCw,
   LogOut,
   Languages,
+  Info,
+  GitBranch,
 } from 'lucide-vue-next'
+import { getAppVersionInfo } from '@/utils/version'
 import { t, currentLocale, setLocale, LANGUAGE_OPTIONS, type SupportedLocale } from '@/utils/i18n'
 import type { FontSize, FontFamily, UiScale } from '@/types'
 import type { AiProviderConfig, AiProviderType } from '@/types/copilot'
@@ -932,6 +1000,9 @@ function resetAutoThemeTimes() {
     end: '22:00',
   })
 }
+
+// --- 版本信息 (从 0. 开始的内测版与分支信息) ---
+const versionInfo = getAppVersionInfo()
 
 // --- AI Copilot Settings Logic ---
 const aiConfig = ref<AiProviderConfig>(loadAiConfig())

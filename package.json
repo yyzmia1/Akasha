@@ -1,6 +1,6 @@
 {
   "name": "akasha",
-  "version": "1.0.0",
+  "version": "0.9.6",
   "description": "An all-in-one calendar, multi-level todo, habit tracking, and journal app",
   "type": "module",
   "scripts": {
