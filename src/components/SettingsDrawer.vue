@@ -392,7 +392,7 @@
                     <span>AI 个人效能与识图配置</span>
                   </div>
                   <div class="text-[11px] text-slate-400 truncate mt-0.5">
-                    {{ aiConfig.apiKey ? `${aiConfig.model || '已就绪'} · 识图: ${aiConfig.visionModel || matchedVisionModel}` : '配置 API 接口与密钥' }}
+                    {{ (aiConfig.apiKey || aiConfig.provider === 'ollama') ? `${aiConfig.model || '已就绪'} · 识图: ${aiConfig.visionSeparate ? (aiConfig.visionModel || '待配置独立模型') : '复用主模型'}` : '配置 API 接口与密钥' }}
                   </div>
                 </div>
               </div>
@@ -495,8 +495,8 @@
               <div class="space-y-3">
                 <div class="flex items-center justify-between">
                   <div>
-                    <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">开启独立识图模型</div>
-                    <div class="text-[10px] text-slate-400">未开启时识图将复用文字模型，开启后可单独填写识图口子</div>
+                    <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">{{ t('settings.enableSeparateVision') }}</div>
+                    <div class="text-[10px] text-slate-400">{{ t('settings.enableSeparateVisionDesc') }}</div>
                   </div>
                   <button
                     type="button"

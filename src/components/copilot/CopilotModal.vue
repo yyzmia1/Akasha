@@ -176,8 +176,8 @@
           <div class="space-y-3">
             <div class="flex items-center justify-between">
               <div>
-                <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">开启独立识图模型</div>
-                <div class="text-[10px] text-slate-400">未开启时识图将复用文字模型，开启后可单独填写识图口子</div>
+                <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">{{ t('settings.enableSeparateVision') }}</div>
+                <div class="text-[10px] text-slate-400">{{ t('settings.enableSeparateVisionDesc') }}</div>
               </div>
               <button
                 type="button"
