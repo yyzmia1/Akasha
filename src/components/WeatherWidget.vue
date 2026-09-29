@@ -326,18 +326,12 @@ onUnmounted(() => {
       :title="weather ? `${weather.location.name} [${weather.location.isAuto ? '定位' : '手动'}] · ${weather.characteristic.displayLabel} ${weather.current.temp}°C (点击查看详情)` : '获取天气中...'"
     >
       <!-- 天气图标 -->
-      <div class="relative flex items-center justify-center">
+      <div class="flex items-center justify-center">
         <component
           :is="weatherIconComponent"
           class="w-4 h-4 transition-transform group-hover:scale-110"
           :class="iconColorClass"
         />
-        <!-- 降水/带伞提醒小徽标 -->
-        <span
-          v-if="weather?.characteristic.umbrellaAdvice"
-          class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-blue-500 ring-2 ring-white dark:ring-slate-900 animate-pulse"
-          title="今日有雨，建议备伞"
-        ></span>
       </div>
 
       <!-- 天气描述 (小屏隐藏，sm 及以上展示) -->
