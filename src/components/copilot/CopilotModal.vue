@@ -251,8 +251,17 @@
           ></textarea>
 
           <div class="px-3 pb-2.5 flex items-center justify-between text-xs text-slate-400">
-            <div class="flex items-center gap-1.5 text-[11px]">
+            <div class="flex items-center gap-3 text-[11px]">
               <span class="hidden sm:inline">快捷键：Enter 发送，Shift+Enter 换行</span>
+              <button
+                type="button"
+                @click="$emit('open-academic'); $emit('close')"
+                class="flex items-center gap-1 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
+                title="上传课表截图，通过多模态 AI 视觉识图智能创建课表日程"
+              >
+                <Camera class="w-3.5 h-3.5 text-indigo-500" />
+                <span>AI 课表识图</span>
+              </button>
             </div>
 
             <button
@@ -569,6 +578,7 @@ import {
   Check,
   RefreshCw,
   ArrowLeft,
+  Camera,
 } from 'lucide-vue-next'
 import type { Area, Project, ScheduleItem, Habit } from '@/types'
 import type { CopilotMode, CopilotPlanResult, AiProviderConfig, AiProviderType } from '@/types/copilot'
@@ -594,6 +604,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'close'): void
   (e: 'open-settings'): void
+  (e: 'open-academic'): void
   (e: 'update-ghosts', drafts: any[]): void
   (e: 'apply-plan', plan: CopilotPlanResult): void
 }>()
@@ -697,6 +708,7 @@ const modeOptions: { label: string; value: CopilotMode; icon: any }[] = [
 ]
 
 const promptChips = [
+  '📷 AI 识图导入学期课程表',
   '🚀 帮我规划明天全天的高效日程',
   '📊 拆解下周二复盘汇报任务及准备事项',
   '🏃 制定每周一三五晨间慢跑打卡习惯',
@@ -704,6 +716,11 @@ const promptChips = [
 ]
 
 function applyChip(chipText: string) {
+  if (chipText.includes('AI 识图导入')) {
+    emit('open-academic')
+    emit('close')
+    return
+  }
   inputPrompt.value = chipText.replace(/^[^\s]+\s*/, '')
   if (inputRef.value) {
     inputRef.value.focus()

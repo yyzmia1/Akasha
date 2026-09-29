@@ -5,6 +5,7 @@ import {
   saveAiConfig,
   loadAiConfig,
   onAiConfigChange,
+  parseRecognizedScheduleContent,
 } from '@/services/aiService'
 
 describe('aiService (AI 规划解析与上下文构建)', () => {
@@ -124,4 +125,53 @@ describe('aiService (AI 规划解析与上下文构建)', () => {
     expect(loadAiConfig().apiKey).toBe('sk-test-sync-key')
     unsubscribe()
   })
+
+  it('parseRecognizedScheduleContent 能够正确解析 AI 识图返回的课程表 JSON', () => {
+    const rawAiVisionOutput = `\`\`\`json
+{
+  "semesterInfo": {
+    "semesterName": "2026年秋季学期",
+    "totalWeeks": 16
+  },
+  "courses": [
+    {
+      "name": "大学物理(A)",
+      "dayOfWeek": 1,
+      "startSection": 3,
+      "step": 2,
+      "weeks": [1, 2, 3, 4, 5, 6, 7, 8],
+      "location": "理学院 302",
+      "teacher": "张教授"
+    },
+    {
+      "name": "马克思主义基本原理",
+      "dayOfWeek": 3,
+      "startSection": 1,
+      "step": 2,
+      "rawWeeksStr": "1-15单周",
+      "location": "教学主楼 101",
+      "teacher": "王老师"
+    }
+  ]
+}
+\`\`\``
+
+    const result = parseRecognizedScheduleContent(rawAiVisionOutput)
+    expect(result.courses).toHaveLength(2)
+    expect(result.courses[0].name).toBe('大学物理(A)')
+    expect(result.courses[0].dayOfWeek).toBe(1)
+    expect(result.courses[0].startSection).toBe(3)
+    expect(result.courses[0].step).toBe(2)
+    expect(result.courses[0].weeks).toEqual([1, 2, 3, 4, 5, 6, 7, 8])
+    expect(result.courses[0].location).toBe('理学院 302')
+    expect(result.courses[0].teacher).toBe('张教授')
+
+    expect(result.courses[1].name).toBe('马克思主义基本原理')
+    expect(result.courses[1].dayOfWeek).toBe(3)
+    expect(result.courses[1].weeks).toEqual([1, 3, 5, 7, 9, 11, 13, 15])
+
+    expect(result.semesterInfo?.semesterName).toBe('2026年秋季学期')
+    expect(result.semesterInfo?.totalWeeks).toBe(16)
+  })
 })
+

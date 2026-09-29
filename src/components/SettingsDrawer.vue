@@ -374,20 +374,55 @@
             </div>
           </section>
 
-          <!-- AI 智能副驾驶配置 (AI Copilot Settings) -->
-          <section class="space-y-3">
-            <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">
-              <span class="flex items-center gap-1.5">
-                <Sparkles class="w-3.5 h-3.5 text-indigo-500" />
-                <span>AI 个人效能配置 (Copilot)</span>
-              </span>
-              <span v-if="aiConfig.apiKey" class="text-[11px] font-normal text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                已配置
-              </span>
-            </h3>
+          <!-- AI 智能副驾驶配置 (AI Copilot Settings，支持默认收纳折叠) -->
+          <section class="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden transition-all">
+            <!-- 头部收纳卡片按钮 (默认收纳状态，点击后展开配置) -->
+            <button
+              type="button"
+              @click="isAiSettingsExpanded = !isAiSettingsExpanded"
+              class="w-full p-3.5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer select-none text-left"
+              :aria-expanded="isAiSettingsExpanded"
+            >
+              <div class="flex items-center gap-2.5 min-w-0">
+                <div class="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 shrink-0">
+                  <Sparkles class="w-4 h-4" />
+                </div>
+                <div class="min-w-0">
+                  <div class="text-xs font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                    <span>AI 个人效能与识图配置 (Copilot)</span>
+                  </div>
+                  <div class="text-[11px] text-slate-400 truncate mt-0.5">
+                    {{ aiConfig.apiKey ? `已启用 · ${aiConfig.model || '通用模型'} · 点击管理配置` : '点击展开配置 API 密钥与视觉识图模型' }}
+                  </div>
+                </div>
+              </div>
 
-            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-3.5">
+              <div class="flex items-center gap-2 shrink-0 ml-2">
+                <span
+                  v-if="aiConfig.apiKey"
+                  class="text-[10px] px-2 py-0.5 rounded-full font-medium bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/40 flex items-center gap-1"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  已配置
+                </span>
+                <span
+                  v-else
+                  class="text-[10px] px-2 py-0.5 rounded-full font-medium bg-slate-100 dark:bg-slate-800 text-slate-400"
+                >
+                  未配置
+                </span>
+                <ChevronDown
+                  class="w-4 h-4 text-slate-400 transition-transform duration-200"
+                  :class="{ 'rotate-180 text-indigo-500': isAiSettingsExpanded }"
+                />
+              </div>
+            </button>
+
+            <!-- 折叠展开的具体配置区域 (仅在展开时展现) -->
+            <div
+              v-show="isAiSettingsExpanded"
+              class="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/30 space-y-3.5 transition-all"
+            >
               <!-- 快捷预设供应商选择 -->
               <div class="space-y-1.5">
                 <div class="text-xs font-medium text-slate-800 dark:text-slate-200">推荐服务商预设</div>
@@ -436,11 +471,14 @@
 
               <!-- Model Name -->
               <div class="space-y-1">
-                <label class="text-[11px] font-medium text-slate-700 dark:text-slate-300">模型名称 (Model)</label>
+                <div class="flex items-center justify-between">
+                  <label class="text-[11px] font-medium text-slate-700 dark:text-slate-300">模型名称 (Model)</label>
+                  <span class="text-[10px] text-indigo-500 dark:text-indigo-400 font-normal">支持 gpt-4o / qwen-vl 等视觉识图</span>
+                </div>
                 <input
                   v-model="aiConfig.model"
                   type="text"
-                  placeholder="如 deepseek-chat 或 gpt-4o-mini"
+                  placeholder="如 deepseek-chat、gpt-4o-mini 或 qwen2.5-vl"
                   class="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-600 text-xs font-mono focus:outline-hidden focus:border-indigo-500"
                 />
               </div>
@@ -500,6 +538,19 @@
                 ]"
               >
                 {{ aiTestResult.message }}
+              </div>
+
+              <!-- 快捷功能入库 -->
+              <div class="pt-2 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-xs">
+                <span class="text-slate-400 text-[11px]">快捷功能</span>
+                <button
+                  type="button"
+                  @click="$emit('open-academic'); $emit('close')"
+                  class="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  <GraduationCap class="w-3.5 h-3.5" />
+                  <span>打开 AI 识图导入课表</span>
+                </button>
               </div>
             </div>
           </section>
@@ -879,6 +930,8 @@ import {
   RefreshCw,
   LogOut,
   Languages,
+  ChevronDown,
+  GraduationCap,
   Info,
   GitBranch,
 } from 'lucide-vue-next'
@@ -943,6 +996,7 @@ const emit = defineEmits<{
   (e: 'import-data', jsonData: string): void
   (e: 'clear-all'): void
   (e: 'reload-data'): void
+  (e: 'open-academic'): void
 }>()
 
 function handleSelectTheme(dark: boolean) {
@@ -1009,6 +1063,8 @@ const aiConfig = ref<AiProviderConfig>(loadAiConfig())
 const providerPresets = PROVIDER_PRESETS
 const isTestingAi = ref(false)
 const aiTestResult = ref<{ success: boolean; message: string } | null>(null)
+// AI 设置收纳折叠状态 (默认收纳，点开后展开配置)
+const isAiSettingsExpanded = ref(false)
 
 // 响应远程同步对 AI 配置的实时变更推送
 onAiConfigChange((newCfg) => {

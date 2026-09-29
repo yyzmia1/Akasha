@@ -1,5 +1,8 @@
 import type { Project, ScheduleItem, Habit, Area } from '@/types'
 import type { AiProviderConfig, CopilotMode, CopilotPlanResult } from '@/types/copilot'
+import type { CourseItem, RecognizedScheduleResult } from '@/types/academic'
+import { COURSE_COLOR_PALETTE } from '@/types/academic'
+import { parseWeeksString } from '@/utils/academicParser'
 
 export const AI_CONFIG_KEY = 'flow_os_ai_config'
 
@@ -421,3 +424,188 @@ export function parsePlanResultFromText(text: string): CopilotPlanResult {
     throw new Error(`AI 返回内容未能成功解析为计划数据，请重试。\n原始返回:\n${text.substring(0, 300)}...`)
   }
 }
+
+/**
+ * 使用多模态视觉模型 (Vision) 识别课程表图片并结构化提取课程信息
+ */
+export async function recognizeScheduleFromImage(
+  base64Image: string,
+  userInstruction?: string,
+  configOverride?: AiProviderConfig
+): Promise<RecognizedScheduleResult> {
+  const cfg = configOverride || loadAiConfig()
+
+  if (!cfg.apiKey && cfg.provider !== 'ollama') {
+    throw new Error('未检测到有效的 AI 接口密钥，请先在【设置 -> AI 个人效能配置】中配置 API Key。建议使用支持视觉识别的模型（如 OpenAI gpt-4o-mini 或 SiliconFlow Qwen2.5-VL）。')
+  }
+
+  // 格式化 Data URI
+  let imageUrl = base64Image
+  if (!imageUrl.startsWith('data:')) {
+    imageUrl = `data:image/jpeg;base64,${imageUrl}`
+  }
+
+  // 构建专门的系统识别 Prompt
+  const systemPrompt = `你是一个世界顶尖的课程表图像识别与排课结构化提取专家。
+请仔细分析用户上传的课程表图片（包括教务系统截图、排课软件截图、手机课表、纸质作息表照片等）。
+精准提取出表格中出现的每一门课程排期，并严格按如下 JSON 结构输出：
+
+{
+  "semesterInfo": {
+    "semesterName": "如 2026年秋季学期 或 2026-2027学年第1学期 (若图片中可见)",
+    "semesterStartDate": "开学首周周一日期 YYYY-MM-DD，若有则填，无则留空",
+    "totalWeeks": 16
+  },
+  "courses": [
+    {
+      "name": "课程名称 (如 高等数学)",
+      "dayOfWeek": 1, // 星期几：1代表周一，2代表周二，...，7代表周日 (必须为数字 1-7)
+      "startSection": 1, // 开始节次数字 (如 1, 3, 5, 7, 9，若课表显示时间 08:00 请按常见节次映射为 1)
+      "step": 2, // 连续上几节课 (如 1-2节连上为 2，3节连上为 3)
+      "weeks": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], // 整数周次数组 (如1-16周，单周[1,3,5...]，双周[2,4,6...])
+      "rawWeeksStr": "1-16周", // 原始周次文字
+      "location": "教室或地点 (如 主楼401、理学院102、操场等，可选)",
+      "teacher": "授课教师 (如 张老师，可选)"
+    }
+  ]
+}
+
+【提取规则要求】：
+1. 必须尽可能完整地提取出课表中的全部课程，不要遗漏；
+2. 同一门课程如果在不同星期或不同节次上课，请分别拆分为独立的课程条目；
+3. 周次如标注“单周”请只包含奇数周，“双周”请只包含偶数周；
+4. 只返回包含 JSON 内容的 Markdown 代码块，即以 \`\`\`json 开头，以 \`\`\` 结尾，严禁输出任何多余的寒暄或解释。`
+
+  const userPrompt = userInstruction
+    ? `请识别这张课程表图片中的所有课程排期。特别说明：${userInstruction}`
+    : '请识别这张课程表图片中的所有课程排期，结构化提取每门课的名称、星期几、开始节次、节数、周次、教室与教师。'
+
+  const { url, headers } = resolveEndpoint(cfg, '/chat/completions')
+
+  const messages: any[] = [
+    { role: 'system', content: systemPrompt },
+    {
+      role: 'user',
+      content: [
+        { type: 'text', text: userPrompt },
+        {
+          type: 'image_url',
+          image_url: {
+            url: imageUrl
+          }
+        }
+      ]
+    }
+  ]
+
+  let res: Response
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model: cfg.model,
+        messages,
+        temperature: 0.1,
+      }),
+    })
+  } catch (err: any) {
+    throw new Error(`连接 AI 视觉接口失败: ${err?.message || '网络请求错误，请检查接口地址或反向代理配置'}`)
+  }
+
+  if (!res.ok) {
+    const errorBody = await res.text().catch(() => '')
+    // 专门针对非 Vision 模型给出贴心指引
+    if (res.status === 400 || errorBody.toLowerCase().includes('vision') || errorBody.toLowerCase().includes('image') || errorBody.toLowerCase().includes('multimodal')) {
+      throw new Error(`当前配置的模型 (${cfg.model}) 无法接收图像输入。\n建议在【设置 -> AI 个人效能配置】中切换为支持视觉识别的模型（例如 OpenAI gpt-4o-mini / gpt-4o，或 SiliconFlow Qwen2.5-VL 等）。\n服务器返回: ${errorBody.substring(0, 200)}`)
+    }
+    throw new Error(`AI 视觉识图接口返回异常 (${res.status}): ${errorBody.substring(0, 300)}`)
+  }
+
+  const data = await res.json()
+  const rawContent = data.choices?.[0]?.message?.content || ''
+  if (!rawContent) {
+    throw new Error('AI 未返回任何识别内容，请重试或更换更清晰的课表截图。')
+  }
+
+  // 解析 JSON 内容
+  return parseRecognizedScheduleContent(rawContent)
+}
+
+/**
+ * 解析并规范化 AI 识图返回的 JSON 内容
+ */
+export function parseRecognizedScheduleContent(rawContent: string): RecognizedScheduleResult {
+  let cleaned = rawContent.trim()
+  if (cleaned.includes('```json')) {
+    cleaned = cleaned.replace(/```json\s*([\s\S]*?)\s*```/g, '$1').trim()
+  } else if (cleaned.includes('```')) {
+    cleaned = cleaned.replace(/```\s*([\s\S]*?)\s*```/g, '$1').trim()
+  }
+
+  let parsed: any
+  try {
+    parsed = JSON.parse(cleaned)
+  } catch (_e) {
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
+    if (jsonMatch) {
+      try {
+        parsed = JSON.parse(jsonMatch[0])
+      } catch (err) {
+        throw new Error(`解析 AI 返回的课表 JSON 数据失败: ${(err as Error).message}\n返回片段:\n${cleaned.substring(0, 300)}`)
+      }
+    } else {
+      throw new Error(`AI 未返回符合规范的 JSON 课表格式。\n返回片段:\n${cleaned.substring(0, 300)}`)
+    }
+  }
+
+  const rawCourses = Array.isArray(parsed.courses) ? parsed.courses : (Array.isArray(parsed) ? parsed : [])
+  const courses: CourseItem[] = []
+
+  rawCourses.forEach((c: any, index: number) => {
+    if (!c.name || typeof c.name !== 'string') return
+    const name = c.name.trim()
+    if (!name) return
+
+    let dayOfWeek = Number(c.dayOfWeek) || 1
+    if (dayOfWeek < 1 || dayOfWeek > 7) dayOfWeek = 1
+
+    let startSection = Number(c.startSection) || 1
+    if (startSection < 1) startSection = 1
+
+    let step = Number(c.step) || 2
+    if (step < 1) step = 1
+
+    let weeks: number[] = []
+    if (Array.isArray(c.weeks) && c.weeks.length > 0) {
+      weeks = Array.from(new Set(c.weeks.map(Number).filter((n: number) => !isNaN(n) && n > 0 && n <= 50))).sort((a, b) => a - b)
+    } else if (c.rawWeeksStr) {
+      weeks = parseWeeksString(String(c.rawWeeksStr))
+    }
+    if (weeks.length === 0) {
+      weeks = Array.from({ length: 16 }, (_, i) => i + 1)
+    }
+
+    const color = c.color || COURSE_COLOR_PALETTE[index % COURSE_COLOR_PALETTE.length]
+
+    courses.push({
+      id: `ai-course-${Date.now()}-${index}`,
+      name,
+      dayOfWeek,
+      startSection,
+      step,
+      weeks,
+      rawWeeksStr: c.rawWeeksStr || `${weeks[0]}-${weeks[weeks.length - 1]}周`,
+      location: c.location ? String(c.location).trim() : undefined,
+      teacher: c.teacher ? String(c.teacher).trim() : undefined,
+      color,
+    })
+  })
+
+  return {
+    courses,
+    semesterInfo: parsed.semesterInfo || {},
+    rawContent,
+  }
+}
+

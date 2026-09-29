@@ -33,6 +33,14 @@
             </button>
 
             <button
+              @click="$emit('open-academic'); isVisible = true"
+              class="p-1.5 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors"
+              title="高校课表导入 (AI 识图 / WakeUp)"
+            >
+              <GraduationCap class="w-4 h-4" />
+            </button>
+
+            <button
               @click="$emit('open-search'); isVisible = true"
               class="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               :title="t('nav.search')"
@@ -292,6 +300,7 @@ import {
   Settings,
   Sun,
   Moon,
+  GraduationCap,
 } from 'lucide-vue-next'
 import WeatherWidget from './WeatherWidget.vue'
 import SyncStatusBadge from './SyncStatusBadge.vue'
@@ -308,6 +317,7 @@ const emit = defineEmits<{
   (e: 'open-settings'): void
   (e: 'open-search'): void
   (e: 'open-copilot'): void
+  (e: 'open-academic'): void
   (e: 'toggle-theme'): void
 }>()
 
