@@ -1,4 +1,4 @@
-const CACHE_NAME = 'akasha-cache'
+const CACHE_NAME = 'akasha-cache-v20260929'
 
 self.addEventListener('install', (event) => {
   self.skipWaiting()
