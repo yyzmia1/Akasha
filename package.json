@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:i18n": "vite --port 12321 --host",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",

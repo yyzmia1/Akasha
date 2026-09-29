@@ -95,7 +95,7 @@
                 ? 'bg-white dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 shadow-2xs font-semibold'
                 : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 line-through opacity-60'
             ]"
-            :title="typeFilters.schedules ? '点击隐藏固定日程' : '点击显示固定日程'"
+            :title="typeFilters.schedules ? t('calendar.hideSchedules') : t('calendar.showSchedules')"
           >
             <CalendarDays class="w-3.5 h-3.5" :class="typeFilters.schedules ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'" />
             <span class="hidden sm:inline">{{ t('nav.schedules') }}</span>
@@ -111,7 +111,7 @@
                 ? 'bg-white dark:bg-slate-700 text-emerald-700 dark:text-emerald-300 shadow-2xs font-semibold'
                 : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 line-through opacity-60'
             ]"
-            :title="typeFilters.todos ? '点击隐藏待办事项' : '点击显示待办事项'"
+            :title="typeFilters.todos ? t('calendar.hideTodos') : t('calendar.showTodos')"
           >
             <CheckSquare class="w-3.5 h-3.5" :class="typeFilters.todos ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'" />
             <span class="hidden sm:inline">{{ t('nav.todos') }}</span>
@@ -127,7 +127,7 @@
                 ? 'bg-white dark:bg-slate-700 text-amber-700 dark:text-amber-300 shadow-2xs font-semibold'
                 : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 line-through opacity-60'
             ]"
-            :title="typeFilters.habits ? '点击隐藏习惯打卡' : '点击显示习惯打卡'"
+            :title="typeFilters.habits ? t('calendar.hideHabits') : t('calendar.showHabits')"
           >
             <Sparkles class="w-3.5 h-3.5" :class="typeFilters.habits ? 'text-amber-500' : 'text-slate-400'" />
             <span class="hidden sm:inline">{{ t('nav.habits') }}</span>
@@ -147,13 +147,13 @@
       ]"
     >
       <div class="grid grid-cols-7 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-center py-1.5 sm:py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 shrink-0">
-        <div>周一</div>
-        <div>周二</div>
-        <div>周三</div>
-        <div>周四</div>
-        <div>周五</div>
-        <div class="text-blue-600 dark:text-blue-400">周六</div>
-        <div class="text-blue-600 dark:text-blue-400">周日</div>
+        <div
+          v-for="(wName, wIdx) in weekdayHeaders"
+          :key="wIdx"
+          :class="wIdx >= 5 ? 'text-blue-600 dark:text-blue-400' : ''"
+        >
+          {{ wName }}
+        </div>
       </div>
 
       <div
@@ -200,20 +200,20 @@
                 {{ day.dayNumber }}
               </span>
               <span v-if="day.isToday" class="text-[10px] font-medium text-blue-600 dark:text-blue-400 hidden sm:inline">
-                今日
+                {{ t('calendar.today') }}
               </span>
               <BookOpen
                 v-if="hasJournalOnDate(day.dateStr)"
                 @click.stop="$emit('open-journal', day.dateStr)"
                 class="w-3 h-3 text-amber-500 hover:text-amber-600 cursor-pointer hidden sm:inline transition-colors"
-                title="查看当日随笔"
+                :title="t('calendar.viewJournal')"
               />
             </div>
 
             <button
               @click.stop="quickAddTodo(day.dateStr)"
               class="hidden sm:inline-block opacity-0 group-hover:opacity-100 p-0.5 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] transition-opacity"
-              title="添加待办"
+              :title="t('calendar.addTodo')"
             >
               <Plus class="w-3 h-3" />
             </button>
@@ -224,7 +224,7 @@
             <span
               v-if="typeFilters.schedules && getSchedulesForDay(day.dateStr).length > 0"
               class="w-1.5 h-1.5 rounded-full bg-indigo-500"
-              :title="`${getSchedulesForDay(day.dateStr).length} 个日程`"
+              :title="t('schedule.title')"
             ></span>
             <span
               v-if="typeFilters.todos && getTodosForDay(day.dateStr).length > 0"
@@ -232,17 +232,17 @@
                 'w-1.5 h-1.5 rounded-full',
                 hasIncompleteTodos(day.dateStr) ? 'bg-rose-500' : 'bg-emerald-500'
               ]"
-              :title="`${getTodosForDay(day.dateStr).length} 个待办`"
+              :title="t('todo.title')"
             ></span>
             <span
               v-if="typeFilters.habits && getHabitsForDay(day.dateStr).length > 0"
               class="w-1.5 h-1.5 rounded-full bg-amber-400"
-              :title="`${getHabitsForDay(day.dateStr).length} 个习惯排期`"
+              :title="t('nav.habits')"
             ></span>
             <span
               v-if="hasJournalOnDate(day.dateStr)"
               class="w-1.5 h-1.5 rounded-full bg-amber-500"
-              title="已写随笔"
+              :title="t('calendar.writtenJournal')"
             ></span>
           </div>
 
@@ -336,9 +336,9 @@
               v-if="getDayCellItems(day.dateStr).extraCount > 0"
               @click.stop="openDayOverview(day.dateStr)"
               class="text-[10px] text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium py-0.5 text-center hover:underline cursor-pointer select-none"
-              title="查看本日全部条目"
+              :title="t('calendar.dayOverviewTitle', { date: day.dateStr })"
             >
-              +{{ getDayCellItems(day.dateStr).extraCount }} 项
+              +{{ t('calendar.itemsCount', { count: getDayCellItems(day.dateStr).extraCount }) }}
             </button>
           </div>
         </div>
@@ -398,21 +398,21 @@
                 {{ day.weekdayName }}
               </span>
               <span v-if="day.isToday" class="text-[10px] font-medium text-blue-600 dark:text-blue-400">
-                今日
+                {{ t('calendar.today') }}
               </span>
             </div>
             <div class="flex items-center gap-1">
               <button
                 @click="quickAddTodo(day.dateStr)"
                 class="p-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
-                title="添加代办"
+                :title="t('calendar.addTodo')"
               >
                 <Plus class="w-3.5 h-3.5" />
               </button>
               <button
                 @click="$emit('open-journal', day.dateStr)"
                 class="p-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
-                title="随笔日记"
+                :title="t('calendar.viewJournal')"
               >
                 <BookOpen class="w-3.5 h-3.5" />
               </button>
@@ -422,12 +422,12 @@
           <!-- Desktop Column Subheader with Quick Actions -->
           <div class="hidden sm:flex items-center justify-between mb-2 pb-1 border-b border-slate-100 dark:border-slate-800 shrink-0">
             <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-              {{ day.date.getMonth() + 1 }}月{{ day.dayNumber }}日
+              {{ day.date.getMonth() + 1 }}/{{ day.dayNumber }}
             </span>
             <button
               @click.stop="quickAddTodo(day.dateStr)"
               class="opacity-60 hover:opacity-100 p-0.5 rounded text-slate-500 hover:text-blue-600 transition-opacity"
-              title="添加代办"
+              :title="t('calendar.addTodo')"
             >
               <Plus class="w-3.5 h-3.5" />
             </button>
@@ -458,7 +458,7 @@
 
             <!-- Schedules -->
             <div v-if="typeFilters.schedules && getSchedulesForDay(day.dateStr).length > 0" class="space-y-1">
-              <div class="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400">固定日程</div>
+              <div class="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400">{{ t('nav.schedules') }}</div>
               <div
                 v-for="s in getSchedulesForDay(day.dateStr)"
                 :key="s.id"
@@ -481,7 +481,7 @@
 
             <!-- Habits -->
             <div v-if="typeFilters.habits && getHabitsForDay(day.dateStr).length > 0" class="space-y-1">
-              <div class="text-[10px] font-semibold text-amber-600 dark:text-amber-400">打卡习惯</div>
+              <div class="text-[10px] font-semibold text-amber-600 dark:text-amber-400">{{ t('nav.habits') }}</div>
               <div
                 v-for="h in getHabitsForDay(day.dateStr)"
                 :key="h.id"
@@ -514,7 +514,7 @@
 
             <!-- Todos -->
             <div v-if="typeFilters.todos && getTodosForDay(day.dateStr).length > 0" class="space-y-1">
-              <div class="text-[10px] font-semibold text-slate-500 dark:text-slate-400">待办事项</div>
+              <div class="text-[10px] font-semibold text-slate-500 dark:text-slate-400">{{ t('nav.todos') }}</div>
               <div
                 v-for="todo in getTodosForDay(day.dateStr)"
                 :key="todo.id"
@@ -553,7 +553,7 @@
               v-if="getSchedulesForDay(day.dateStr).length === 0 && getHabitsForDay(day.dateStr).length === 0 && getTodosForDay(day.dateStr).length === 0"
               class="py-8 text-center text-slate-300 dark:text-slate-600 text-xs"
             >
-              暂无事项
+              {{ t('calendar.noEvents') }}
             </div>
           </div>
 
@@ -564,7 +564,7 @@
             class="mt-auto pt-1.5 border-t border-slate-100 dark:border-slate-800 flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400 hover:underline cursor-pointer truncate shrink-0"
           >
             <BookOpen class="w-3 h-3 shrink-0" />
-            <span class="truncate">已写随笔</span>
+            <span class="truncate">{{ t('calendar.writtenJournal') }}</span>
           </div>
         </div>
       </div>
@@ -815,10 +815,10 @@
                 type="button"
                 @click="scrollToCurrentTime(true)"
                 class="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-950/70 text-rose-600 dark:text-rose-400 font-semibold transition-all active:scale-95 shadow-2xs cursor-pointer"
-                title="在时间网格中平滑滚动并居中定位到当前时刻"
+                :title="t('calendar.jumpToNowTip')"
               >
                 <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
-                <span>定位此时</span>
+                <span>{{ t('calendar.jumpToNow') }}</span>
               </button>
 
               <!-- View Mode Toggle: Grid vs Agenda List -->
@@ -832,10 +832,10 @@
                       ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-2xs font-semibold'
                       : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                   ]"
-                  title="专业时间网格视图（真实时长比例与并列排布）"
+                  :title="t('calendar.gridTip')"
                 >
                   <LayoutGrid class="w-3.5 h-3.5" />
-                  <span>网格</span>
+                  <span>{{ t('calendar.modeGrid') }}</span>
                 </button>
                 <button
                   type="button"
@@ -846,10 +846,10 @@
                       ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-2xs font-semibold'
                       : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                   ]"
-                  title="紧凑时序清单视图"
+                  :title="t('calendar.listTip')"
                 >
                   <List class="w-3.5 h-3.5" />
-                  <span>清单</span>
+                  <span>{{ t('calendar.modeList') }}</span>
                 </button>
               </div>
             </div>
@@ -862,7 +862,7 @@
           >
             <div class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-xs font-bold px-1 shrink-0">
               <Calendar class="w-3.5 h-3.5 text-blue-500" />
-              <span>全天事项</span>
+              <span>{{ t('calendar.allDayEvents') }}</span>
             </div>
             <div class="flex flex-wrap gap-2 flex-1 min-w-0">
               <div
@@ -888,7 +888,7 @@
                   <Check v-if="item.completed" class="w-2.5 h-2.5 stroke-[3]" />
                 </button>
                 <span class="truncate max-w-[180px]">{{ item.title }}</span>
-                <span class="text-[10px] opacity-75 font-mono">全天</span>
+                <span class="text-[10px] opacity-75 font-mono">{{ t('calendar.allDay') }}</span>
               </div>
             </div>
           </div>
@@ -917,7 +917,7 @@
               <div
                 class="absolute left-12 sm:left-16 right-0 top-0 bottom-0 cursor-pointer"
                 @dblclick="handleGridDoubleClick"
-                title="双击空白处可快捷新建该时刻日程"
+                :title="t('calendar.doubleClickTip')"
               >
                 <!-- Horizontal divider lines for each hour and half-hour -->
                 <template v-for="hour in 24" :key="`hour-line-${hour}`">
@@ -1055,7 +1055,7 @@
                   class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-slate-300 dark:text-slate-700 space-y-2 select-none"
                 >
                   <Clock class="w-8 h-8 stroke-1" />
-                  <span class="text-xs">今日暂无固定时段排期，双击任意时段可新建日程</span>
+                  <span class="text-xs">{{ t('calendar.emptyTimelineDesc') }}</span>
                 </div>
               </div>
             </div>
@@ -1075,7 +1075,7 @@
                   </div>
                   <span class="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-500 text-white shadow-xs shrink-0 select-none">
                     <span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
-                    当前时间 {{ currentNowTimeFormatted }}
+                    {{ t('calendar.currentTime', { time: currentNowTimeFormatted }) }}
                   </span>
                   <div class="h-[2px] bg-rose-500/80 w-8 rounded-full"></div>
                 </div>
@@ -1208,7 +1208,7 @@
               <div class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
                 <span>{{ day.weekdayName }}</span>
                 <span v-if="day.isToday" class="text-xs font-medium text-blue-600 dark:text-blue-400">
-                  (今日)
+                  ({{ t('calendar.today') }})
                 </span>
               </div>
               <div class="text-xs text-slate-400 font-mono">
@@ -1223,14 +1223,14 @@
               class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 text-xs font-medium hover:bg-blue-100 active:scale-95 transition-all"
             >
               <Plus class="w-3.5 h-3.5" />
-              <span>加待办</span>
+              <span>{{ t('calendar.addTodo') }}</span>
             </button>
             <button
               @click="$emit('open-journal', day.dateStr)"
               class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 text-xs font-medium hover:bg-amber-100 active:scale-95 transition-all"
             >
               <BookOpen class="w-3.5 h-3.5" />
-              <span>{{ hasJournalOnDate(day.dateStr) ? '随笔' : '记随笔' }}</span>
+              <span>{{ hasJournalOnDate(day.dateStr) ? t('common.edit') : t('calendar.addQuickNote') }}</span>
             </button>
           </div>
         </div>
@@ -1270,7 +1270,7 @@
             <div class="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
               <div class="flex items-center gap-1.5">
                 <CalendarDays class="w-3.5 h-3.5 text-indigo-600" />
-                <span>固定日程 ({{ getSchedulesForDay(day.dateStr).length }})</span>
+                <span>{{ t('nav.schedules') }} ({{ getSchedulesForDay(day.dateStr).length }})</span>
               </div>
             </div>
 
@@ -1298,7 +1298,7 @@
               </div>
             </div>
             <div v-else class="text-xs text-slate-400 py-1.5 pl-1">
-              暂无固定日程
+              {{ t('schedule.noSchedules') }}
             </div>
           </div>
 
@@ -1307,7 +1307,7 @@
             <div class="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
               <div class="flex items-center gap-1.5">
                 <Sparkles class="w-3.5 h-3.5 text-amber-500" />
-                <span>打卡习惯 ({{ getHabitsForDay(day.dateStr).length }})</span>
+                <span>{{ t('nav.habits') }} ({{ getHabitsForDay(day.dateStr).length }})</span>
               </div>
             </div>
 
@@ -1350,12 +1350,12 @@
                       : 'bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300'
                   ]"
                 >
-                  {{ isHabitDoneOnDate(h.id, day.dateStr) ? '已打卡' : '打卡' }}
+                  {{ isHabitDoneOnDate(h.id, day.dateStr) ? t('calendar.checkedIn') : t('common.confirm') }}
                 </span>
               </div>
             </div>
             <div v-else class="text-xs text-slate-400 py-1.5 pl-1">
-              暂无习惯排期
+              {{ t('calendar.noEvents') }}
             </div>
           </div>
 
@@ -1364,7 +1364,7 @@
             <div class="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
               <div class="flex items-center gap-1.5">
                 <CheckSquare class="w-3.5 h-3.5 text-emerald-600" />
-                <span>待办事项 ({{ getTodosForDay(day.dateStr).length }})</span>
+                <span>{{ t('nav.todos') }} ({{ getTodosForDay(day.dateStr).length }})</span>
               </div>
             </div>
 
@@ -1412,7 +1412,7 @@
               </div>
             </div>
             <div v-else class="text-xs text-slate-400 py-1.5 pl-1">
-              暂无待办事项
+              {{ t('calendar.emptyDailyTodo') }}
             </div>
           </div>
         </div>
@@ -1623,7 +1623,7 @@
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
           <div class="flex items-center gap-2">
             <CalendarDays class="w-4 h-4 text-indigo-600" />
-            <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">日程详情</h3>
+            <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ t('calendar.scheduleDetails') }}</h3>
           </div>
           <button @click="selectedSchedule = null" class="p-1 rounded-md text-slate-400 hover:text-slate-600">
             <X class="w-4 h-4" />
@@ -1632,14 +1632,14 @@
 
         <div class="space-y-3 text-xs">
           <div>
-            <div class="text-[11px] text-slate-400 mb-0.5">日程事项</div>
+            <div class="text-[11px] text-slate-400 mb-0.5">{{ t('calendar.scheduleName') }}</div>
             <div class="text-sm font-semibold text-slate-800 dark:text-slate-100">
               {{ selectedSchedule.title }}
             </div>
           </div>
 
           <div>
-            <div class="text-[11px] text-slate-400 mb-0.5">所属项目</div>
+            <div class="text-[11px] text-slate-400 mb-0.5">{{ t('calendar.scheduleProject') }}</div>
             <div class="flex items-center gap-1.5">
               <span
                 v-if="getProjectColor(selectedSchedule.projectId)"
@@ -1653,7 +1653,7 @@
           </div>
 
           <div>
-            <div class="text-[11px] text-slate-400 mb-0.5">时间与频次</div>
+            <div class="text-[11px] text-slate-400 mb-0.5">{{ t('calendar.scheduleTiming') }}</div>
             <div class="text-slate-700 dark:text-slate-300 font-medium font-mono">
               {{ formatScheduleDetailTiming(selectedSchedule) }}
             </div>
@@ -1667,21 +1667,21 @@
               class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors cursor-pointer"
             >
               <Pencil class="w-3.5 h-3.5" />
-              <span>编辑日程</span>
+              <span>{{ t('calendar.editSchedule') }}</span>
             </button>
             <button
               @click="handleDeleteScheduleItem(selectedSchedule.id)"
               class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
             >
               <Trash2 class="w-3.5 h-3.5" />
-              <span>删除日程</span>
+              <span>{{ t('calendar.deleteSchedule') }}</span>
             </button>
           </div>
           <button
             @click="selectedSchedule = null"
             class="px-4 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 transition-colors cursor-pointer"
           >
-            关闭
+            {{ t('common.close') }}
           </button>
         </div>
       </div>
@@ -1699,7 +1699,7 @@
           <div class="flex items-center gap-2">
             <CalendarDays class="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
             <h3 class="text-base font-bold text-slate-900 dark:text-slate-100">
-              {{ scheduleEditId ? '编辑日程' : '新建日程' }}
+              {{ scheduleEditId ? t('calendar.editSchedule') : t('calendar.newSchedule') }}
             </h3>
           </div>
           <button
@@ -1779,14 +1779,14 @@
             @click="closeScheduleEditModal"
             class="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
-            取消
+            {{ t('common.cancel') }}
           </button>
           <button
             type="button"
             @click="handleSaveScheduleSubmit"
             class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-semibold transition-all shadow-xs cursor-pointer"
           >
-            保存变更
+            {{ t('calendar.saveChanges') }}
           </button>
         </div>
       </div>
@@ -1964,14 +1964,14 @@
             @click="closeQuickTodoModal"
             class="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
-            取消
+            {{ t('common.cancel') }}
           </button>
           <button
             type="button"
             @click="handleSaveQuickTodoSubmit"
             class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-semibold transition-all shadow-xs cursor-pointer"
           >
-            立即添加
+            {{ t('common.add') }}
           </button>
         </div>
       </div>
@@ -1989,7 +1989,7 @@
           <div class="flex items-center gap-2">
             <Calendar class="w-4 h-4 text-blue-600" />
             <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">
-              {{ formatDisplayDate(selectedDayOverview) }} · 当日所有事项
+              {{ t('calendar.dayOverviewTitle', { date: formatDisplayDate(selectedDayOverview) }) }}
             </h3>
           </div>
           <button @click="closeDayOverview" class="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
@@ -2003,7 +2003,7 @@
           <div v-if="getSchedulesForDay(selectedDayOverview).length > 0" class="space-y-1.5">
             <div class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
               <CalendarDays class="w-3.5 h-3.5" />
-              <span>固定日程 ({{ getSchedulesForDay(selectedDayOverview).length }})</span>
+              <span>{{ t('nav.schedules') }} ({{ getSchedulesForDay(selectedDayOverview).length }})</span>
             </div>
             <div
               v-for="s in getSchedulesForDay(selectedDayOverview)"
@@ -2023,7 +2023,7 @@
           <div v-if="getTodosForDay(selectedDayOverview).length > 0" class="space-y-1.5">
             <div class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
               <CheckSquare class="w-3.5 h-3.5" />
-              <span>待办事项 ({{ getTodosForDay(selectedDayOverview).length }})</span>
+              <span>{{ t('nav.todos') }} ({{ getTodosForDay(selectedDayOverview).length }})</span>
             </div>
             <div
               v-for="todo in getTodosForDay(selectedDayOverview)"
@@ -2064,7 +2064,7 @@
           <div v-if="getHabitsForDay(selectedDayOverview).length > 0" class="space-y-1.5">
             <div class="text-[11px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
               <Sparkles class="w-3.5 h-3.5" />
-              <span>习惯排期 ({{ getHabitsForDay(selectedDayOverview).length }})</span>
+              <span>{{ t('nav.habits') }} ({{ getHabitsForDay(selectedDayOverview).length }})</span>
             </div>
             <div
               v-for="h in getHabitsForDay(selectedDayOverview)"
@@ -2101,7 +2101,7 @@
                     'font-medium truncate cursor-pointer hover:underline',
                     isHabitDoneOnDate(h.id, selectedDayOverview) ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-200'
                   ]"
-                  title="点击跳转至习惯管理"
+                  :title="t('calendar.goToHabits')"
                 >
                   {{ h.title }}
                 </span>
@@ -2111,7 +2111,7 @@
                 @click.stop="$emit('switch-tab', 'habits'); closeDayOverview()"
                 class="text-[10px] text-amber-600 dark:text-amber-400 hover:underline shrink-0 cursor-pointer flex items-center gap-0.5"
               >
-                <span>前往习惯</span>
+                <span>{{ t('calendar.goToHabits') }}</span>
                 <ExternalLink class="w-2.5 h-2.5" />
               </button>
             </div>
@@ -2121,7 +2121,7 @@
             v-if="getSchedulesForDay(selectedDayOverview).length === 0 && getTodosForDay(selectedDayOverview).length === 0 && getHabitsForDay(selectedDayOverview).length === 0"
             class="py-6 text-center text-slate-400"
           >
-            本日暂无日程、待办或习惯排期
+            {{ t('calendar.noDayItems') }}
           </div>
         </div>
 
@@ -2133,29 +2133,29 @@
               class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 hover:bg-blue-100 transition-colors cursor-pointer"
             >
               <Plus class="w-3.5 h-3.5" />
-              <span>新建待办</span>
+              <span>{{ t('calendar.addTodo') }}</span>
             </button>
             <button
               @click="$emit('open-journal', selectedDayOverview); closeDayOverview()"
               class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <BookOpen class="w-3.5 h-3.5 text-amber-500" />
-              <span>当日随笔</span>
+              <span>{{ t('journal.title') }}</span>
             </button>
             <button
               @click="$emit('switch-tab', 'habits'); closeDayOverview()"
               class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-              title="前往习惯管理"
+              :title="t('calendar.goToHabitsView')"
             >
               <Sparkles class="w-3.5 h-3.5 text-amber-500" />
-              <span class="hidden sm:inline">习惯</span>
+              <span class="hidden sm:inline">{{ t('nav.habits') }}</span>
             </button>
           </div>
           <button
             @click="closeDayOverview"
             class="px-4 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 transition-colors cursor-pointer"
           >
-            关闭
+            {{ t('common.close') }}
           </button>
         </div>
       </div>
@@ -2165,7 +2165,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
-import { t } from '@/utils/i18n'
+import { t, currentLocale } from '@/utils/i18n'
 import {
   ChevronLeft,
   ChevronRight,
@@ -2256,6 +2256,16 @@ const viewOptions = computed<ViewOption[]>(() => [
   { mode: '2weeks', label: t('calendar.view2Weeks'), desc: t('calendar.view2WeeksDesc') },
   { mode: 'month', label: t('calendar.viewMonth'), desc: t('calendar.viewMonthDesc') },
 ])
+
+const weekdayHeaders = computed(() => {
+  if (currentLocale.value === 'en') {
+    return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+  }
+  if (currentLocale.value === 'ja') {
+    return ['月', '火', '水', '木', '金', '土', '日']
+  }
+  return ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+})
 
 function getInitialViewMode(): CalendarViewMode {
   if (typeof window === 'undefined') return 'day'
@@ -2428,10 +2438,12 @@ const selectedSchedule = ref<ScheduleItem | null>(null)
 const selectedMobileDate = ref(formatDate(today))
 
 const currentPeriodTitle = computed(() => {
+  const _ = currentLocale.value
   return formatPeriodTitle(viewMode.value, currentBaseDate.value)
 })
 
 const displayDays = computed(() => {
+  const _ = currentLocale.value
   return getViewDays(viewMode.value, currentBaseDate.value)
 })
 
