@@ -336,6 +336,14 @@ export const messages: Record<SupportedLocale, Record<string, any>> = {
       area: '领域 / 分组',
       areaName: '领域名称',
       newArea: '新建领域',
+      newSubArea: '新建子领域',
+      areaDirectory: '领域目录',
+      allAreas: '全部领域',
+      subAreas: '子分类',
+      parentArea: '上级领域',
+      noParentArea: '无（顶级根分类）',
+      includeSubProjects: '穿透包含子分类项目',
+      directProjectsOnly: '仅直属项目',
       manageAreas: '管理领域'
     },
     habit: {
@@ -714,6 +722,14 @@ export const messages: Record<SupportedLocale, Record<string, any>> = {
       area: 'Area / Group',
       areaName: 'Area Name',
       newArea: 'New Area',
+      newSubArea: 'New Sub-area',
+      areaDirectory: 'Area Directory',
+      allAreas: 'All Areas',
+      subAreas: 'Sub-areas',
+      parentArea: 'Parent Area',
+      noParentArea: 'None (Root Area)',
+      includeSubProjects: 'Include sub-area projects',
+      directProjectsOnly: 'Direct projects only',
       manageAreas: 'Manage Areas'
     },
     habit: {
@@ -1092,6 +1108,14 @@ export const messages: Record<SupportedLocale, Record<string, any>> = {
       area: 'エリア / グループ',
       areaName: 'エリア名',
       newArea: '新規エリア',
+      newSubArea: '新規サブエリア',
+      areaDirectory: 'エリアディレクトリ',
+      allAreas: 'すべてのエリア',
+      subAreas: 'サブエリア',
+      parentArea: '親エリア',
+      noParentArea: 'なし（ルートエリア）',
+      includeSubProjects: 'サブエリアのプロジェクトを含める',
+      directProjectsOnly: '直接のプロジェクトのみ',
       manageAreas: 'エリア管理'
     },
     habit: {

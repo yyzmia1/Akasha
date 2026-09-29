@@ -1,25 +1,32 @@
 <template>
   <div class="space-y-6">
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
-      <div>
-        <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-          <FolderKanban class="w-5 h-5 text-blue-600" />
-          <span>{{ t('project.title') }}</span>
-        </h2>
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200/60 dark:border-blue-800/40 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+          <FolderKanban class="w-5 h-5" />
+        </div>
+        <div>
+          <h2 class="text-base sm:text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <span>{{ t('project.title') }}</span>
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            {{ t('project.areaDirectory') }} · {{ areas.length }} {{ t('project.area') }} · {{ projects.length }} {{ t('project.title') }}
+          </p>
+        </div>
       </div>
 
       <div class="flex items-center gap-2 w-full sm:w-auto">
         <button
           @click="openNewProjectModal()"
-          class="flex-1 sm:flex-none justify-center flex items-center gap-1.5 px-3.5 py-2 sm:py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-medium shadow-sm transition-all cursor-pointer"
+          class="flex-1 sm:flex-none justify-center flex items-center gap-1.5 px-3.5 py-2 sm:py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-medium shadow-xs transition-all cursor-pointer"
         >
           <Plus class="w-4 h-4" />
           <span>{{ t('project.newProject') }}</span>
         </button>
 
         <button
-          @click="showAddAreaModal = true"
-          class="flex-1 sm:flex-none justify-center flex items-center gap-1.5 px-3.5 py-2 sm:py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 text-xs font-medium transition-all cursor-pointer"
+          @click="openAddAreaModal(null)"
+          class="flex-1 sm:flex-none justify-center flex items-center gap-1.5 px-3.5 py-2 sm:py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs sm:text-sm font-medium transition-all cursor-pointer border border-transparent hover:border-slate-300 dark:hover:border-slate-700"
         >
           <FolderPlus class="w-3.5 h-3.5" />
           <span>{{ t('project.newArea') }}</span>
@@ -27,52 +34,8 @@
       </div>
     </div>
 
-    <!-- 领域标签栏（可点击筛选、可拖动换排序） -->
-    <div v-if="areas.length > 0" class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 p-1.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80 overflow-x-auto no-scrollbar select-none">
-      <button
-        @click="selectedAreaId = 'all'"
-        :class="[
-          'px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer',
-          selectedAreaId === 'all'
-            ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-300 shadow-2xs font-semibold'
-            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-        ]"
-      >
-        <span>{{ t('common.all') }}</span>
-        <span class="text-[10px] px-1.5 py-0.2 rounded-full font-mono" :class="selectedAreaId === 'all' ? 'bg-blue-50 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300' : 'bg-slate-200/60 dark:bg-slate-800 text-slate-500'">
-          {{ projects.length }}
-        </span>
-      </button>
-
-      <div
-        v-for="(area, index) in sortedAreas"
-        :key="area.id"
-        draggable="true"
-        @dragstart="handleAreaTabDragStart($event, index)"
-        @dragover.prevent="handleAreaTabDragOver($event, index)"
-        @dragleave="handleAreaTabDragLeave($event, index)"
-        @drop="handleAreaTabDrop($event, index)"
-        @dragend="handleAreaTabDragEnd"
-        :class="[
-          'px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-grab active:cursor-grabbing border border-transparent',
-          selectedAreaId === area.id
-            ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-300 shadow-2xs font-semibold'
-            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200',
-          draggedTabAreaIndex === index ? 'opacity-40 scale-95 border-dashed border-blue-400' : '',
-          dragOverTabAreaIndex === index && draggedTabAreaIndex !== index ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-950/40' : ''
-        ]"
-        @click="selectedAreaId = area.id"
-        :title="`拖动此标签可调整领域顺序 (当前第 ${index + 1} 位)`"
-      >
-        <GripVertical class="w-3 h-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 shrink-0" />
-        <span>{{ area.title }}</span>
-        <span class="text-[10px] px-1.5 py-0.2 rounded-full font-mono" :class="selectedAreaId === area.id ? 'bg-blue-50 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300' : 'bg-slate-200/60 dark:bg-slate-800 text-slate-500'">
-          {{ getProjectsByArea(area.id).length }}
-        </span>
-      </div>
-    </div>
-
-    <div v-if="areas.length === 0" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-8 sm:p-12 text-center space-y-3 shadow-sm">
+    <!-- 无领域时的空状态提示 -->
+    <div v-if="areas.length === 0" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-8 sm:p-12 text-center space-y-3 shadow-xs">
       <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mx-auto">
         <FolderPlus class="w-6 h-6" />
       </div>
@@ -82,8 +45,8 @@
       </div>
       <div>
         <button
-          @click="showAddAreaModal = true"
-          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium shadow-sm transition-all cursor-pointer"
+          @click="openAddAreaModal(null)"
+          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium shadow-xs transition-all cursor-pointer"
         >
           <Plus class="w-4 h-4" />
           <span>{{ t('project.newArea') }}</span>
@@ -91,145 +54,361 @@
       </div>
     </div>
 
-    <div v-else class="space-y-4 sm:space-y-6">
-      <div
-        v-for="(area, index) in displayAreas"
-        :key="area.id"
-        draggable="true"
-        @dragstart="handleAreaCardDragStart($event, index)"
-        @dragover.prevent="handleAreaCardDragOver($event, index)"
-        @dragleave="handleAreaCardDragLeave($event, index)"
-        @drop="handleAreaCardDrop($event, index)"
-        @dragend="handleAreaCardDragEnd"
-        :class="[
-          'bg-white dark:bg-slate-900 border rounded-xl p-3.5 sm:p-5 space-y-3 sm:space-y-4 shadow-sm transition-all',
-          draggedCardAreaIndex === index ? 'opacity-40 border-dashed border-blue-400' : 'border-slate-200 dark:border-slate-800',
-          dragOverCardAreaIndex === index && draggedCardAreaIndex !== index ? 'ring-2 ring-blue-500 border-blue-500 bg-blue-50/20 dark:bg-blue-950/20' : ''
-        ]"
-      >
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-          <div class="flex items-center gap-2">
-            <div
-              class="cursor-grab active:cursor-grabbing p-1 -ml-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded"
-              title="按住拖动调整领域次序"
-            >
-              <GripVertical class="w-4 h-4" />
+    <!-- 主布局：左侧层级目录树 + 右侧工作区 -->
+    <div v-else class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <!-- 左侧：层级领域目录树 -->
+      <div class="lg:col-span-4 xl:col-span-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 sm:p-4 shadow-xs space-y-3">
+        <!-- 目录树顶部操作栏 -->
+        <div class="flex items-center justify-between px-1 pb-2 border-b border-slate-100 dark:border-slate-800">
+          <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <FolderTree class="w-4 h-4 text-blue-500" />
+            <span>{{ t('project.areaDirectory') }}</span>
+            <span class="text-[10px] px-1.5 py-0.2 rounded-full font-mono bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+              {{ areas.length }}
+            </span>
+          </div>
+          <button
+            type="button"
+            @click="openAddAreaModal(null)"
+            class="p-1 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors cursor-pointer"
+            title="新建顶级领域"
+          >
+            <Plus class="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <!-- 目录树内容容器 -->
+        <div class="space-y-1">
+          <!-- 全部领域选项 -->
+          <div
+            @click="selectArea('all')"
+            :class="[
+              'group flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs transition-all cursor-pointer border border-transparent select-none',
+              selectedAreaId === 'all'
+                ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-300 font-semibold border-blue-200/60 dark:border-blue-800/40 shadow-2xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-800/60'
+            ]"
+          >
+            <div class="flex items-center gap-2 min-w-0">
+              <Layers class="w-3.5 h-3.5 shrink-0" :class="selectedAreaId === 'all' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'" />
+              <span class="truncate">{{ t('project.allAreas') }}</span>
             </div>
-            <span class="text-sm font-bold text-slate-800 dark:text-slate-100">{{ area.title }}</span>
-            <span class="text-xs text-slate-400">({{ getProjectsByArea(area.id).length }})</span>
+            <span
+              class="text-[10px] px-1.5 py-0.2 rounded-full font-mono"
+              :class="selectedAreaId === 'all' ? 'bg-blue-100 dark:bg-blue-900/80 text-blue-700 dark:text-blue-200 font-bold' : 'bg-slate-200/60 dark:bg-slate-800 text-slate-500 dark:text-slate-400'"
+            >
+              {{ projects.length }}
+            </span>
           </div>
 
-          <div class="flex items-center gap-1">
-            <!-- 移动顺序按钮 (方便触屏微调) -->
+          <!-- 递归领域树 -->
+          <div class="pt-1 space-y-0.5">
+            <AreaTreeItem
+              v-for="rootNode in areaTree"
+              :key="rootNode.id"
+              :node="rootNode"
+              :selected-area-id="selectedAreaId"
+              :collapsed-map="collapsedAreaMap"
+              @select="selectArea($event)"
+              @toggle-collapse="toggleAreaCollapse($event)"
+              @add-subarea="openAddAreaModal($event)"
+              @edit-area="openEditAreaModal($event)"
+              @delete-area="handleDeleteAreaClick($event)"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧：沉浸工作区 -->
+      <div class="lg:col-span-8 xl:col-span-9 space-y-5">
+        <!-- 顶部信息与面包屑卡片 -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-xs space-y-3.5">
+          <!-- 面包屑路径导航 (当选中特定领域时展示) -->
+          <nav v-if="selectedAreaId !== 'all' && currentBreadcrumbs.length > 0" class="flex items-center gap-1.5 text-xs text-slate-500 overflow-x-auto no-scrollbar pb-1">
             <button
-              v-if="index > 0"
-              @click.stop="moveArea(index, index - 1)"
-              class="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              title="上移领域"
+              type="button"
+              @click="selectArea('all')"
+              class="hover:text-blue-600 transition-colors flex items-center gap-1 shrink-0 cursor-pointer"
             >
-              <ArrowUp class="w-3.5 h-3.5" />
+              <Layers class="w-3.5 h-3.5" />
+              <span>{{ t('project.allAreas') }}</span>
             </button>
-            <button
-              v-if="index < displayAreas.length - 1"
-              @click.stop="moveArea(index, index + 1)"
-              class="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              title="下移领域"
-            >
-              <ArrowDown class="w-3.5 h-3.5" />
-            </button>
-            <button
-              @click="openNewProjectModal(area.id)"
-              class="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              title="添加项目"
-            >
-              <Plus class="w-4 h-4" />
-            </button>
-            <button
-              @click="handleEditArea(area)"
-              class="p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              title="重命名领域"
-            >
-              <Edit2 class="w-3.5 h-3.5" />
-            </button>
-            <button
-              @click.stop="handleDeleteAreaClick(area)"
-              class="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
-              title="删除领域"
-            >
-              <Trash2 class="w-3.5 h-3.5" />
-            </button>
+            <template v-for="(crumb, idx) in currentBreadcrumbs" :key="crumb.id">
+              <ChevronRight class="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 shrink-0" />
+              <button
+                v-if="idx < currentBreadcrumbs.length - 1"
+                type="button"
+                @click="selectArea(crumb.id)"
+                class="hover:text-blue-600 transition-colors truncate max-w-[120px] shrink-0 cursor-pointer"
+              >
+                {{ crumb.title }}
+              </button>
+              <span v-else class="font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[160px] shrink-0">
+                {{ crumb.title }}
+              </span>
+            </template>
+          </nav>
+
+          <!-- 领域标题与操作区 -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <span
+                class="w-3.5 h-3.5 rounded-full shrink-0 shadow-2xs"
+                :style="{ backgroundColor: currentSelectedArea?.color || '#3b82f6' }"
+              ></span>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h1 class="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
+                    {{ selectedAreaId === 'all' ? t('project.allAreas') : currentSelectedArea?.title }}
+                  </h1>
+                  <span
+                    v-if="selectedAreaId !== 'all' && currentSubAreas.length > 0"
+                    class="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono"
+                  >
+                    {{ currentSubAreas.length }} {{ t('project.subAreas') }}
+                  </span>
+                </div>
+                <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                  <template v-if="selectedAreaId === 'all'">
+                    共 {{ areas.length }} 个领域分组，{{ projects.length }} 个项目
+                  </template>
+                  <template v-else>
+                    直属项目 {{ directProjectsCount }} 个<template v-if="includeSubAreaProjects && totalBranchProjectsCount !== directProjectsCount"> · 包含子分类共 {{ totalBranchProjectsCount }} 个</template>
+                  </template>
+                </p>
+              </div>
+            </div>
+
+            <!-- 右侧快捷按钮组 -->
+            <div class="flex items-center gap-2 flex-wrap">
+              <!-- 穿透显示开关 (仅在非 all 且有子分类或总数不等于直属时显现) -->
+              <button
+                v-if="selectedAreaId !== 'all' && (currentSubAreas.length > 0 || totalBranchProjectsCount > directProjectsCount)"
+                type="button"
+                @click="includeSubAreaProjects = !includeSubAreaProjects"
+                :class="[
+                  'px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all border flex items-center gap-1.5 cursor-pointer',
+                  includeSubAreaProjects
+                    ? 'bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-300'
+                    : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400'
+                ]"
+                :title="includeSubAreaProjects ? t('project.includeSubProjects') : t('project.directProjectsOnly')"
+              >
+                <CheckSquare v-if="includeSubAreaProjects" class="w-3.5 h-3.5" />
+                <Square v-else class="w-3.5 h-3.5" />
+                <span>{{ t('project.includeSubProjects') }}</span>
+              </button>
+
+              <!-- 在当前领域新建项目 -->
+              <button
+                type="button"
+                @click="openNewProjectModal(selectedAreaId === 'all' ? undefined : selectedAreaId)"
+                class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium shadow-xs transition-colors cursor-pointer"
+              >
+                <Plus class="w-3.5 h-3.5" />
+                <span>{{ t('project.newProject') }}</span>
+              </button>
+
+              <!-- 在当前领域新建子领域 -->
+              <button
+                v-if="selectedAreaId !== 'all'"
+                type="button"
+                @click="openAddAreaModal(selectedAreaId)"
+                class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium transition-colors cursor-pointer"
+                title="新建子领域"
+              >
+                <FolderPlus class="w-3.5 h-3.5" />
+                <span>{{ t('project.newSubArea') }}</span>
+              </button>
+
+              <!-- 编辑当前领域 -->
+              <button
+                v-if="selectedAreaId !== 'all' && currentSelectedArea"
+                type="button"
+                @click="openEditAreaModal(currentSelectedArea)"
+                class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                title="编辑领域"
+              >
+                <Edit2 class="w-3.5 h-3.5" />
+              </button>
+
+              <!-- 删除当前领域 -->
+              <button
+                v-if="selectedAreaId !== 'all' && currentSelectedArea"
+                type="button"
+                @click="handleDeleteAreaClick(currentSelectedArea)"
+                class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                title="删除领域"
+              >
+                <Trash2 class="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div
-            v-for="proj in getProjectsByArea(area.id)"
-            :key="proj.id"
-            @click="openProjectDetail(proj)"
-            class="group p-4 rounded-xl border border-slate-200/90 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer bg-white dark:bg-slate-950 flex flex-col justify-between relative"
-          >
-            <div>
-              <div class="flex items-start justify-between gap-2 mb-2">
-                <div class="flex items-center gap-2 min-w-0">
-                  <span
-                    class="w-2.5 h-2.5 rounded-full shrink-0"
-                    :style="{ backgroundColor: proj.color || '#3b82f6' }"
-                  ></span>
-                  <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate group-hover:text-blue-600 transition-colors">
-                    {{ proj.title }}
-                  </h3>
-                </div>
+        <!-- 子分类卡片网格 (仅当存在子分类时优雅展示) -->
+        <div v-if="currentSubAreas.length > 0" class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <Folder class="w-3.5 h-3.5 text-amber-500" />
+              <span>{{ t('project.subAreas') }} ({{ currentSubAreas.length }})</span>
+            </h3>
+            <button
+              type="button"
+              @click="openAddAreaModal(selectedAreaId === 'all' ? null : selectedAreaId)"
+              class="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer font-medium"
+            >
+              <Plus class="w-3 h-3" />
+              <span>{{ t('project.newSubArea') }}</span>
+            </button>
+          </div>
 
-                <div class="flex items-center gap-1 shrink-0">
-                  <button
-                    type="button"
-                    @click.stop="openEditProjectModal(proj)"
-                    class="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                    title="修改项目"
+          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+            <div
+              v-for="sub in currentSubAreasWithCounts"
+              :key="sub.id"
+              @click="selectArea(sub.id)"
+              class="group p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800/90 hover:border-blue-400 dark:hover:border-blue-500 bg-white dark:bg-slate-900/90 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
+            >
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <div
+                    class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border"
+                    :style="{
+                      backgroundColor: sub.color ? `${sub.color}15` : '#3b82f615',
+                      borderColor: sub.color ? `${sub.color}30` : '#3b82f630',
+                      color: sub.color || '#3b82f6'
+                    }"
                   >
-                    <Edit2 class="w-3.5 h-3.5" />
-                  </button>
-                  <ChevronRight class="w-4 h-4 text-slate-300 group-hover:text-blue-600 transition-colors shrink-0" />
+                    <Folder class="w-4 h-4" />
+                  </div>
+                  <div class="min-w-0">
+                    <h4 class="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                      {{ sub.title }}
+                    </h4>
+                    <p class="text-[11px] text-slate-400 dark:text-slate-500 flex items-center gap-2 mt-0.5">
+                      <span>{{ sub.totalProjectCount }} 个项目</span>
+                      <span v-if="sub.childrenCount > 0">· {{ sub.childrenCount }} 个子分类</span>
+                    </p>
+                  </div>
                 </div>
-              </div>
-
-              <div class="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500 my-3">
-                <span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-medium">
-                  习惯 {{ getHabitsForProject(proj.id).length }}
-                </span>
-                <span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-medium">
-                  日程 {{ getSchedulesForProject(proj.id).length }}
-                </span>
-                <span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-medium">
-                  待办 {{ getProjectTodosCount(proj.id).completed }}/{{ getProjectTodosCount(proj.id).total }}
-                </span>
-              </div>
-            </div>
-
-            <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80">
-              <div class="flex items-center justify-between text-[10px] text-slate-400 mb-1 font-mono">
-                <span>进度</span>
-                <span>{{ getProjectProgress(proj.id) }}%</span>
-              </div>
-              <div class="w-full h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                <div
-                  class="h-full rounded-full transition-all duration-300"
-                  :style="{
-                    width: `${getProjectProgress(proj.id)}%`,
-                    backgroundColor: proj.color || '#3b82f6'
-                  }"
-                ></div>
+                <ChevronRight class="w-4 h-4 text-slate-300 dark:text-slate-600 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all shrink-0 mt-2" />
               </div>
             </div>
           </div>
+        </div>
 
-          <button
-            @click="openNewProjectModal(area.id)"
-            class="p-4 rounded-xl border border-dashed border-slate-300 dark:border-slate-800 hover:border-blue-400 text-slate-400 hover:text-blue-600 flex flex-col items-center justify-center gap-1.5 transition-colors min-h-[120px]"
-          >
-            <Plus class="w-5 h-5" />
-            <span class="text-xs font-medium">新建项目</span>
-          </button>
+        <!-- 项目列表/看板 -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <FolderKanban class="w-3.5 h-3.5 text-blue-500" />
+              <span>{{ t('project.title') }} ({{ displayedProjects.length }})</span>
+            </h3>
+            <button
+              type="button"
+              @click="openNewProjectModal(selectedAreaId === 'all' ? undefined : selectedAreaId)"
+              class="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer font-medium"
+            >
+              <Plus class="w-3 h-3" />
+              <span>{{ t('project.newProject') }}</span>
+            </button>
+          </div>
+
+          <!-- 项目卡片网格 -->
+          <div v-if="displayedProjects.length > 0" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div
+              v-for="proj in displayedProjects"
+              :key="proj.id"
+              @click="openProjectDetail(proj)"
+              class="group p-4 rounded-xl border border-slate-200/90 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer bg-white dark:bg-slate-900 flex flex-col justify-between relative"
+            >
+              <div>
+                <div class="flex items-start justify-between gap-2 mb-2">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span
+                      class="w-2.5 h-2.5 rounded-full shrink-0"
+                      :style="{ backgroundColor: proj.color || '#3b82f6' }"
+                    ></span>
+                    <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate group-hover:text-blue-600 transition-colors">
+                      {{ proj.title }}
+                    </h3>
+                  </div>
+
+                  <div class="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      @click.stop="openEditProjectModal(proj)"
+                      class="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                      title="修改项目"
+                    >
+                      <Edit2 class="w-3.5 h-3.5" />
+                    </button>
+                    <ChevronRight class="w-4 h-4 text-slate-300 group-hover:text-blue-600 transition-colors shrink-0" />
+                  </div>
+                </div>
+
+                <!-- 领域标签 (在全部视图或穿透子级时显示) -->
+                <div v-if="selectedAreaId === 'all' || (includeSubAreaProjects && proj.areaId !== selectedAreaId)" class="mb-2">
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-medium">
+                    <Folder class="w-3 h-3 text-slate-400" />
+                    <span>{{ getAreaTitle(proj.areaId) }}</span>
+                  </span>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500 my-3">
+                  <span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-medium">
+                    习惯 {{ getHabitsForProject(proj.id).length }}
+                  </span>
+                  <span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-medium">
+                    日程 {{ getSchedulesForProject(proj.id).length }}
+                  </span>
+                  <span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-medium">
+                    待办 {{ getProjectTodosCount(proj.id).completed }}/{{ getProjectTodosCount(proj.id).total }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80">
+                <div class="flex items-center justify-between text-[10px] text-slate-400 mb-1 font-mono">
+                  <span>进度</span>
+                  <span>{{ getProjectProgress(proj.id) }}%</span>
+                </div>
+                <div class="w-full h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                  <div
+                    class="h-full rounded-full transition-all duration-300"
+                    :style="{
+                      width: `${getProjectProgress(proj.id)}%`,
+                      backgroundColor: proj.color || '#3b82f6'
+                    }"
+                  ></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 卡片网格中的快速新建占位卡片 -->
+            <button
+              type="button"
+              @click="openNewProjectModal(selectedAreaId === 'all' ? undefined : selectedAreaId)"
+              class="p-4 rounded-xl border border-dashed border-slate-300 dark:border-slate-800 hover:border-blue-400 text-slate-400 hover:text-blue-600 flex flex-col items-center justify-center gap-1.5 transition-colors min-h-[120px] cursor-pointer"
+            >
+              <Plus class="w-5 h-5" />
+              <span class="text-xs font-medium">{{ t('project.newProject') }}</span>
+            </button>
+          </div>
+
+          <!-- 无项目时的空状态 -->
+          <div v-else class="p-8 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-center space-y-2 bg-slate-50/50 dark:bg-slate-900/40">
+            <p class="text-xs text-slate-400 dark:text-slate-500">当前领域下暂无项目</p>
+            <button
+              type="button"
+              @click="openNewProjectModal(selectedAreaId === 'all' ? undefined : selectedAreaId)"
+              class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-colors cursor-pointer shadow-xs"
+            >
+              <Plus class="w-3.5 h-3.5" />
+              <span>新建首个项目</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -502,28 +681,34 @@
 
         <div class="space-y-3.5 text-xs sm:text-sm">
           <div>
-            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">所属领域</label>
+            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{{ t('project.area') }}</label>
             <select
               v-model="modalAreaId"
-              class="w-full px-2.5 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950"
+              class="w-full px-2.5 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100"
             >
-              <option v-for="a in areas" :key="a.id" :value="a.id">{{ a.title }}</option>
+              <option
+                v-for="a in flatAreaTree"
+                :key="a.id"
+                :value="a.id"
+              >
+                {{ getIndentedAreaOptionLabel(a) }}
+              </option>
             </select>
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">项目名称</label>
+            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{{ t('project.projectName') }}</label>
             <input
               v-model="modalProjectTitle"
               type="text"
-              placeholder="项目名称..."
-              class="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950"
+              :placeholder="t('project.projectName') + '...'"
+              class="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100"
               @keyup.enter="handleSaveProject"
             />
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">主题颜色</label>
+            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{{ t('project.projectColor') }}</label>
             <div class="flex items-center gap-2.5 flex-wrap">
               <button
                 v-for="c in colorOptions"
@@ -543,54 +728,102 @@
             @click="showProjectModal = false"
             class="flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
           >
-            取消
+            {{ t('common.cancel') }}
           </button>
           <button
             @click="handleSaveProject"
             class="flex-1 sm:flex-none px-5 py-2 rounded-lg text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
           >
-            保存
+            {{ t('common.save') }}
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Add Area Modal -->
+    <!-- Add / Edit Area Modal -->
     <div
       v-if="showAddAreaModal"
       class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm"
       @click.self="showAddAreaModal = false"
     >
-      <div class="w-full sm:max-w-sm bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-2xl sm:rounded-xl p-5 space-y-4 shadow-xl pb-safe animate-in slide-in-from-bottom-6 sm:slide-in-from-bottom-2 duration-200">
+      <div class="w-full sm:max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-2xl sm:rounded-xl p-5 space-y-4 shadow-xl pb-safe animate-in slide-in-from-bottom-6 sm:slide-in-from-bottom-2 duration-200">
         <div class="sm:hidden w-10 h-1 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto -mt-2 mb-2"></div>
 
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
-          <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">新建领域</h3>
-          <button @click="showAddAreaModal = false" class="p-1 rounded-md text-slate-400 hover:text-slate-600">
+          <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">
+            {{ editingAreaId ? (t('common.edit') + ' ' + t('project.area')) : (areaModalParentId ? t('project.newSubArea') : t('project.newArea')) }}
+          </h3>
+          <button @click="showAddAreaModal = false" class="p-1 rounded-md text-slate-400 hover:text-slate-600 cursor-pointer">
             <X class="w-4 h-4" />
           </button>
         </div>
 
-        <input
-          v-model="newAreaTitle"
-          type="text"
-          placeholder="领域名称..."
-          class="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950"
-          @keyup.enter="handleSaveNewArea"
-        />
+        <div class="space-y-3.5 text-xs sm:text-sm">
+          <!-- 上级领域 Parent Area -->
+          <div>
+            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+              {{ t('project.parentArea') }}
+            </label>
+            <select
+              v-model="areaModalParentId"
+              class="w-full px-2.5 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100"
+            >
+              <option :value="null">{{ t('project.noParentArea') }}</option>
+              <option
+                v-for="a in selectableParentAreas"
+                :key="a.id"
+                :value="a.id"
+              >
+                {{ getIndentedAreaOptionLabel(a) }}
+              </option>
+            </select>
+          </div>
+
+          <!-- 领域名称 Area Title -->
+          <div>
+            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+              {{ t('project.areaName') }} <span class="text-rose-500">*</span>
+            </label>
+            <input
+              v-model="areaModalTitle"
+              type="text"
+              :placeholder="t('project.areaName') + '...'"
+              class="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-blue-500"
+              @keyup.enter="handleSaveAreaModal"
+            />
+          </div>
+
+          <!-- 主题颜色 Area Color -->
+          <div>
+            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+              {{ t('project.projectColor') }}
+            </label>
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <button
+                v-for="c in colorOptions"
+                :key="c"
+                type="button"
+                @click="areaModalColor = c"
+                class="w-7 h-7 sm:w-6 sm:h-6 rounded-full border-2 transition-transform active:scale-95 cursor-pointer"
+                :class="areaModalColor === c ? 'scale-110 border-slate-900 dark:border-white shadow-xs' : 'border-transparent'"
+                :style="{ backgroundColor: c }"
+              ></button>
+            </div>
+          </div>
+        </div>
 
         <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
           <button
             @click="showAddAreaModal = false"
-            class="flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+            class="flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
-            取消
+            {{ t('common.cancel') }}
           </button>
           <button
-            @click="handleSaveNewArea"
-            class="flex-1 sm:flex-none px-5 py-2 rounded-lg text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+            @click="handleSaveAreaModal"
+            class="flex-1 sm:flex-none px-5 py-2 rounded-lg text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-colors cursor-pointer"
           >
-            保存
+            {{ t('common.save') }}
           </button>
         </div>
       </div>
@@ -1220,6 +1453,11 @@ import { t } from '@/utils/i18n'
 import {
   FolderKanban,
   FolderPlus,
+  FolderTree,
+  Folder,
+  FolderOpen,
+  Layers,
+  Square,
   Plus,
   Edit2,
   Pencil,
@@ -1238,8 +1476,10 @@ import {
   Clock,
 } from 'lucide-vue-next'
 import TodoTreeItem from '@/components/TodoTreeItem.vue'
+import AreaTreeItem from '@/components/AreaTreeItem.vue'
 import type {
   Area,
+  AreaTreeNode,
   Project,
   ScheduleItem,
   Habit,
@@ -1250,6 +1490,15 @@ import type {
   TimingType,
   ScheduleRecurringType,
 } from '@/types'
+import {
+  buildAreaTree,
+  flattenAreaTree,
+  getAreaBreadcrumbs,
+  getAreaDescendantIds,
+  getAreaAncestorIds,
+  canSetAreaParent,
+  getProjectsInAreaBranch,
+} from '@/utils/areaTree'
 import { getPriorityStyle, normalizePriority } from '@/utils/priority'
 import { buildTodoTree, calculateLinkedTodoCompletion, getDescendantTodoIds } from '@/utils/tree'
 import { formatDate } from '@/utils/date'
@@ -1291,98 +1540,102 @@ const emit = defineEmits<{
 const todayStr = formatDate(new Date())
 
 const selectedAreaId = ref<string>('all')
+const collapsedAreaMap = ref<Record<string, boolean>>({})
+const includeSubAreaProjects = ref<boolean>(true)
 
-const sortedAreas = computed(() => {
-  return [...props.areas].sort((a, b) => a.order - b.order)
+const areaTree = computed(() => buildAreaTree(props.areas, props.projects))
+const flatAreaTree = computed(() => flattenAreaTree(areaTree.value))
+
+function toggleAreaCollapse(id: string) {
+  collapsedAreaMap.value[id] = !collapsedAreaMap.value[id]
+}
+
+function selectArea(id: string) {
+  selectedAreaId.value = id
+  if (id !== 'all') {
+    const ancestors = getAreaAncestorIds(id, props.areas)
+    for (const ancId of ancestors) {
+      collapsedAreaMap.value[ancId] = false
+    }
+  }
+}
+
+const currentSelectedArea = computed(() => {
+  if (selectedAreaId.value === 'all') return null
+  return props.areas.find((a) => a.id === selectedAreaId.value) || null
 })
 
-const displayAreas = computed(() => {
-  if (selectedAreaId.value === 'all') return sortedAreas.value
-  return sortedAreas.value.filter((a) => a.id === selectedAreaId.value)
+const currentBreadcrumbs = computed(() => {
+  if (selectedAreaId.value === 'all') return []
+  return getAreaBreadcrumbs(selectedAreaId.value, props.areas)
 })
 
-// Drag & drop state for Area Tabs and Area Cards
-const draggedTabAreaIndex = ref<number | null>(null)
-const dragOverTabAreaIndex = ref<number | null>(null)
-const draggedCardAreaIndex = ref<number | null>(null)
-const dragOverCardAreaIndex = ref<number | null>(null)
+function findTreeNode(nodes: AreaTreeNode[], id: string): AreaTreeNode | null {
+  for (const n of nodes) {
+    if (n.id === id) return n
+    if (n.children && n.children.length > 0) {
+      const found = findTreeNode(n.children, id)
+      if (found) return found
+    }
+  }
+  return null
+}
 
-function moveArea(fromIndex: number, toIndex: number) {
-  if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0) return
-  if (fromIndex >= sortedAreas.value.length || toIndex >= sortedAreas.value.length) return
+const currentSelectedNode = computed(() => {
+  if (selectedAreaId.value === 'all') return null
+  return findTreeNode(areaTree.value, selectedAreaId.value)
+})
 
-  const list = [...sortedAreas.value]
-  const [moved] = list.splice(fromIndex, 1)
-  list.splice(toIndex, 0, moved)
-
-  const updated = list.map((a, idx) => ({
-    ...a,
-    order: idx,
+const currentSubAreasWithCounts = computed(() => {
+  if (selectedAreaId.value === 'all') {
+    return areaTree.value.map((node) => ({
+      id: node.id,
+      title: node.title,
+      color: node.color,
+      totalProjectCount: node.totalProjectCount ?? 0,
+      childrenCount: node.children?.length ?? 0,
+    }))
+  }
+  if (!currentSelectedNode.value) return []
+  return currentSelectedNode.value.children.map((node) => ({
+    id: node.id,
+    title: node.title,
+    color: node.color,
+    totalProjectCount: node.totalProjectCount ?? 0,
+    childrenCount: node.children?.length ?? 0,
   }))
+})
 
-  emit('reorder-areas', updated)
-}
+const currentSubAreas = computed(() => currentSubAreasWithCounts.value)
 
-function handleAreaTabDragStart(e: DragEvent, index: number) {
-  draggedTabAreaIndex.value = index
-  if (e.dataTransfer) {
-    e.dataTransfer.effectAllowed = 'move'
-    e.dataTransfer.setData('text/plain', String(index))
+const directProjectsCount = computed(() => {
+  if (selectedAreaId.value === 'all') return props.projects.length
+  return props.projects.filter((p) => p.areaId === selectedAreaId.value).length
+})
+
+const totalBranchProjectsCount = computed(() => {
+  if (selectedAreaId.value === 'all') return props.projects.length
+  return getProjectsInAreaBranch(selectedAreaId.value, props.areas, props.projects).length
+})
+
+const displayedProjects = computed(() => {
+  if (selectedAreaId.value === 'all') {
+    return [...props.projects].sort((a, b) => a.order - b.order)
   }
-}
-
-function handleAreaTabDragOver(e: DragEvent, index: number) {
-  if (draggedTabAreaIndex.value === null) return
-  dragOverTabAreaIndex.value = index
-}
-
-function handleAreaTabDragLeave(e: DragEvent, index: number) {
-  if (dragOverTabAreaIndex.value === index) {
-    dragOverTabAreaIndex.value = null
+  if (includeSubAreaProjects.value) {
+    return getProjectsInAreaBranch(selectedAreaId.value, props.areas, props.projects).sort(
+      (a, b) => a.order - b.order
+    )
   }
-}
+  return props.projects
+    .filter((p) => p.areaId === selectedAreaId.value)
+    .sort((a, b) => a.order - b.order)
+})
 
-function handleAreaTabDrop(e: DragEvent, toIndex: number) {
-  if (draggedTabAreaIndex.value !== null) {
-    moveArea(draggedTabAreaIndex.value, toIndex)
-  }
-  handleAreaTabDragEnd()
-}
-
-function handleAreaTabDragEnd() {
-  draggedTabAreaIndex.value = null
-  dragOverTabAreaIndex.value = null
-}
-
-function handleAreaCardDragStart(e: DragEvent, index: number) {
-  draggedCardAreaIndex.value = index
-  if (e.dataTransfer) {
-    e.dataTransfer.effectAllowed = 'move'
-    e.dataTransfer.setData('text/plain', String(index))
-  }
-}
-
-function handleAreaCardDragOver(e: DragEvent, index: number) {
-  if (draggedCardAreaIndex.value === null) return
-  dragOverCardAreaIndex.value = index
-}
-
-function handleAreaCardDragLeave(e: DragEvent, index: number) {
-  if (dragOverCardAreaIndex.value === index) {
-    dragOverCardAreaIndex.value = null
-  }
-}
-
-function handleAreaCardDrop(e: DragEvent, toIndex: number) {
-  if (draggedCardAreaIndex.value !== null) {
-    moveArea(draggedCardAreaIndex.value, toIndex)
-  }
-  handleAreaCardDragEnd()
-}
-
-function handleAreaCardDragEnd() {
-  draggedCardAreaIndex.value = null
-  dragOverCardAreaIndex.value = null
+function getIndentedAreaOptionLabel(node: AreaTreeNode): string {
+  const indent = '\u00A0\u00A0'.repeat(node.depth)
+  const prefix = node.depth > 0 ? '└ ' : ''
+  return `${indent}${prefix}${node.title}`
 }
 
 function getProjectsByArea(areaId: string): Project[] {
@@ -1424,7 +1677,12 @@ watch(
   (newId) => {
     if (newId) {
       const p = props.projects.find((item) => item.id === newId)
-      if (p) activeProject.value = p
+      if (p) {
+        activeProject.value = p
+        if (p.areaId) {
+          selectArea(p.areaId)
+        }
+      }
     }
   },
   { immediate: true }
@@ -1985,11 +2243,17 @@ const colorOptions = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#e
 
 function openNewProjectModal(defaultAreaId?: string) {
   if (props.areas.length === 0) {
-    showAddAreaModal.value = true
+    openAddAreaModal()
     return
   }
   editingProjectId.value = null
-  modalAreaId.value = defaultAreaId || props.areas[0]?.id || ''
+  if (defaultAreaId && props.areas.some((a) => a.id === defaultAreaId)) {
+    modalAreaId.value = defaultAreaId
+  } else if (selectedAreaId.value !== 'all' && props.areas.some((a) => a.id === selectedAreaId.value)) {
+    modalAreaId.value = selectedAreaId.value
+  } else {
+    modalAreaId.value = flatAreaTree.value[0]?.id || props.areas[0]?.id || ''
+  }
   modalProjectTitle.value = ''
   modalProjectColor.value = '#3b82f6'
   showProjectModal.value = true
@@ -2036,32 +2300,85 @@ function handleSaveProject() {
 }
 
 const showAddAreaModal = ref(false)
-const newAreaTitle = ref('')
+const editingAreaId = ref<string | null>(null)
+const areaModalTitle = ref('')
+const areaModalParentId = ref<string | null>(null)
+const areaModalColor = ref('#3b82f6')
 
-function handleSaveNewArea() {
-  if (!newAreaTitle.value.trim()) return
-  emit('save-area', {
-    title: newAreaTitle.value.trim(),
-    order: props.areas.length,
-  })
-  newAreaTitle.value = ''
+function openAddAreaModal(parentId?: string | null) {
+  editingAreaId.value = null
+  areaModalTitle.value = ''
+  areaModalParentId.value = parentId || null
+  areaModalColor.value = '#3b82f6'
+  showAddAreaModal.value = true
+}
+
+function openEditAreaModal(area: Area) {
+  editingAreaId.value = area.id
+  areaModalTitle.value = area.title
+  areaModalParentId.value = area.parentId || null
+  areaModalColor.value = area.color || '#3b82f6'
+  showAddAreaModal.value = true
+}
+
+const selectableParentAreas = computed(() => {
+  if (!editingAreaId.value) return flatAreaTree.value
+  return flatAreaTree.value.filter((a) => canSetAreaParent(editingAreaId.value!, a.id, props.areas))
+})
+
+function handleSaveAreaModal() {
+  if (!areaModalTitle.value.trim()) return
+  const title = areaModalTitle.value.trim()
+  const parentId = areaModalParentId.value || null
+  const color = areaModalColor.value
+
+  if (editingAreaId.value) {
+    if (!canSetAreaParent(editingAreaId.value, parentId, props.areas)) {
+      alert('不能将自身或其子分类设为上级领域')
+      return
+    }
+    const current = props.areas.find((a) => a.id === editingAreaId.value)
+    emit('save-area', {
+      ...(current || {}),
+      id: editingAreaId.value,
+      title,
+      parentId,
+      color,
+    })
+  } else {
+    emit('save-area', {
+      title,
+      parentId,
+      color,
+      order: props.areas.length,
+    })
+  }
+
   showAddAreaModal.value = false
 }
 
 function handleEditArea(area: Area) {
-  const updated = prompt('重命名领域：', area.title)
-  if (updated && updated.trim() && updated !== area.title) {
-    emit('save-area', { ...area, title: updated.trim() })
-  }
+  openEditAreaModal(area)
 }
 
 function handleDeleteAreaClick(area: Area) {
-  const projectCount = getProjectsByArea(area.id).length
-  const confirmMsg = projectCount > 0
-    ? `确定删除领域「${area.title}」吗？该领域下的 ${projectCount} 个项目及关联内容将一并删除。`
-    : `确定删除领域「${area.title}」吗？`
+  const branchProjects = getProjectsInAreaBranch(area.id, props.areas, props.projects)
+  const descendants = getAreaDescendantIds(area.id, props.areas)
+
+  let confirmMsg = `确定删除领域「${area.title}」吗？`
+  if (descendants.length > 0 && branchProjects.length > 0) {
+    confirmMsg = `确定删除领域「${area.title}」吗？该操作将连同删除其下的 ${descendants.length} 个子领域以及 ${branchProjects.length} 个项目与关联日程、待办及习惯，且无法恢复。`
+  } else if (descendants.length > 0) {
+    confirmMsg = `确定删除领域「${area.title}」吗？该操作将连同删除其下的 ${descendants.length} 个子领域。`
+  } else if (branchProjects.length > 0) {
+    confirmMsg = `确定删除领域「${area.title}」吗？该领域下的 ${branchProjects.length} 个项目及关联内容将一并删除。`
+  }
+
   if (confirm(confirmMsg)) {
     emit('delete-area', area.id)
+    if (selectedAreaId.value === area.id || descendants.includes(selectedAreaId.value)) {
+      selectedAreaId.value = 'all'
+    }
   }
 }
 </script>
