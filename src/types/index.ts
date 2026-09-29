@@ -4,10 +4,20 @@ export type TimingType = 'anytime' | 'weekend' | 'specific_days'
 
 export interface Area {
   id: string
+  parentId?: string | null
   title: string
   order: number
+  icon?: string
+  color?: string
   createdAt: string
   updatedAt?: number | string
+}
+
+export interface AreaTreeNode extends Area {
+  children: AreaTreeNode[]
+  depth: number
+  projectCount?: number
+  totalProjectCount?: number
 }
 
 export interface Project {

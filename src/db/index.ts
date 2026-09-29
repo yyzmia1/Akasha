@@ -29,6 +29,9 @@ export class FlowOSDatabase extends Dexie {
       todos: 'id, projectId, parentId, completed, importance, dueDate, order',
       journals: 'id, date, createdAt',
     })
+    this.version(4).stores({
+      areas: 'id, parentId, order, createdAt',
+    })
   }
 }
 

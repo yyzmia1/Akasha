@@ -218,6 +218,7 @@ import type {
 } from '@/types'
 import { formatDate } from '@/utils/date'
 import { getDescendantTodoIds, calculateLinkedTodoCompletion } from '@/utils/tree'
+import { getAreaDescendantIds } from '@/utils/areaTree'
 import { enqueueChange, onRemoteDataChange, syncAll, applyBackupToCloud, resetSyncOutbox, syncCopilotEnabled } from '@/sync/syncEngine'
 import { loadAiConfig, saveAiConfig } from '@/services/aiService'
 import { isAuthenticated } from '@/sync/pocketbase'
@@ -715,8 +716,11 @@ async function handleSaveArea(areaData: Partial<Area>) {
   } else {
     const newArea: Area = {
       id: 'area-' + Date.now(),
+      parentId: areaData.parentId ?? null,
       title: areaData.title || '新领域',
       order: areaData.order ?? areas.value.length,
+      icon: areaData.icon,
+      color: areaData.color,
       createdAt: new Date().toISOString(),
       updatedAt: now,
     }
@@ -737,30 +741,36 @@ async function handleReorderAreas(reorderedAreas: Area[]) {
 }
 
 async function handleDeleteArea(id: string) {
-  const projs = await db.projects.where('areaId').equals(id).toArray()
-  for (const p of projs) {
-    const schs = await db.schedules.where('projectId').equals(p.id).toArray()
-    for (const s of schs) enqueueChange('schedule', s.id, null, true)
-    await db.schedules.where('projectId').equals(p.id).delete()
+  // 获取当前领域及其所有子孙后代领域 ID
+  const allCurrentAreas = await db.areas.toArray()
+  const targetAreaIds = [id, ...getAreaDescendantIds(id, allCurrentAreas)]
 
-    const hbs = await db.habits.where('projectId').equals(p.id).toArray()
-    for (const h of hbs) {
-      const logs = await db.habitLogs.where('habitId').equals(h.id).toArray()
-      for (const l of logs) enqueueChange('habitLog', l.id, null, true)
-      await db.habitLogs.where('habitId').equals(h.id).delete()
-      enqueueChange('habit', h.id, null, true)
+  for (const areaId of targetAreaIds) {
+    const projs = await db.projects.where('areaId').equals(areaId).toArray()
+    for (const p of projs) {
+      const schs = await db.schedules.where('projectId').equals(p.id).toArray()
+      for (const s of schs) enqueueChange('schedule', s.id, null, true)
+      await db.schedules.where('projectId').equals(p.id).delete()
+
+      const hbs = await db.habits.where('projectId').equals(p.id).toArray()
+      for (const h of hbs) {
+        const logs = await db.habitLogs.where('habitId').equals(h.id).toArray()
+        for (const l of logs) enqueueChange('habitLog', l.id, null, true)
+        await db.habitLogs.where('habitId').equals(h.id).delete()
+        enqueueChange('habit', h.id, null, true)
+      }
+      await db.habits.where('projectId').equals(p.id).delete()
+
+      const tds = await db.todos.where('projectId').equals(p.id).toArray()
+      for (const t of tds) enqueueChange('todo', t.id, null, true)
+      await db.todos.where('projectId').equals(p.id).delete()
+
+      enqueueChange('project', p.id, null, true)
     }
-    await db.habits.where('projectId').equals(p.id).delete()
-
-    const tds = await db.todos.where('projectId').equals(p.id).toArray()
-    for (const t of tds) enqueueChange('todo', t.id, null, true)
-    await db.todos.where('projectId').equals(p.id).delete()
-
-    enqueueChange('project', p.id, null, true)
+    await db.projects.where('areaId').equals(areaId).delete()
+    await db.areas.delete(areaId)
+    enqueueChange('area', areaId, null, true)
   }
-  await db.projects.where('areaId').equals(id).delete()
-  await db.areas.delete(id)
-  enqueueChange('area', id, null, true)
   await loadAllData()
 }
 
