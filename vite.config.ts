@@ -2,12 +2,15 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
+import fs from 'fs'
 import { execSync } from 'child_process'
 
-let gitBranch = 'feat/ai-copilot'
+const pkg = JSON.parse(fs.readFileSync(path.resolve(import.meta.dirname, './package.json'), 'utf-8'))
+
+let gitBranch = 'feat/i18n'
 let gitCommit = ''
 try {
-  gitBranch = execSync('git rev-parse --abbrev-ref HEAD').toString().trim() || 'feat/ai-copilot'
+  gitBranch = execSync('git rev-parse --abbrev-ref HEAD').toString().trim() || 'feat/i18n'
   gitCommit = execSync('git rev-parse --short HEAD').toString().trim()
 } catch (_e) {}
 
@@ -16,7 +19,7 @@ const isBranch = gitBranch !== 'main' && gitBranch !== 'master' && gitBranch !==
 export default defineConfig({
   plugins: [vue(), tailwindcss()],
   define: {
-    __APP_VERSION__: JSON.stringify('0.9.6'),
+    __APP_VERSION__: JSON.stringify(pkg.version),
     __GIT_BRANCH__: JSON.stringify(gitBranch),
     __GIT_COMMIT__: JSON.stringify(gitCommit),
     __IS_BRANCH__: JSON.stringify(isBranch),
