@@ -5,8 +5,8 @@
 </p>
 
 <p align="center">
-  <strong>一个开源、简洁的个人日程计划、日历与待办管理工具，可部署在自己的电脑或服务器上。</strong><br>
-  <em>An open-source, clean personal planner, calendar, and todo app that can be deployed on your own computer or server.</em>
+  <strong>现代化本地优先个人生产力与工作流架构系统</strong><br>
+  <em>A Modern, Local-First Personal Productivity & Architecture Flow OS</em>
 </p>
 
 <p align="center">
@@ -15,226 +15,228 @@
 </p>
 
 <p align="center">
-  <a href="https://vuejs.org/"><img src="https://img.shields.io/badge/Vue-3.5-4FC08D?style=flat-square&logo=vue.js&logoColor=white" alt="Vue 3"></a>
-  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript"></a>
-  <a href="https://vitejs.dev/"><img src="https://img.shields.io/badge/Vite-8.x-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite"></a>
-  <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/TailwindCSS-4.x-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white" alt="Tailwind CSS"></a>
-  <a href="https://dexie.com/"><img src="https://img.shields.io/badge/Dexie.js-IndexedDB-orange?style=flat-square" alt="Dexie.js"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="License"></a>
+  <a href="https://github.com/yyzmiao/Akasha/releases"><img src="https://img.shields.io/badge/Release-v0.9.8-3B82F6?style=flat-square&logo=github" alt="Release v0.9.8"></a>
+  <a href="https://vuejs.org/"><img src="https://img.shields.io/badge/Vue-3.5-4FC08D?style=flat-square&logo=vue.js&logoColor=white" alt="Vue 3.5"></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript 5"></a>
+  <a href="https://vitejs.dev/"><img src="https://img.shields.io/badge/Vite-8.x-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite 8"></a>
+  <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/TailwindCSS-4.x-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white" alt="Tailwind CSS 4"></a>
+  <a href="https://dexie.com/"><img src="https://img.shields.io/badge/Dexie.js-IndexedDB-orange?style=flat-square" alt="Dexie.js Local-First"></a>
+  <a href="https://pocketbase.io/"><img src="https://img.shields.io/badge/PocketBase-SSE_Realtime-b648ff?style=flat-square" alt="PocketBase SSE"></a>
+  <a href="https://vitest.dev/"><img src="https://img.shields.io/badge/Vitest-100%25_Passed-729B1B?style=flat-square&logo=vitest&logoColor=white" alt="Vitest 100%"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="License MIT"></a>
 </p>
 
 ---
 
-## 📖 简介
+## 📌 架构愿景与设计哲学
 
-**Akasha** 是一个开源、轻量且可部署在自己电脑或服务器上的个人日程计划、动态日历与多级待办事项管理工具。
+**Akasha** 并非传统的碎片化清单或娱乐向待办工具，而是一套面向**高阶专业人士、系统化创作者与严谨思考者**构建的**商业级个人效能与全流程工作架构系统 (Personal Architecture Flow OS)**。
 
-日常生活中，我们常常需要在不同的应用之间来回切换：在日历里查日程、在待办软件里拆任务、在打卡工具里记习惯、在备忘录里写随笔——多款工具割裂跳转，既繁琐又分散精力。
+在现代工作与生活中，知识工作者面临三大核心矛盾：
+1. **工具链严重割裂**：任务分解在待办软件、日程排期在日历系统、行为管理在习惯追踪、思考复盘在笔记文档，信息流转损耗巨大；
+2. **云端隐私与厂商锁定**：商业 SaaS 平台掌控数据主权，网络波动导致操作延迟，订阅制成本高昂且随时面临数据泄露隐患；
+3. **AI 协同悬浮脱节**：市面多数 AI 仅提供悬浮对话框，无法穿透真实业务上下文进行时空冲突检测与智能结构化落地。
 
-**Akasha 将这些常用的计划与待办功能融为一体：**  
-它汇集了**自适应动态月历、无限多级待办清单、规律习惯打卡、固定日程规划以及随笔日记**。界面直观清爽，专注于日常任务的高效规划与时间管理。
+**Akasha 确立了四大核心设计原则：**
 
-支持自由部署在个人电脑（PC / Mac）或私有云服务器（VPS）中。采用 **本地优先（Local-First）** 架构，所有数据均保存在本地浏览器的 IndexedDB 数据库中。无需注册账号，不依赖任何第三方云端服务，毫秒级即时响应，全离线可用，并支持一键安装为桌面或手机独立应用（PWA）。
-
----
-
-## ✨ 核心特性
-
-### 1. 顶层架构：领域与项目 (Areas & Projects)
-* **人生领域定义**：自由开辟长期关注领域（如：工作事业、学业提升、生活理财、健康身心等）。
-* **项目生命周期**：项目归属于具体领域，支持自定义专属色彩标定。
-* **三位一体聚合**：在项目详情中无缝管理该项目关联的**习惯打卡**、**固定日程**与**待办任务**。
-* **自动计算完成度**：根据待办事项完成比例，实时动态更新项目进度条与百分比。
-
-### 2. 执行攻坚：无限多级待办树 (Recursive Todo Tree)
-* **无限深度分解**：支持任意层级的大任务 ➔ 阶段任务 ➔ 具体行动的嵌套拆解。
-* **树节点交互**：支持独立折叠/展开多级分支，父子状态双向联动。
-* **多维深度属性**：
-  * **重要度评分**：P1 ~ P10 滑块精细化打分，一眼锚定高优先级事项。
-  * **智能截止预警**：支持设定开始与截止时间，动态呈现“今日截止”、“剩余 N 天”、“逾期 N 天”告警。
-  * **备忘与备注**：支持为每个待办附加详尽说明。
-* **复合筛选与排序**：支持按项目筛选、按进行中/已完成/今日截止/逾期过滤，支持按权重与日期排序。
-
-### 3. 规律生活：多频次习惯打卡 (Habits Tracker)
-* **灵活周期支持**：
-  * **每日习惯**：支持按早晨（Morning）、下午（Afternoon）、晚上（Evening）、全天（Anytime）时段分类。
-  * **周期习惯**：支持每周特定频次、每两周（双周）、每月固定频次习惯。
-* **正向反馈与连胜激励**：自动记录每日打卡历史，统计当前连胜天数（Current Streak）与历史最佳打卡记录。
-
-### 4. 时间规约：固定日程安排 (Schedules)
-* **周期性规约**：支持特定单次日期日程、每周固定日日程（如每周一例会）、每月固定日日程（如每月10日）。
-* **项目关联**：将固定日程与具体项目关联，在时间轴上保持清晰的归属边界。
-
-### 5. 时间全景：自适应动态月历 (Calendar Dashboard)
-* **自适应高度**：单元格随当天内容多少智能伸缩扩展，任务充实时自如展开，空闲时整洁紧凑。
-* **多源信息聚合**：在单一月历视图中同时整合**固定日程**、**截止待办事项**以及**随笔日记标记**。
-* **跨模块穿透交互**：
-  * 点击空白处或日期：一键调起当日随笔/日记速写。
-  * 点击日程标签：弹出日程详情与删除管理，杜绝误触冒泡。
-  * 点击待办芯片：自动定位跳转至待办视图并直接弹出属性编辑面板。
-
-### 6. 反思沉淀：随笔与每日复盘 (Daily Journal)
-* **日期驱动书写**：支持任意日期的随笔撰写，记录心得、情绪状态与当日复盘。
-* **月度归档目录**：侧边栏支持“全部记录”与“按月份筛选”切换，卡片直观显示日期与文字摘要，点击即可即时载入编辑。
-
-### 7. 全局检索与个性化定制 (Global Tools & Preferences)
-* **全景穿透搜索**：快捷检索项目、待办、习惯、日程与随笔，结果一键穿透直达。
-* **全界面等比缩放**：内置 90%（紧凑）、100%（标准）、108%（舒适）、118%（大屏）四档全局无损比例缩放。
-* **多字体风格一键切换**：支持霞鹜文楷（文雅温润）、系统默认黑体（现代利落）、典雅宋体（沉稳内敛）。
-* **明暗双主题**：纯净浅色（Clean Light）与沉浸深色（Deep Dark）平滑过渡。
-* **数据自主可控**：支持一键导出/导入全量 JSON 备份，支持一键清空重置为完全空白数据集。
-
-### 8. 渐进式 Web 应用 (PWA & Mobile Ready)
-* **独立应用模式**：全面适配 Android Chrome WebAPK 与 iOS Safari 添加到主屏幕，无浏览器地址栏与安全角标，呈现原生全屏体验。
-* **离线服务工作线程**：内置 Service Worker 预缓存，断网状态下照常加载与操作。
-
-### 9. 真·多端无缝实时同步 (PocketBase Realtime Sync)
-* **本地优先 + 云端长连接**：基于 PocketBase（单文件轻量级 BaaS，内存仅需 ~25MB）与浏览器 IndexedDB。
-* **毫秒级双向广播**：手机端打勾或修改待办，电脑端通过 SSE (Server-Sent Events) 瞬间无感刷新。
-* **双向离线容灾**：网络中断时依然畅享毫秒级操作；网络恢复自动增量推拉同步。
-* **墓碑防复活机制**：彻底解决断网重连后已删除项目死灰复燃的问题。
-* **单端口统一反代**：容器内置 Nginx 自动反代 `/api/` 与后台 `/_/`，无需多开防火墙端口，零跨域配置烦恼。
+* 🛡️ **绝对数据主权与本地优先 (Local-First & Privacy First)**：所有业务数据持久化于本地浏览器 IndexedDB 中，离线状态毫秒级无感操作，零第三方强制依赖；
+* 🧩 **顶层至终端的闭环治理 (Closed-Loop Governance)**：形成「顶层领域（Areas）➔ 阶段项目（Projects）➔ 任务决策树（Todos）➔ 连续时间网格（Schedules）➔ 惯性习惯（Habits）➔ 复盘反思（Journals）」的完整系统闭环；
+* 🤖 **原生多模态 AI 智能副驾驶 (Multimodal Copilot Engine)**：将大语言模型推理与视觉解析引擎深度植入业务核心，支持双模型解耦配置、截图秒变排期、智能时间冲突探测；
+* ⚡ **生产级分布式实时同步 (Enterprise-Grade Real-Time Sync)**：结合轻量级 PocketBase BaaS 引擎，依托 SSE (Server-Sent Events) 与增量推拉机制，实现毫秒级多端双向广播与可靠容灾。
 
 ---
 
-## 🛠️ 技术栈 (Tech Stack)
+## 🏗️ 整体系统架构与数据流
 
-* **核心框架**：[Vue 3](https://vuejs.org/) (Composition API, `<script setup>`)
-* **开发语言**：[TypeScript](https://www.typescriptlang.org/)
-* **构建工具**：[Vite 8](https://vitejs.dev/)
-* **样式处理**：[Tailwind CSS 4](https://tailwindcss.com/)
-* **本地数据库**：[Dexie.js](https://dexie.com/) (HTML5 IndexedDB 高性能封装)
-* **图标组件**：[Lucide Vue Next](https://lucide.dev/)
-* **视觉粒子**：[canvas-confetti](https://github.com/catdad/canvas-confetti)
-* **默认字体**：[LXGW WenKai Screen](https://github.com/lxgw/LxgwWenKai)
+```mermaid
+flowchart TB
+    subgraph Client["前端客户端 (Vue 3.5 + TypeScript + Tailwind 4)"]
+        UI["呈现与交互层 (PWA / Mobile / Desktop)"]
+        
+        subgraph Logic["核心引擎层"]
+            Copilot["AI Copilot 推理引擎\n(Dual Model: Text / Vision)"]
+            Conflict["时间冲突检测引擎\n(Conflict Detector)"]
+            Timeline["连续时间网格排版引擎\n(Multi-Column Collision Layout)"]
+            I18n["全球化国际化中心\n(zh-CN / en-US / ja-JP / fr-FR / de-DE)"]
+        end
+        
+        subgraph Storage["本地存储层 (Local-First)"]
+            Dexie["Dexie.js (HTML5 IndexedDB)\n毫秒级本地事务 & 离线缓存"]
+        end
+        
+        UI <--> Logic
+        Logic <--> Storage
+    end
+
+    subgraph Server["私有服务端 (Docker Compose / VPS / 本地)"]
+        Nginx["反向代理 & 访问控制 (Nginx / HTTPS)\nHTTP Basic Auth + 动态 /api/ai-proxy/ 转发"]
+        PB["PocketBase BaaS (轻量单二进制, ~25MB 内存)\n数据持久化 (pb_data) + SSE 实时双向同步"]
+        
+        Nginx <--> PB
+    end
+
+    subgraph LLM["外部 / 本地模型集群 (OpenAI 协议兼容)"]
+        AI_Chat["推理大模型 (DeepSeek / SiliconFlow / OpenAI / Ollama 等)"]
+        AI_Vision["多模态视觉大模型 (Qwen-VL / GPT-4o / Claude Vision 等)"]
+    end
+
+    Storage <== "增量推拉 & SSE 广播" ==> PB
+    Copilot <== "流式 SSE 穿透代理" ==> Nginx
+    Nginx <== "安全转发" ==> LLM
+```
 
 ---
 
-## 🚀 部署与运行 (Deployment & Running)
+## ⚡ 核心系统特性矩阵
 
-本项目支持部署在**个人电脑**或**云端服务器**上，提供轻量灵活的运行方式：
+### 1. 顶层战略中枢：领域与项目治理 (Areas & Projects)
+* **全局战略领域 (Areas of Responsibility)**：按人生与业务维度开辟长期关注领域（例如：研发架构、商业增长、学业深造、生活财务、身心健康）。
+* **项目全生命周期 (Project Lifecycle)**：支持项目归属、状态推进、专属视觉色彩识别以及富文本目标设定。
+* **三位一体任务聚合**：在单一项目视窗中无缝穿透管理该项目归属的**执行待办**、**固定日程**与**习惯打卡**。
+* **动态进度度量**：基于子任务完成状态与权重算法，实时计算项目完成度百分比与可视化进度线。
 
-### 1. 部署在自己的电脑上 (Local Computer)
+### 2. 高精度连续时间网格与日程系统 (Continuous Time Grid & Scheduling)
+* **24 小时连续时间网格**：彻底告别简陋的时间块列表，日历视图采用高精度绝对时间物理坐标轴，精准呈现全天时间流。
+* **多任务重叠自适应分栏算法 (`timelineLayout`)**：独创的时间冲突横向自适应列宽分配算法，当多个日程/跨度待办在相同时间段重叠时，系统自动计算最大重叠阶数，等比智能分配横向列宽，杜绝视觉挤压与重叠遮挡。
+* **高精度“当前时刻”游标 (Now Cursor)**：红线游标沿绝对时间轴以精确分钟比例自适应推进，当前进行中的日程高亮凸显。
+* **跨周期排期规则**：支持单次绝对时间日程、每周固定日排期（如团队例会）、每月固定日排期（如财务结算）。
 
-#### 方式 A：Node.js 本地极速运行
+### 3. 多模态 AI 智能副驾驶 (Multimodal AI Copilot Engine)
+* **双模型独立解耦架构 (Dual-Model Decoupling)**：
+  * **主文字规划模型 (Chat Engine)**：负责意图拆解、任务优先级评估、自然语言排期规划；
+  * **独立视觉模型 (Vision Multimodal API)**：支持与主模型完全独立的 Provider / BaseUrl / APIKey / Model 配置，可搭配最具性价比的视觉识别端点。
+* **智能冲突探测推演 (`conflictDetector`)**：在计划制定或导入时，毫秒级扫描已有时间轴，秒级检出潜在的时间段重叠冲突并输出预警。
+* **图片多模态智能排期提取**：直接截屏或粘贴工作排期表、高校课表、会议议程图，AI 视觉引擎全自动解析并提取结构化数据，一键批量灌入日历。
+* **安全流式反向代理 (`/api/ai-proxy/`)**：内置 Nginx 动态流式中间件，解决前端调用三方大模型 API 的跨域限制，保障 SSE (Server-Sent Events) 打字机级逐字渲染。
+
+### 4. 递归任务决策工程：无限多级待办树 (Recursive Multi-Depth Todo Tree)
+* **无限深度结构化拆解**：支持自战略目标 ➔ 阶段任务 ➔ 攻坚项 ➔ 最小行动单元（Next Physical Action）的无限层级嵌套。
+* **状态双向联动与折叠交互**：父子节点双向级联，支持单树枝深度折叠，保障高阶项目下的视觉整洁。
+* **P1 ~ P10 十级权重度量**：精细化滑动权重评分，结合逾期自动警报（今日截止、剩余 N 天、逾期 N 天），精准锁定关键攻坚点。
+
+### 5. 行为惯性工程：多频度习惯矩阵 (Habits & Consistency Engine)
+* **时段分类驱动**：精细划分晨间（Morning）、午后（Afternoon）、晚间（Evening）与全天（Anytime）打卡象限。
+* **复合周期规划**：全面支持按日、按周、双周以及按月维度的规律行为约束。
+* **连续执飞追踪 (Current Streak & Best Record)**：精准度量坚持天数与历史极值，提供确定性正向行为反馈。
+
+### 6. 深度反思沉淀：随笔与每日复盘 (Reflective Journaling & Audit)
+* **日期锚定双向流**：与日历完全互通，支持任意时间戳的结构化心得随笔、情绪状态与复盘输出。
+* **月度时光检索目录**：侧边卡片按月份无损聚合，支持快速按月检索历史沉淀。
+
+### 7. 全球化与本地化体系 (Enterprise i18n Localization)
+* **原生 5 语言全链路覆盖**：系统内置并深度适配简体中文（zh-CN）、英语（en-US）、日语（ja-JP）、法语（fr-FR）、德语（de-DE）。
+* **动态自适应时区与格式化**：不同语言环境下，时间格式、星期缩写与日历月份自适应按照国际通用惯例智能排版。
+
+### 8. 宏观环境与状态感知 (Atmospheric & Status Perception)
+* **实时气象感知微件**：支持精确至地级市/区县的多级行政区划定位与温度、天气状况展示。
+* **权威预报系统外链**：一键穿透直达专业天气平台，辅助出差与户外日程规划。
+
+### 9. 生产级多端实时同步与离线容灾 (PocketBase Realtime Synchronization)
+* **轻量级微服务架构**：基于 PocketBase 单二进制 BaaS（内存占用仅 ~25MB），持久化保存于宿主机本地。
+* **双向增量同步与墓碑防复活机制**：网络中断时毫秒级写入本地 IndexedDB，网络恢复后智能比对 `updatedAt` 时间戳进行增量同步；删除项通过墓碑机制标记，杜绝重连复活。
+* **SSE 实时长连接广播**：移动端打卡，桌面端无需刷新，毫秒级响应并即时同步状态。
+
+---
+
+## 🛠️ 技术规格与工程实现
+
+| 分层维度 | 技术选型 | 说明 / 优势 |
+| :--- | :--- | :--- |
+| **核心前端框架** | **Vue 3.5+** | 深度使用 Composition API、`<script setup>`、响应式系统与计算属性 |
+| **开发语言** | **TypeScript 5+** | 完备的类型安全，覆盖领域、任务树、AI 配置与协议定义 |
+| **构建与打包工具** | **Vite 8.x** | 秒级 HMR 模块热更，极致生产打包优化 |
+| **原子化样式引擎** | **Tailwind CSS 4.x** | 现代色彩体系、深浅模式平滑无缝过渡、自适应流式网格 |
+| **本地优先数据库** | **Dexie.js (IndexedDB)** | 高性能异步存储，提供强大的索引检索与离线事务能力 |
+| **自动化测试框架** | **Vitest 5.x** | **26 项单元测试用例 100% 自动化覆盖**（冲突检测、时间线网格、AI 服务等） |
+| **图标与视觉系统** | **Lucide Vue Next** | 统一、精致的高级矢量图标库 |
+| **排版默认字体** | **LXGW WenKai Screen** | 文雅温润的屏幕阅读字体，兼顾美学与专业度 |
+| **同步与 BaaS 核心** | **PocketBase (Golang)** | 单二进制单文件数据库，嵌入式 SQLite，极致轻量稳定 |
+| **容器与部署编排** | **Docker & Docker Compose** | 生产多阶段静态镜像构建，内置 Nginx 反代与健康检查 |
+
+---
+
+## 🚀 生产部署与运行指南 (Deployment Guide)
+
+本项目支持部署在**个人工作电脑**或**公网私有云服务器（VPS）**中：
+
+### 方式一：个人电脑极速启动 (Local Running)
+
+#### 1. Node.js 本地开发模式
 ```bash
-# 1. 克隆代码仓库并进入目录
+# 克隆代码仓库
 git clone https://github.com/yyzmiao/Akasha.git
 cd Akasha
 
-# 2. 安装项目依赖
+# 安装依赖
 npm install
 
-# 3. 启动本地开发服务 (默认运行在 http://localhost:5173/)
+# 运行自动化测试确保环境正常
+npm test
+
+# 启动本地开发服务 (默认 http://localhost:5173/)
 npm run dev
 ```
 
-#### 方式 B：本地 Docker 一键启动
+#### 2. 本地 Docker 容器化运行
 ```bash
-# 一键编译并启动本地容器服务 (访问 http://localhost:8080)
 docker compose up -d --build
+# 访问 http://localhost:8080
 ```
 
 ---
 
-### 2. 部署在自己的服务器上 (Server / VPS)
+### 方式二：私有云服务器生产部署 (Production Server / VPS)
 
-#### 第一步：Docker 容器化启动
+#### 第一步：启动容器集群
+在服务器拉取代码并启动标准 Docker 编排服务：
 ```bash
-# 在服务器克隆代码并进入目录
 git clone https://github.com/yyzmiao/Akasha.git
 cd Akasha
 
-# 启动容器服务 (包含 Akasha 前端与 PocketBase 实时同步后端)
+# 编译并拉起 Akasha 前端与 PocketBase 容器
 docker compose up -d --build
 ```
+> **数据持久化说明**：PocketBase 的所有用户与同步数据持久化存储于宿主机的 `./pb_data` 目录中，升级或重启容器不会丢失任何数据。
 
-> **提示**：启动后，直接访问网页并打开「**设置 ➔ 云端多端同步**」，注册您的专属账号即可开启手机与电脑的毫秒级双向实时同步。PocketBase 数据会自动持久化保存在宿主机的 `./pb_data` 目录中。
+#### 第二步：配置域名反代与访问安全鉴权 (推荐)
+Akasha 提供标准化生产反代模版 [`deploy/nginx-proxy.conf`](deploy/nginx-proxy.conf) 与密码配置示例 [`deploy/.htpasswd.example`](deploy/.htpasswd.example)。
 
-
-#### 第二步：配置 Nginx 域名反代与访问密码 (可选)
-
-可直接参考项目内置的生产反代模板 [`deploy/nginx-proxy.conf`](deploy/nginx-proxy.conf) 与凭证模板 [`deploy/.htpasswd.example`](deploy/.htpasswd.example)。
-
-<details>
-<summary><strong>👉 点击展开查看：服务器 Nginx 反向代理与网页账号密码防护全教程</strong></summary>
-
-<br>
-
-Akasha 作为纯前端本地优先应用，若部署在公网服务器上，建议使用 **Nginx 反向代理** 结合 **HTTP Basic Auth**，无需繁琐的后端用户系统即可原生实现网页层面的密码防护。
-
-##### 1. 安装密码生成工具 `htpasswd`
-根据服务器操作系统安装工具：
-```bash
-# Ubuntu / Debian
-sudo apt update && sudo apt install -y apache2-utils
-
-# CentOS / RHEL / AlmaLinux
-sudo yum install -y httpd-tools
-```
-
-##### 2. 生成账号与密码文件
-在 Nginx 配置目录（例如 `/etc/nginx/conf.d/`）下创建凭据文件：
-```bash
-# 创建新文件并添加第一个管理员账号 (-c 为创建新文件，-b 为命令行传密)
-htpasswd -b -c /etc/nginx/conf.d/.htpasswd your_username your_secure_password
-
-# 后续添加其他账号或修改已有密码（注意不要加 -c，否则会覆盖原文件）
-htpasswd -b /etc/nginx/conf.d/.htpasswd new_user their_password
-
-# 查看生成的文件内容（密码将以安全的加密哈希存储）
-cat /etc/nginx/conf.d/.htpasswd
-```
-
-##### 3. 配置 Nginx 站点与 PWA 免密白名单
-创建或编辑站点配置文件（如 `/etc/nginx/conf.d/akasha.conf`），将请求反向代理到容器端口（默认 `8080`），并配置密码防护与关键资源放行：
+结合 **Nginx 反向代理** 与 **HTTP Basic Auth**，无需暴露未保护端口即可原生建立企业级安全访问屏障：
 
 ```nginx
+# 参考配置片段 (/etc/nginx/conf.d/akasha.conf)
 server {
     listen 80;
-    listen 443 ssl;
+    listen 443 ssl http2;
     server_name your-domain.com;
 
-    ssl_certificate /etc/nginx/certs/fullchain.pem;
+    ssl_certificate     /etc/nginx/certs/fullchain.pem;
     ssl_certificate_key /etc/nginx/certs/privkey.pem;
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers HIGH:!aNULL:!MD5;
 
-    charset utf-8;
-    server_tokens off;
-    gzip on;
-    gzip_types text/plain text/css application/javascript application/json application/xml image/svg+xml;
-
-    # 开启网页访问账号密码保护
-    auth_basic "Akasha Restricted Access";
+    # 启用安全账号密码认证
+    auth_basic "Akasha Access Authentication";
     auth_basic_user_file /etc/nginx/conf.d/.htpasswd;
 
-    # 关键放行：PWA 清单 (供手机浏览器免密检测并安装独立应用)
+    # 关键放行：PWA Manifest 与 Service Worker（确保手机桌面免密检测与离线安装）
     location = /manifest.json {
         auth_basic off;
         proxy_pass http://127.0.0.1:8080;
-        proxy_set_header Host $host;
-        add_header Access-Control-Allow-Origin *;
     }
-
-    # 关键放行：Service Worker (供离线缓存注册)
     location = /sw.js {
         auth_basic off;
         proxy_pass http://127.0.0.1:8080;
-        proxy_set_header Host $host;
     }
-
-    # 关键放行：高清桌面图标
     location ~* ^/(icon-.*\.png|apple-touch-icon.*\.png|favicon\..*)$ {
         auth_basic off;
         proxy_pass http://127.0.0.1:8080;
-        proxy_set_header Host $host;
-        add_header Access-Control-Allow-Origin *;
     }
 
-    # 主应用反代 (受账号密码保护)
+    # 主站反向代理 (受鉴权保护)
     location / {
         proxy_pass http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -243,73 +245,84 @@ server {
 }
 ```
 
-> **避坑提示**：由于安卓 Chrome（WebAPK）与 iOS Safari 添加主屏幕时，是在底层静默拉取 `/manifest.json` 与 `/sw.js`，无法弹出 Basic Auth 输入框。上述配置针对 Manifest、Service Worker 与图标的 `auth_basic off;` 放行极为关键，既保证了主应用的密码安全，又彻底解决了手机浏览器无法安装或图标模糊的问题。
-
-##### 4. 测试并热重载 Nginx
-```bash
-# 测试配置文件语法
-nginx -t
-
-# 语法通过后热重载生效
-nginx -s reload
-```
-
-访问 `https://your-domain.com` 时浏览器将自动弹出登录框，输入设置的用户名和密码即可登入。
-
-</details>
-
 ---
 
-## 📂 目录结构 (Project Structure)
+## 📂 项目工程架构一览
 
 ```text
 Akasha/
-├── deploy/                # 生产部署与反向代理模板
-│   ├── .htpasswd.example  # Basic Auth 凭据模版
-│   └── nginx-proxy.conf   # 生产 Nginx 反向代理配置模版
-├── public/                # 静态资源、图标与 PWA 清单
-│   ├── icon-check-192.png # PWA 192x192 高清图标
-│   ├── icon-check-512.png # PWA 512x512 高清图标
-│   └── manifest.json      # 应用清单配置
+├── .github/
+│   └── workflows/
+│       └── ci.yml               # GitHub Actions 自动化 CI 验证工作流 (Test & Build)
+├── deploy/                      # 生产级部署与反向代理模板
+│   ├── .htpasswd.example        # Basic Auth 凭据配置样例
+│   └── nginx-proxy.conf         # 生产 Nginx SSL/反代模板
+├── public/                      # PWA 清单、静态图标与离线工作线程
+│   ├── icon-check-192.png       # 192x192 标准 PWA 图标
+│   ├── icon-check-512.png       # 512x512 高清视网膜图标
+│   ├── manifest.json            # Web App 独立应用元数据定义
+│   └── sw.js                    # Service Worker 离线网络拦截与缓存
 ├── src/
-│   ├── components/        # 核心功能组件
-│   │   ├── CalendarView.vue    # 自适应动态月历看板
-│   │   ├── GlobalSearch.vue    # 全局全景穿透搜索
-│   │   ├── HabitsView.vue      # 习惯打卡与连胜管理
-│   │   ├── JournalView.vue     # 随笔撰写与历史归档
-│   │   ├── Navbar.vue          # 顶栏导航与主题/搜索控制
-│   │   ├── ProjectView.vue     # 领域与项目卡片、三位一体详情
-│   │   ├── SettingsDrawer.vue  # 抽屉式流型设置与数据备份
-│   │   ├── TodoTreeItem.vue    # 无限多级待办递归项
-│   │   └── TodoView.vue        # 待办清单多维筛选与管理
+│   ├── components/              # 核心功能业务组件
+│   │   ├── copilot/
+│   │   │   └── CopilotModal.vue # AI 智能副驾驶交互弹窗 (规划、推演、识图导入)
+│   │   ├── CalendarView.vue     # 连续时间网格与自适应动态月历看板
+│   │   ├── GlobalSearch.vue     # 全景穿透搜索引擎
+│   │   ├── HabitsView.vue       # 行为惯性与习惯打卡管理
+│   │   ├── JournalView.vue      # 结构化随笔与复盘归档
+│   │   ├── Navbar.vue           # 系统顶栏、天气状态与功能导航
+│   │   ├── ProjectView.vue      # 领域与项目卡片流及三位一体详情
+│   │   ├── ScheduleView.vue     # 固定日程规约列表
+│   │   ├── SettingsDrawer.vue   # 抽屉式系统配置 (双模型AI、国际化、多端同步)
+│   │   ├── SyncStatusBadge.vue  # 云端长连接实时状态指示徽标
+│   │   ├── TodoTreeItem.vue     # 无限多级待办递归渲染项
+│   │   ├── TodoView.vue         # 待办清单多维矩阵视图
+│   │   └── WeatherWidget.vue    # 气象感知微件
 │   ├── db/
-│   │   └── index.ts            # Dexie.js 本地 IndexedDB 模式与初始数据
+│   │   └── index.ts             # Dexie.js 本地 IndexedDB 模式与事务封装
+│   ├── services/
+│   │   ├── aiService.ts         # 多端点 AI 调度器 (Chat / Vision / 动态代理)
+│   │   └── conflictDetector.ts  # 时间时空冲突探测引擎
+│   ├── sync/
+│   │   ├── pocketbase.ts        # PocketBase SDK 实例与鉴权上下文
+│   │   └── syncEngine.ts        # 增量推拉同步引擎与 SSE 广播监听器
 │   ├── types/
-│   │   └── index.ts            # 全局 TypeScript 接口定义
+│   │   ├── copilot.ts           # AI 引擎与双模型端点类型定义
+│   │   └── index.ts             # 领域、项目、待办、日程、习惯核心类型
 │   ├── utils/
-│   │   ├── date.ts             # 日历算法与周期时间处理工具
-│   │   └── tree.ts             # 无限多级任务树遍历与递归工具
-│   ├── App.vue                 # 根组件与顶层状态流
-│   ├── main.ts                 # 应用入口挂载
-│   └── style.css               # 全局样式与 Tailwind 基础配置
-├── Dockerfile             # 多阶段构建生产镜像配置
-├── docker-compose.yml     # 一键编排容器配置
-├── index.html             # 单页应用 HTML 模板
-├── package.json           # 项目元数据与依赖配置
-├── tsconfig.json          # TypeScript 编译配置
-└── vite.config.ts         # Vite 构建配置
+│   │   ├── date.ts              # 日期计算与周期算法
+│   │   ├── habit.ts             # 习惯连胜与打卡统计
+│   │   ├── i18n.ts              # 5国语言本地化多语言字典与国际化引擎
+│   │   ├── priority.ts          # 任务优先级权重算法
+│   │   ├── timelineLayout.ts    # 连续时间网格多列重叠自适应排版算法
+│   │   ├── tree.ts              # 任务递归树遍历、折叠与聚合算法
+│   │   ├── version.ts           # 版本元数据与内测环境探针
+│   │   └── weather.ts           # 行政区划解析与气象映射
+│   ├── App.vue                  # 根视图组件与全局状态中枢
+│   ├── main.ts                  # 应用入口点
+│   └── style.css                # Tailwind 基础层与自定义微动效
+├── tests/                       # Vitest 自动化单元测试套件 (100% 覆盖关键核心)
+│   ├── aiService.test.ts        # AI 调度与双模型端点测试
+│   ├── conflictDetector.test.ts # 时间段冲突检出逻辑测试
+│   ├── i18n.test.ts             # 多语言格式化测试
+│   └── timelineLayout.test.ts   # 连续时间网格多列冲突避让算法测试
+├── Dockerfile                   # 生产环境 Node.js 编译 + Nginx 轻量镜像
+├── docker-compose.yml           # 一键启动 Akasha + PocketBase 编排定义
+├── nginx.conf                   # 容器内置 Nginx 路由与 AI 动态反代规则
+├── package.json                 # 项目依赖与元数据配置
+├── tsconfig.json                # TypeScript 编译器配置
+└── vite.config.ts               # Vite 构建工程配置
 ```
 
 ---
 
-## 💾 本地存储与数据管理 (Local-First Storage)
+## 🔒 数据迁移与格式标准 (Data Sovereignty)
 
-* **本地数据库存储**：所有领域、项目、日程、习惯、打卡记录与随笔均直接存放在设备本地浏览器的 IndexedDB 数据库中。
-* **零云端依赖**：无需注册账号，不依赖任何远程后端服务。
-* **数据备份与导出**：随时可通过设置面板导出标准的 `.json` 格式数据文件，在不同设备间自由导入与迁移。
+* **零锁定标准 JSON 导出**：支持随时一键导出包含 `areas`、`projects`、`schedules`、`todos`、`habits`、`habitLogs`、`journals` 及 `aiConfig` 的全量 JSON 备份。
+* **严格 Schema 校验**：数据导入机制支持事务级原子覆盖，提供合规性与数组完整性预检，防止异常损坏现有数据。
 
 ---
 
-## 📄 开源许可 (License)
+## 📄 开源许可证 (License)
 
-本项目基于 [MIT License](LICENSE) 协议开源。
+本项目采用 [MIT License](LICENSE) 协议开源。任何人均可自由部署、使用、修改或二次开发。

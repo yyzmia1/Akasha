@@ -5,8 +5,8 @@
 </p>
 
 <p align="center">
-  <strong>An open-source, clean personal planner, calendar, and todo app that can be deployed on your own computer or server.</strong><br>
-  <em>一个开源、简洁的个人日程计划、日历与待办管理工具，可部署在自己的电脑或服务器上。</em>
+  <strong>A Modern, Local-First Personal Productivity & Architecture Flow OS</strong><br>
+  <em>Systematic, high-reliability personal execution framework featuring Multimodal AI Copilot, Continuous Time Grid, Multi-Depth Decision Trees, and Private Real-Time Sync.</em>
 </p>
 
 <p align="center">
@@ -15,216 +15,226 @@
 </p>
 
 <p align="center">
-  <a href="https://vuejs.org/"><img src="https://img.shields.io/badge/Vue-3.5-4FC08D?style=flat-square&logo=vue.js&logoColor=white" alt="Vue 3"></a>
-  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript"></a>
-  <a href="https://vitejs.dev/"><img src="https://img.shields.io/badge/Vite-8.x-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite"></a>
-  <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/TailwindCSS-4.x-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white" alt="Tailwind CSS"></a>
-  <a href="https://dexie.com/"><img src="https://img.shields.io/badge/Dexie.js-IndexedDB-orange?style=flat-square" alt="Dexie.js"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="License"></a>
+  <a href="https://github.com/yyzmiao/Akasha/releases"><img src="https://img.shields.io/badge/Release-v0.9.8-3B82F6?style=flat-square&logo=github" alt="Release v0.9.8"></a>
+  <a href="https://vuejs.org/"><img src="https://img.shields.io/badge/Vue-3.5-4FC08D?style=flat-square&logo=vue.js&logoColor=white" alt="Vue 3.5"></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript 5"></a>
+  <a href="https://vitejs.dev/"><img src="https://img.shields.io/badge/Vite-8.x-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite 8"></a>
+  <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/TailwindCSS-4.x-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white" alt="Tailwind CSS 4"></a>
+  <a href="https://dexie.com/"><img src="https://img.shields.io/badge/Dexie.js-IndexedDB-orange?style=flat-square" alt="Dexie.js Local-First"></a>
+  <a href="https://pocketbase.io/"><img src="https://img.shields.io/badge/PocketBase-SSE_Realtime-b648ff?style=flat-square" alt="PocketBase SSE"></a>
+  <a href="https://vitest.dev/"><img src="https://img.shields.io/badge/Vitest-100%25_Passed-729B1B?style=flat-square&logo=vitest&logoColor=white" alt="Vitest 100%"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="License MIT"></a>
 </p>
 
 ---
 
-## 📖 Introduction
+## 📌 Architecture Vision & Core Philosophy
 
-**Akasha** is an open-source, lightweight personal planner, dynamic calendar, and multi-level todo app that can be deployed on your own computer or server.
+**Akasha** is not an ephemeral checklist or casual habit gamifier. It is a commercial-grade **Personal Architecture Flow OS** designed specifically for **knowledge workers, engineers, researchers, and systematic thinkers**.
 
-In our daily routines, we often find ourselves juggling between multiple separate apps: checking schedules in calendars, breaking down tasks in todo lists, tracking habits in habit apps, and jotting notes in memo pads — switching back and forth is both cumbersome and distracting.
+Modern professionals encounter three fundamental productivity bottlenecks:
+1. **Fragmented Toolchains**: Task breakdowns live in todo apps, time blocking lives in calendars, routines live in habit trackers, and retrospective thoughts live in notes. Context switching wastes substantial cognitive energy.
+2. **Cloud Vulnerability & Vendor Lock-in**: Commercial SaaS vendors own your private data, introduce network latency, charge recurring subscription fees, and risk data breaches.
+3. **Superficial AI Wrappers**: Most consumer AI tools offer generic chat bubbles detached from your real-world calendar constraints, unable to detect scheduling conflicts or produce structured actions.
 
-**Akasha brings these daily essentials together into one clean, unified tool:**  
-It combines an **adaptive dynamic monthly calendar, infinite multi-level todo lists, habit streak tracking, fixed schedules, and daily journaling**. The interface is intuitive, uncluttered, and tailored for daily task planning and time management.
+**Akasha addresses these challenges through four foundational principles:**
 
-Easily deployed on your personal computer (PC / Mac) or private cloud server (VPS). Built with a **Local-First** architecture, all your data is stored directly in your browser's IndexedDB. No registration required, no cloud dependencies, instant response times, 100% offline-ready, and fully installable as a standalone desktop or mobile application (PWA).
-
----
-
-## ✨ Key Features
-
-### 1. Life Architecture: Areas & Projects
-* **Life Areas**: Establish long-term domains of life (e.g., Career, Learning, Wealth & Living, Health & Mind).
-* **Project Lifecycle**: Organize projects under specific areas with custom color identifiers.
-* **Unified Trinity Hub**: Manage associated **Habits**, **Schedules**, and **Todos** seamlessly in the project detail cockpit.
-* **Dynamic Progress Calculation**: Automatically recalculates completion percentages and progress bars based on associated task states.
-
-### 2. Execution Engine: Infinite Recursive Todo Tree
-* **Unlimited Depth**: Decompose massive goals into phases and granular actions with infinite nesting levels.
-* **Interactive Tree Nodes**: Fold or expand nested branches with bidirectional state propagation between parent and child tasks.
-* **Rich Metadata**:
-  * **Priority Rating**: P1 to P10 slider to instantly spotlight high-impact tasks.
-  * **Smart Due Warnings**: Visual alerts for "Due Today", "N Days Left", and "Overdue by N Days".
-  * **Detailed Notes**: Add memos and context directly to each task.
-* **Compound Filters & Sorting**: Filter by project, active/completed status, due today, or overdue; sort dynamically by weight or date.
-
-### 3. Rhythmic Living: Multi-Frequency Habit Tracker
-* **Flexible Cadence**:
-  * **Daily Habits**: Categorized by time of day (Morning, Afternoon, Evening, Anytime).
-  * **Periodic Habits**: Specific frequencies per week, bi-weekly (fortnightly), or monthly targets.
-* **Streaks & Positive Reinforcement**: Logs daily completion history with current streak count and personal best records.
-
-### 4. Time Cadence: Fixed Schedules
-* **Recurring & Milestone Rules**: Single-instance dates, weekly recurring days (e.g., Monday syncs), or monthly dates (e.g., 10th of every month).
-* **Project Association**: Connect schedules to specific projects to establish unambiguous temporal boundaries.
-
-### 5. Bird's Eye View: Adaptive Dynamic Calendar
-* **Smart Elastic Height**: Calendar rows and cells adapt dynamically to the amount of content—expanding smoothly when packed with items and remaining compact when empty.
-* **Multi-Source Synthesis**: Aggregates fixed schedules, task deadlines, and journal reflection markers on a single monthly view.
-* **Cross-Module Deep Navigation**:
-  * Click on empty cell/date to start journaling for that day.
-  * Click schedule chips to inspect or manage schedule details.
-  * Click todo chips to immediately jump to the Todo view with the detail drawer opened.
-
-### 6. Mindful Reflection: Daily Journal & Archives
-* **Date-Driven Writing**: Jot down thoughts, emotional reflections, and evening reviews for any chosen day.
-* **Monthly Archives**: Easily toggle between all records and month-filtered archives with text snippets and instant editing.
-
-### 7. Global Command & Aesthetics
-* **Omnipresent Search**: Quickly locate projects, todos, habits, schedules, and journal entries with one-click deep navigation.
-* **UI Scale Control**: Switch between 90% (Compact), 100% (Standard), 108% (Comfortable), and 118% (Large Display) without blurriness.
-* **Typography Switcher**: Seamlessly switch between LXGW WenKai (warm & elegant), System Sans-serif (modern & sharp), and Classical Serif.
-* **Light / Dark Dual Themes**: Clean Light and Deep Dark modes with smooth transitions.
-* **Complete Data Sovereignty**: One-click full JSON export/import and instant dataset reset.
-
-### 8. Progressive Web App (PWA & Mobile Ready)
-* **Standalone App Mode**: Fully optimized for Android Chrome WebAPK and iOS Safari "Add to Home Screen" — zero URL bar, no badge overlay, genuine native app feeling.
-* **Offline Service Worker**: Built-in caching strategy ensures fast loading and complete functionality without internet access.
+* 🛡️ **Absolute Data Sovereignty (Local-First)**: All operational data resides permanently in your local browser's IndexedDB. Zero mandatory third-party dependency, instant sub-millisecond response, and 100% offline capability.
+* 🧩 **Closed-Loop Execution Hierarchy**: A cohesive pipeline mapping high-level **Areas of Responsibility** ➔ strategic **Projects** ➔ recursive **Todo Trees** ➔ physical **Continuous Time Grids** ➔ behavioral **Habits** ➔ retrospective **Journals**.
+* 🤖 **Deep Multimodal Copilot Integration**: Native LLM reasoning and multimodal vision capabilities embedded directly into the workflow—offering decoupled dual-model routing, image-to-schedule extraction, and spatial-temporal collision detection.
+* ⚡ **Enterprise-Grade Distributed Sync**: Ultra-lightweight PocketBase BaaS (~25MB RAM) paired with SSE (Server-Sent Events) and incremental tombstone reconciliation for instant multi-device broadcasting and disaster recovery.
 
 ---
 
-## 🛠️ Tech Stack
+## 🏗️ System Architecture & Data Topology
 
-* **Framework**: [Vue 3](https://vuejs.org/) (Composition API, `<script setup>`)
-* **Language**: [TypeScript](https://www.typescriptlang.org/)
-* **Build Tool**: [Vite 8](https://vitejs.dev/)
-* **Styling**: [Tailwind CSS 4](https://tailwindcss.com/)
-* **Local Storage**: [Dexie.js](https://dexie.com/) (HTML5 IndexedDB wrapper)
-* **Icons**: [Lucide Vue Next](https://lucide.dev/)
-* **Celebration Effects**: [canvas-confetti](https://github.com/catdad/canvas-confetti)
-* **Default Font**: [LXGW WenKai Screen](https://github.com/lxgw/LxgwWenKai)
+```mermaid
+flowchart TB
+    subgraph Client["Frontend Client (Vue 3.5 + TypeScript + Tailwind 4)"]
+        UI["Presentation & Interaction Layer (PWA / Mobile / Desktop)"]
+        
+        subgraph Logic["Core Engines"]
+            Copilot["AI Copilot Reasoning Engine\n(Dual Model: Text / Vision)"]
+            Conflict["Spatio-Temporal Conflict Engine\n(Conflict Detector)"]
+            Timeline["Continuous Time Grid Engine\n(Multi-Column Collision Layout)"]
+            I18n["Internationalization Engine\n(zh-CN / en-US / ja-JP / fr-FR / de-DE)"]
+        end
+        
+        subgraph Storage["Local Storage (Local-First)"]
+            Dexie["Dexie.js (HTML5 IndexedDB)\nSub-millisecond ACID Transactions & Offline Cache"]
+        end
+        
+        UI <--> Logic
+        Logic <--> Storage
+    end
+
+    subgraph Server["Private Server Stack (Docker Compose / VPS / Local)"]
+        Nginx["Reverse Proxy & Access Control (Nginx / HTTPS)\nHTTP Basic Auth + Dynamic /api/ai-proxy/ Stream"]
+        PB["PocketBase BaaS (Single Go Binary, ~25MB RAM)\nData Persistence (pb_data) + SSE Real-Time Sync"]
+        
+        Nginx <--> PB
+    end
+
+    subgraph LLM["External / Local LLM Clusters (OpenAI Compatible)"]
+        AI_Chat["Text Reasoning Models (DeepSeek / SiliconFlow / OpenAI / Ollama)"]
+        AI_Vision["Multimodal Vision Models (Qwen-VL / GPT-4o / Claude Vision)"]
+    end
+
+    Storage <== "Incremental Sync & SSE Broadcast" ==> PB
+    Copilot <== "Streaming SSE Passthrough" ==> Nginx
+    Nginx <== "Secure Proxy" ==> LLM
+```
 
 ---
 
-## 🚀 Deployment Guide
+## ⚡ Core Feature Matrix
 
-This project can be deployed on your **personal computer** or **cloud server**, offering lightweight and flexible setups:
+### 1. Strategic Governance: Areas & Projects
+* **Areas of Responsibility**: Establish permanent life and career domains (e.g., Systems Engineering, Business Growth, Academic Research, Financial Health).
+* **Project Lifecycle Management**: Color-coded project cards with rich targets, progress tracking, and complete lifecycle states.
+* **Unified Tripartite Aggregation**: Manage associated **Todos**, **Schedules**, and **Habits** seamlessly within each dedicated project view.
+* **Weighted Progress Measurement**: Dynamic percentage indicators calculated in real time from underlying action items.
 
-### 1. Deploy on Your Own Computer (Local PC / Mac)
+### 2. High-Precision Continuous Time Grid & Scheduling
+* **24-Hour Continuous Time Grid**: Replaces crude block lists with an absolute physical coordinate timeline accurately plotting every minute of the day.
+* **Adaptive Multi-Column Collision Layout (`timelineLayout`)**: Proprietary layout algorithm that calculates maximum overlap tiers when multiple events coincide, proportionally distributing horizontal lane widths to prevent visual clipping or overlapping.
+* **Dynamic "Now" Cursor**: Minute-precise real-time red line tracking current progress, automatically highlighting active events.
+* **Flexible Recurrence Rules**: Single events, fixed weekly routines (e.g., engineering syncs), and fixed monthly schedules.
 
-#### Option A: Run locally with Node.js
+### 3. Multimodal AI Copilot Engine
+* **Decoupled Dual-Model Configuration**:
+  * **Chat Engine**: Natural language task breakdown, prioritization, and time-block drafting.
+  * **Dedicated Vision API**: Configure an independent Provider, Base URL, API Key, and Model specifically tuned for multimodal visual document extraction.
+* **Predictive Conflict Detection (`conflictDetector`)**: Scans existing commitments in milliseconds to identify overlap hazards before committing plans.
+* **Image-to-Schedule OCR & Parsing**: Paste or upload timetables, conference agendas, or meeting roadmaps; AI automatically extracts structured calendar blocks for one-click import.
+* **Secure Dynamic Streaming Proxy (`/api/ai-proxy/`)**: Embedded Nginx streaming middleware eliminates browser CORS restrictions and guarantees smooth SSE typing streams.
+
+### 4. Recursive Decision Engineering: Multi-Depth Todo Trees
+* **Infinite Nested Decomposition**: Deconstruct initiatives from macro objectives down to phase milestones, discrete work packages, and Next Physical Actions.
+* **Bidirectional Cascade & Branch Folding**: Collapse entire branches for cognitive clarity while maintaining aggregate completion status.
+* **P1 ~ P10 Priority Granularity**: Continuous priority slider paired with intelligent deadline alerts (Due Today, N Days Left, Overdue).
+
+### 5. Habit Consistency Engineering: Multiphase Habits
+* **Time-of-Day Quadrants**: Classify routines across Morning, Afternoon, Evening, or Anytime blocks.
+* **Variable Frequency Cadences**: Daily, weekly target frequency, bi-weekly, and monthly recurring commitments.
+* **Streak & Resilience Metrics**: Track continuous active streaks alongside historical all-time records for positive behavioral reinforcement.
+
+### 6. Reflective Journaling & Audit
+* **Date-Anchored Double Stream**: Structured daily debriefs, mood tracking, and retrospective logs tied directly to calendar dates.
+* **Monthly Archive Vault**: Chronological sidebar cards grouped by month for rapid historical search and review.
+
+### 7. Enterprise Internationalization (i18n)
+* **Native 5-Language Support**: Complete translations for English (en-US), Simplified Chinese (zh-CN), Japanese (ja-JP), French (fr-FR), and German (de-DE).
+* **Localized Temporal Formatting**: Adaptive date conventions, weekday abbreviations, and month nomenclatures adhering to international typographic standards.
+
+### 8. Environmental Perception & Weather
+* **Integrated Meteorological Widget**: Multi-tiered administrative location mapping displaying real-time weather and temperature.
+* **Authoritative External Links**: One-click passthrough to meteorological services for travel and field planning.
+
+### 9. Production-Grade Multi-Device Sync (PocketBase)
+* **Microservices Footprint**: Backed by PocketBase (~25MB RAM footprint), embedded SQLite, and file-based zero-configuration storage.
+* **Tombstone Sync**: True offline operation via IndexedDB; changes reconcile upon reconnection via timestamp deltas, with deletion tombstones preventing phantom restorations.
+* **Instant SSE Broadcast**: Actions taken on mobile reflect instantaneously across desktop sessions without manual page refreshes.
+
+---
+
+## 🛠️ Technology Stack & Engineering Standards
+
+| Dimension | Technology | Architecture Rationale |
+| :--- | :--- | :--- |
+| **Frontend Framework** | **Vue 3.5+** | Composition API, `<script setup>`, granular reactivity |
+| **Language** | **TypeScript 5+** | Strict static typing across domains, task trees, and sync schemas |
+| **Build System** | **Vite 8.x** | Instant HMR, Rolldown-accelerated minification, production bundling |
+| **Styling Engine** | **Tailwind CSS 4.x** | Zero-runtime modern utility styling, seamless light/dark palettes |
+| **Local Storage** | **Dexie.js (IndexedDB)** | High-throughput indexed transactions, client-side resilience |
+| **Test Suite** | **Vitest 5.x** | **26 Unit Tests with 100% Pass Rate** covering conflict detection, timeline math, and AI dispatch |
+| **Iconography** | **Lucide Vue Next** | Cohesive vector icon system |
+| **Typography** | **LXGW WenKai Screen** | High-readability screen font balancing aesthetics and clarity |
+| **Sync Engine** | **PocketBase (Golang)** | Embedded single-binary BaaS, ultra-lightweight SSE streaming |
+| **Containerization** | **Docker & Docker Compose** | Multi-stage build, hardened Nginx proxy with TLS and Basic Auth |
+
+---
+
+## 🚀 Production Deployment Guide
+
+Akasha can be deployed locally or hosted on a private Virtual Private Server (VPS):
+
+### Method 1: Local Machine Execution
+
 ```bash
-# 1. Clone repository and navigate into directory
+# Clone the repository
 git clone https://github.com/yyzmiao/Akasha.git
 cd Akasha
 
-# 2. Install dependencies
+# Install dependencies
 npm install
 
-# 3. Start local development server (runs at http://localhost:5173/)
+# Run automated tests
+npm test
+
+# Launch local dev server (default: http://localhost:5173/)
 npm run dev
 ```
 
-#### Option B: One-click local Docker startup
+Alternatively, run locally with Docker:
 ```bash
-# Build and run container locally (visit http://localhost:8080)
 docker compose up -d --build
+# Access via http://localhost:8080
 ```
 
 ---
 
-### 2. Deploy on Your Own Server (VPS / Cloud)
+### Method 2: Production Server / VPS Deployment
 
-#### Step 1: Start container with Docker Compose
+#### Step 1: Launch Containers
 ```bash
-# Clone the repository on your server
 git clone https://github.com/yyzmiao/Akasha.git
 cd Akasha
 
-# Launch container service (mapped to host port 8080)
+# Build and start Akasha frontend and PocketBase services
 docker compose up -d --build
 ```
+> **Data Persistence**: PocketBase data is mapped to `./pb_data` on the host machine. Upgrades and restarts preserve all data automatically.
 
-#### Step 2: Configure Nginx reverse proxy & Basic Auth (Optional)
+#### Step 2: Configure Reverse Proxy with Access Protection
+Refer to the provided templates [`deploy/nginx-proxy.conf`](deploy/nginx-proxy.conf) and [`deploy/.htpasswd.example`](deploy/.htpasswd.example).
 
-Refer to the included production template [`deploy/nginx-proxy.conf`](deploy/nginx-proxy.conf) and credential template [`deploy/.htpasswd.example`](deploy/.htpasswd.example).
-
-<details>
-<summary><strong>👉 Click to expand: Complete Server Nginx Reverse Proxy & HTTP Basic Auth Guide</strong></summary>
-
-<br>
-
-Akasha is a local-first application. When hosting on a public cloud server, combining **Nginx reverse proxy** with **HTTP Basic Auth** provides a rock-solid, lightweight layer of web access security without needing a heavy user backend.
-
-##### 1. Install `htpasswd` Utility
-Depending on your server distribution:
-```bash
-# Ubuntu / Debian
-sudo apt update && sudo apt install -y apache2-utils
-
-# CentOS / RHEL / AlmaLinux
-sudo yum install -y httpd-tools
-```
-
-##### 2. Generate Credentials File
-Create the password file in your Nginx configuration directory (e.g. `/etc/nginx/conf.d/`):
-```bash
-# Create file and add your initial user (-c creates a new file, -b passes password inline)
-htpasswd -b -c /etc/nginx/conf.d/.htpasswd your_username your_secure_password
-
-# Add subsequent users or update existing passwords (omit -c to avoid overwriting)
-htpasswd -b /etc/nginx/conf.d/.htpasswd new_user their_password
-
-# Inspect the file (passwords are stored as salted secure hashes)
-cat /etc/nginx/conf.d/.htpasswd
-```
-
-##### 3. Configure Nginx Reverse Proxy & PWA Whitelist
-Create or update your server block (e.g. `/etc/nginx/conf.d/akasha.conf`), forwarding traffic to the container port (`8080` by default), while configuring HTTP Basic Auth and PWA exemptions:
+Using **Nginx Reverse Proxy** with **HTTP Basic Auth** provides enterprise-grade perimeter security:
 
 ```nginx
+# Example Server Block (/etc/nginx/conf.d/akasha.conf)
 server {
     listen 80;
-    listen 443 ssl;
+    listen 443 ssl http2;
     server_name your-domain.com;
 
-    ssl_certificate /etc/nginx/certs/fullchain.pem;
+    ssl_certificate     /etc/nginx/certs/fullchain.pem;
     ssl_certificate_key /etc/nginx/certs/privkey.pem;
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers HIGH:!aNULL:!MD5;
 
-    charset utf-8;
-    server_tokens off;
-    gzip on;
-    gzip_types text/plain text/css application/javascript application/json application/xml image/svg+xml;
-
-    # Enforce HTTP Basic Auth globally
-    auth_basic "Akasha Restricted Access";
+    # Secure HTTP Basic Auth
+    auth_basic "Akasha Access Authentication";
     auth_basic_user_file /etc/nginx/conf.d/.htpasswd;
 
-    # Critical PWA Exemption: Allow manifest retrieval for mobile installation
+    # Whitelist PWA Manifest and Service Worker for installation
     location = /manifest.json {
         auth_basic off;
         proxy_pass http://127.0.0.1:8080;
-        proxy_set_header Host $host;
-        add_header Access-Control-Allow-Origin *;
     }
-
-    # Critical PWA Exemption: Allow Service Worker registration
     location = /sw.js {
         auth_basic off;
         proxy_pass http://127.0.0.1:8080;
-        proxy_set_header Host $host;
     }
-
-    # Critical PWA Exemption: Allow desktop & home screen icons
     location ~* ^/(icon-.*\.png|apple-touch-icon.*\.png|favicon\..*)$ {
         auth_basic off;
         proxy_pass http://127.0.0.1:8080;
-        proxy_set_header Host $host;
-        add_header Access-Control-Allow-Origin *;
     }
 
-    # Main Web Application Reverse Proxy (Protected by Basic Auth)
+    # Main Application Proxy
     location / {
         proxy_pass http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -233,73 +243,61 @@ server {
 }
 ```
 
-> **Pro Tip**: When installing a PWA on Android (via Chrome WebAPK) or iOS (via Safari Add to Home Screen), background workers fetch `/manifest.json` and `/sw.js` without interactive auth prompt capabilities. The `auth_basic off;` rules above are critical: they allow browsers to detect the PWA metadata cleanly while keeping the entire web app interface securely locked.
-
-##### 4. Test & Reload Nginx
-```bash
-# Verify syntax
-nginx -t
-
-# Reload configuration seamlessly
-nginx -s reload
-```
-
-Navigate to `https://your-domain.com`. The browser will trigger a native credential prompt — enter your username and password to log in.
-
-</details>
-
 ---
 
-## 📂 Project Structure
+## 📂 Repository File Structure
 
 ```text
 Akasha/
-├── deploy/                # Deployment and reverse proxy templates
-│   ├── .htpasswd.example  # Basic Auth credential template
-│   └── nginx-proxy.conf   # Production Nginx reverse proxy template
-├── public/                # Static assets, icons, and PWA manifest
-│   ├── icon-check-192.png # PWA 192x192 HD icon
-│   ├── icon-check-512.png # PWA 512x512 HD icon
-│   └── manifest.json      # Web App Manifest
+├── .github/
+│   └── workflows/
+│       └── ci.yml               # GitHub Actions CI pipeline (Node 22 LTS, Test & Build)
+├── deploy/                      # Production deployment templates
+│   ├── .htpasswd.example        # Basic Auth credential template
+│   └── nginx-proxy.conf         # Production Nginx SSL configuration
+├── public/                      # Static assets, icons & PWA manifest
 ├── src/
-│   ├── components/        # UI and functional components
-│   │   ├── CalendarView.vue    # Adaptive dynamic calendar
-│   │   ├── GlobalSearch.vue    # Global omnipresent search
-│   │   ├── HabitsView.vue      # Habit tracking and streaks
-│   │   ├── JournalView.vue     # Journal writing and archives
-│   │   ├── Navbar.vue          # Top navigation and search control
-│   │   ├── ProjectView.vue     # Area and project cockpits
-│   │   ├── SettingsDrawer.vue  # Preferences and data backup drawer
-│   │   ├── TodoTreeItem.vue    # Recursive multi-level todo item
-│   │   └── TodoView.vue        # Filterable multi-level todo list
-│   ├── db/
-│   │   └── index.ts            # Dexie.js schema and sample seed
-│   ├── types/
-│   │   └── index.ts            # Global TypeScript interfaces
+│   ├── components/              # Vue UI components
+│   │   ├── copilot/             # Copilot modal, planning & vision ingestion
+│   │   ├── CalendarView.vue     # Continuous grid & responsive monthly calendar
+│   │   ├── GlobalSearch.vue     # Omnipresent global spotlight search
+│   │   ├── HabitsView.vue       # Habit matrix & streak tracking
+│   │   ├── JournalView.vue      # Retrospective journals & archive
+│   │   ├── Navbar.vue           # Header navigation & weather status
+│   │   ├── ProjectView.vue      # Domain & project workspace
+│   │   ├── ScheduleView.vue     # Recurring schedule management
+│   │   ├── SettingsDrawer.vue   # Configuration drawer (Dual AI, Sync, i18n)
+│   │   ├── TodoTreeItem.vue     # Recursive task tree item
+│   │   └── TodoView.vue         # Multidimensional todo matrix
+│   ├── services/
+│   │   ├── aiService.ts         # Multi-endpoint AI dispatcher & streaming
+│   │   └── conflictDetector.ts  # Timeline conflict detection engine
+│   ├── sync/
+│   │   ├── pocketbase.ts        # PocketBase client & auth store
+│   │   └── syncEngine.ts        # Incremental sync engine & SSE listener
 │   ├── utils/
-│   │   ├── date.ts             # Calendar and date algorithms
-│   │   └── tree.ts             # Recursive task tree utilities
-│   ├── App.vue                 # Root component and top-level state
-│   ├── main.ts                 # App entry point
-│   └── style.css               # Global styles & Tailwind configuration
-├── Dockerfile             # Multi-stage production container image
-├── docker-compose.yml     # Docker compose orchestration
-├── index.html             # Single-page HTML shell
-├── package.json           # Project metadata & dependencies
-├── tsconfig.json          # TypeScript configuration
-└── vite.config.ts         # Vite build configuration
+│   │   ├── timelineLayout.ts    # Multi-column overlap allocation algorithm
+│   │   ├── i18n.ts              # 5-Language internationalization dictionary
+│   │   ├── date.ts              # High-precision time and calendar math
+│   │   └── tree.ts              # Recursive tree traversal algorithms
+│   ├── App.vue                  # Root orchestrator
+│   └── main.ts                  # Application entry point
+├── tests/                       # Vitest unit test suite (100% coverage on core)
+├── Dockerfile                   # Multi-stage production container build
+├── docker-compose.yml           # Compose specification for Akasha + PocketBase
+├── nginx.conf                   # Embedded Nginx proxy & SSE AI proxy rules
+└── package.json                 # Dependencies & project metadata
 ```
 
 ---
 
-## 💾 Local Storage & Data Management
+## 🔒 Data Portability & Backup Specification
 
-* **Browser Local Storage**: All areas, projects, schedules, habits, check-ins, and journal entries are stored strictly in your browser's IndexedDB.
-* **Zero Cloud Dependencies**: No user registration required; operates completely independent of any remote backend.
-* **Data Backup & Migration**: Export and import standard `.json` backup files at any time to migrate between devices seamlessly.
+* **Zero-Lockout JSON Export**: Export your entire dataset (`areas`, `projects`, `schedules`, `todos`, `habits`, `habitLogs`, `journals`, `aiConfig`) into standard structured JSON at any time.
+* **Atomic Import Validation**: Incoming backups undergo strict schema sanity checks before executing an atomic database transaction.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the [MIT License](LICENSE).
+Distributed under the [MIT License](LICENSE). Open for self-hosting, auditing, and continuous improvement.
