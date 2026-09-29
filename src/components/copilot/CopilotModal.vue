@@ -239,39 +239,88 @@
           </button>
         </div>
 
-        <!-- 自然语言输入框 (Raycast / Amie 风格) -->
-        <div class="relative rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-800/50 focus-within:border-blue-500 dark:focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all shadow-2xs">
+        <!-- 自然语言 / 多模态图片输入框 (Amie / Raycast 风格) -->
+        <div
+          :class="[
+            'relative rounded-xl border bg-slate-50/50 dark:bg-slate-800/50 transition-all shadow-2xs',
+            isDragging
+              ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/40 ring-2 ring-indigo-500/20'
+              : 'border-slate-200 dark:border-slate-700/80 focus-within:border-blue-500 dark:focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20'
+          ]"
+          @dragover.prevent="isDragging = true"
+          @dragleave.prevent="isDragging = false"
+          @drop.prevent="handleDrop"
+        >
+          <!-- 隐藏的文件上传 input -->
+          <input
+            ref="imageInputRef"
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/bmp,image/jpg"
+            class="hidden"
+            @change="handleImageFileSelect"
+          />
+
+          <!-- 已选图片预览胶囊条 -->
+          <div
+            v-if="selectedImageBase64"
+            class="m-2.5 p-2 rounded-lg bg-indigo-50/90 dark:bg-indigo-950/50 border border-indigo-200/80 dark:border-indigo-800/70 flex items-center justify-between gap-3 animate-in fade-in select-none"
+          >
+            <div class="flex items-center gap-2.5 overflow-hidden">
+              <img
+                :src="selectedImageBase64"
+                class="w-10 h-10 object-cover rounded-md border border-indigo-200 dark:border-indigo-700 shrink-0"
+                alt="Image Preview"
+              />
+              <div class="text-xs truncate">
+                <div class="font-medium text-slate-800 dark:text-slate-200 truncate flex items-center gap-1.5">
+                  <span>📷 {{ selectedImageName || '已选图片' }}</span>
+                  <span v-if="selectedImageSize" class="text-[10px] text-slate-400">({{ selectedImageSize }})</span>
+                </div>
+                <p class="text-[11px] text-indigo-600 dark:text-indigo-400">将调用多模态视觉模型深度提取排程与计划</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              @click="clearImage"
+              class="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+              title="移除图片"
+            >
+              <X class="w-4 h-4" />
+            </button>
+          </div>
+
           <textarea
             ref="inputRef"
             v-model="inputPrompt"
             rows="3"
-            placeholder="告诉 Copilot 你的计划，例如：「明天下午3点跟团队开上线会，周五前完成PPT，每天早晨阅读20分钟」..."
+            :placeholder="selectedImageBase64 ? '可选输入对图片的补充要求（如「提取为周排程」、「只识别下周日程」），或直接点击【开始视觉解析】...' : '告诉 Copilot 你的计划，例如：「明天下午3点跟团队开上线会，周五前完成PPT，每天早晨阅读20分钟」...（支持直接粘贴截图）'"
             class="w-full p-3 bg-transparent text-xs sm:text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 resize-none focus:outline-hidden"
             @keydown="handleKeyDown"
+            @paste="handlePaste"
           ></textarea>
 
           <div class="px-3 pb-2.5 flex items-center justify-between text-xs text-slate-400">
-            <div class="flex items-center gap-3 text-[11px]">
-              <span class="hidden sm:inline">快捷键：Enter 发送，Shift+Enter 换行</span>
+            <div class="flex items-center gap-2 sm:gap-3 text-[11px]">
+              <span class="hidden sm:inline">Enter 发送 · Shift+Enter 换行</span>
               <button
                 type="button"
-                @click="$emit('open-academic'); $emit('close')"
-                class="flex items-center gap-1 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
-                title="上传课表截图，通过多模态 AI 视觉识图智能创建课表日程"
+                @click="triggerImageSelect"
+                class="flex items-center gap-1 px-2 py-1 rounded-md text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors cursor-pointer"
+                title="上传或粘贴日程/作息/课表等图片，由多模态 AI 视觉智能解析排期"
               >
                 <Camera class="w-3.5 h-3.5 text-indigo-500" />
-                <span>AI 课表识图</span>
+                <span>{{ selectedImageBase64 ? '更换图片' : 'AI 识图排期' }}</span>
               </button>
             </div>
 
             <button
               @click="handleStartGenerate"
-              :disabled="isLoading || !inputPrompt.trim()"
+              :disabled="isLoading || (!selectedImageBase64 && !inputPrompt.trim())"
               class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 disabled:opacity-40 text-white font-medium text-xs shadow-xs transition-all cursor-pointer"
             >
               <RefreshCw v-if="isLoading" class="w-3.5 h-3.5 animate-spin" />
               <Send v-else class="w-3.5 h-3.5" />
-              <span>{{ isLoading ? '正在深度排程...' : '生成规划' }}</span>
+              <span>{{ selectedImageBase64 ? (isLoading ? '正在视觉识图...' : '开始视觉解析') : (isLoading ? '正在深度排程...' : '生成规划') }}</span>
             </button>
           </div>
         </div>
@@ -588,6 +637,7 @@ import {
   testAiConnection,
   buildSystemPrompt,
   streamPlanGeneration,
+  recognizeScheduleFromImage,
   PROVIDER_PRESETS,
 } from '@/services/aiService'
 import { annotateConflicts } from '@/services/conflictDetector'
@@ -604,7 +654,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'close'): void
   (e: 'open-settings'): void
-  (e: 'open-academic'): void
   (e: 'update-ghosts', drafts: any[]): void
   (e: 'apply-plan', plan: CopilotPlanResult): void
 }>()
@@ -617,6 +666,72 @@ const isLoading = ref(false)
 const streamingText = ref('')
 const currentPlan = ref<CopilotPlanResult | null>(null)
 const aiConfig = ref<AiProviderConfig>(loadAiConfig())
+
+const imageInputRef = ref<HTMLInputElement | null>(null)
+const selectedImageBase64 = ref<string | null>(null)
+const selectedImageName = ref('')
+const selectedImageSize = ref('')
+const isDragging = ref(false)
+
+function triggerImageSelect() {
+  imageInputRef.value?.click()
+}
+
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function processImageFile(file: File) {
+  if (!file.type.startsWith('image/')) return
+  selectedImageName.value = file.name
+  selectedImageSize.value = formatBytes(file.size)
+
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    selectedImageBase64.value = e.target?.result as string
+  }
+  reader.readAsDataURL(file)
+}
+
+function handleImageFileSelect(e: Event) {
+  const target = e.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (file) {
+    processImageFile(file)
+  }
+  target.value = ''
+}
+
+function handleDrop(e: DragEvent) {
+  isDragging.value = false
+  const file = e.dataTransfer?.files?.[0]
+  if (file && file.type.startsWith('image/')) {
+    processImageFile(file)
+  }
+}
+
+function handlePaste(e: ClipboardEvent) {
+  const items = e.clipboardData?.items
+  if (!items) return
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].type.startsWith('image/')) {
+      const file = items[i].getAsFile()
+      if (file) {
+        e.preventDefault()
+        processImageFile(file)
+        return
+      }
+    }
+  }
+}
+
+function clearImage() {
+  selectedImageBase64.value = null
+  selectedImageName.value = ''
+  selectedImageSize.value = ''
+}
 
 const showConfigView = ref(false)
 const isTestingAi = ref(false)
@@ -708,7 +823,7 @@ const modeOptions: { label: string; value: CopilotMode; icon: any }[] = [
 ]
 
 const promptChips = [
-  '📷 AI 识图导入学期课程表',
+  '📷 识图排程：上传作息/日程截图',
   '🚀 帮我规划明天全天的高效日程',
   '📊 拆解下周二复盘汇报任务及准备事项',
   '🏃 制定每周一三五晨间慢跑打卡习惯',
@@ -716,9 +831,8 @@ const promptChips = [
 ]
 
 function applyChip(chipText: string) {
-  if (chipText.includes('AI 识图导入')) {
-    emit('open-academic')
-    emit('close')
+  if (chipText.includes('识图排程')) {
+    triggerImageSelect()
     return
   }
   inputPrompt.value = chipText.replace(/^[^\s]+\s*/, '')
@@ -738,6 +852,7 @@ watch(
     } else {
       showConfigView.value = false
       aiTestResult.value = null
+      clearImage()
       // 关闭时清理幽灵草稿
       emit('update-ghosts', [])
     }
@@ -781,7 +896,8 @@ function toggleGroupSelection(group: 'schedules' | 'todos' | 'habits') {
 }
 
 async function handleStartGenerate() {
-  if (!inputPrompt.value.trim() || isLoading.value) return
+  if (isLoading.value) return
+  if (!selectedImageBase64.value && !inputPrompt.value.trim()) return
 
   if (!aiConfig.value.apiKey && aiConfig.value.provider !== 'ollama') {
     showConfigView.value = true
@@ -796,23 +912,35 @@ async function handleStartGenerate() {
   emit('update-ghosts', [])
 
   try {
-    const sysPrompt = buildSystemPrompt({
-      mode: activeMode.value,
-      areas: props.areas,
-      projects: props.projects,
-      schedules: props.schedules,
-      habits: props.habits,
-      activeHours: props.activeHours,
-    })
+    let result: CopilotPlanResult
+    if (selectedImageBase64.value) {
+      streamingText.value = '📷 正在调用多模态视觉模型深度解析图片中的日程与安排...'
+      result = await recognizeScheduleFromImage(
+        selectedImageBase64.value,
+        inputPrompt.value.trim() || undefined,
+        aiConfig.value
+      )
+      // 识别完成后清理图片缓存
+      clearImage()
+    } else {
+      const sysPrompt = buildSystemPrompt({
+        mode: activeMode.value,
+        areas: props.areas,
+        projects: props.projects,
+        schedules: props.schedules,
+        habits: props.habits,
+        activeHours: props.activeHours,
+      })
 
-    const result = await streamPlanGeneration(
-      inputPrompt.value.trim(),
-      sysPrompt,
-      aiConfig.value,
-      (textChunk) => {
-        streamingText.value = textChunk
-      }
-    )
+      result = await streamPlanGeneration(
+        inputPrompt.value.trim(),
+        sysPrompt,
+        aiConfig.value,
+        (textChunk) => {
+          streamingText.value = textChunk
+        }
+      )
+    }
 
     // 对日程草稿进行本地高精度碰撞检测
     result.schedules = annotateConflicts(result.schedules, props.schedules)
@@ -823,13 +951,11 @@ async function handleStartGenerate() {
       mainScrollRef.value.scrollTop = mainScrollRef.value.scrollHeight
     }
 
-    // 默认在日历上同步显示日程草稿预览
     handleDraftSelectionChanged()
   } catch (err: any) {
-    alert('AI 生成失败：' + (err.message || err))
+    streamingText.value = `❌ 解析排程失败: ${err?.message || '未知错误'}`
   } finally {
     isLoading.value = false
-    streamingText.value = ''
   }
 }
 
