@@ -37,6 +37,7 @@ import { computed } from 'vue'
 import { Cloud, CloudOff, RefreshCw, AlertCircle } from 'lucide-vue-next'
 import { isAuthenticated } from '@/sync/pocketbase'
 import { syncStatus, syncError } from '@/sync/syncEngine'
+import { t } from '@/utils/i18n'
 
 defineEmits<{
   (e: 'click'): void
@@ -44,19 +45,19 @@ defineEmits<{
 
 const statusLabel = computed(() => {
   if (!isAuthenticated.value) {
-    return '本地模式'
+    return t('syncStatus.local')
   }
   switch (syncStatus.value) {
     case 'synced':
-      return '云端已同步'
+      return t('syncStatus.synced')
     case 'syncing':
-      return '同步中...'
+      return t('syncStatus.syncing')
     case 'error':
-      return '同步异常'
+      return t('syncStatus.error')
     case 'offline':
-      return '离线模式'
+      return t('syncStatus.offline')
     default:
-      return '未同步'
+      return t('syncStatus.notSynced')
   }
 })
 
