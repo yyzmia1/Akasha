@@ -14,7 +14,7 @@
           v-if="item.children && item.children.length > 0"
           @click="$emit('toggle-collapse', item.id)"
           class="p-1 -ml-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 shrink-0"
-          aria-label="展开或折叠子任务"
+          :aria-label="t('todo.subtasks')"
         >
           <ChevronDown v-if="!item.collapsed" class="w-3.5 h-3.5" />
           <ChevronRight v-else class="w-3.5 h-3.5" />
@@ -89,7 +89,7 @@
                 class="absolute z-50 top-full mt-1.5 left-0 sm:left-auto sm:right-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-2.5 w-60 sm:w-64 animate-in fade-in zoom-in-95 duration-150"
               >
                 <div class="flex items-center justify-between pb-1.5 mb-2 border-b border-slate-100 dark:border-slate-800 text-[11px] font-medium text-slate-500">
-                  <span>设定任务重要度</span>
+                  <span>{{ t('todo.priority') }}</span>
                   <span class="font-mono text-blue-600 dark:text-blue-400 font-semibold">P{{ currentImportance }} ({{ priorityMeta.label }})</span>
                 </div>
 
@@ -133,16 +133,16 @@
         <button
           @click="$emit('add-child', item.id)"
           class="p-1.5 sm:p-1 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-xs flex items-center gap-0.5 transition-colors"
-          title="添加子任务"
+          :title="t('todo.addSubtask')"
         >
           <Plus class="w-3.5 h-3.5" />
-          <span class="text-[11px] hidden sm:inline">子任务</span>
+          <span class="text-[11px] hidden sm:inline">{{ t('todo.subtasks') }}</span>
         </button>
 
         <button
           @click="$emit('edit-details', item)"
           class="p-1.5 sm:p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          title="属性设置"
+          :title="t('common.details')"
         >
           <SlidersHorizontal class="w-3.5 h-3.5" />
         </button>
@@ -150,7 +150,7 @@
         <button
           @click="$emit('delete-item', item.id)"
           class="p-1.5 sm:p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
-          title="删除"
+          :title="t('common.delete')"
         >
           <Trash2 class="w-3.5 h-3.5" />
         </button>
@@ -187,6 +187,7 @@ import {
 } from 'lucide-vue-next'
 import type { TodoItem, Project } from '@/types'
 import { getPriorityStyle, normalizePriority } from '@/utils/priority'
+import { t } from '@/utils/i18n'
 
 const props = defineProps<{
   item: TodoItem

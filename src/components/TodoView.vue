@@ -5,7 +5,7 @@
         <div>
           <h2 class="text-base sm:text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <CheckSquare class="w-5 h-5 text-blue-600" />
-            <span>待办清单</span>
+            <span>{{ t('todo.title') }}</span>
           </h2>
         </div>
 
@@ -15,7 +15,7 @@
             v-model="selectedProjectFilter"
             class="w-full sm:w-auto px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-blue-500"
           >
-            <option value="">全部项目</option>
+            <option value="">{{ t('project.all') }}</option>
             <option v-for="p in projects" :key="p.id" :value="p.id">{{ p.title }}</option>
           </select>
 
@@ -24,28 +24,28 @@
             <input
               v-model="newRootTitle"
               type="text"
-              placeholder="快速添加待办 (回车保存)..."
+              :placeholder="t('todo.quickAddPlaceholder')"
               class="flex-1 sm:w-52 px-3 py-1.5 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-blue-500"
               @keyup.enter="handleAddRoot"
             />
             <button
               @click="handleAddRoot"
               class="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs sm:text-sm font-medium transition-all"
-              title="快速单行添加"
+              :title="t('common.add')"
             >
               <Plus class="w-3.5 h-3.5" />
-              <span>快速添加</span>
+              <span>{{ t('common.add') }}</span>
             </button>
           </div>
 
           <!-- 全量新建按钮 -->
           <button
             @click="handleOpenCreateModal"
-            class="shrink-0 flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-98 text-white text-xs sm:text-sm font-medium shadow-xs transition-all"
-            title="打开全量新建窗口，可设置项目、优先级、日期与详细备注"
+            class="shrink-0 flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-98 text-white text-xs sm:text-sm font-medium shadow-xs transition-all cursor-pointer"
+            :title="t('todo.newTodo')"
           >
             <PlusCircle class="w-4 h-4" />
-            <span>新建待办</span>
+            <span>{{ t('todo.newTodo') }}</span>
           </button>
         </div>
       </div>
@@ -56,13 +56,13 @@
             @click="expandAll(true)"
             class="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-medium"
           >
-            全部展开
+            {{ t('common.all') }}
           </button>
           <button
             @click="expandAll(false)"
             class="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-medium"
           >
-            全部折叠
+            {{ t('common.close') }}
           </button>
 
           <label class="flex items-center gap-1.5 cursor-pointer select-none ml-1 text-slate-600 dark:text-slate-400">
@@ -71,7 +71,7 @@
               v-model="hideCompleted"
               class="w-3.5 h-3.5 rounded text-blue-600 border-slate-300"
             />
-            <span>隐藏已完成</span>
+            <span>{{ t('todo.filterActive') }}</span>
           </label>
         </div>
 
@@ -82,10 +82,10 @@
             v-model="sortBy"
             class="px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 focus:outline-none"
           >
-            <option value="default">默认序号</option>
-            <option value="importance-desc">优先级从高到低 (P10 ➔ P1)</option>
-            <option value="importance-asc">优先级从低到高 (P1 ➔ P10)</option>
-            <option value="dueDate">截止日期优先</option>
+            <option value="default">{{ t('todo.sort') }}</option>
+            <option value="importance-desc">{{ t('todo.sortByPriority') }} (P10 ➔ P1)</option>
+            <option value="importance-asc">{{ t('todo.sortByPriority') }} (P1 ➔ P10)</option>
+            <option value="dueDate">{{ t('todo.sortByDate') }}</option>
           </select>
         </div>
       </div>
@@ -98,13 +98,13 @@
       <div class="w-10 h-10 mx-auto rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
         <CheckSquare class="w-5 h-5" />
       </div>
-      <p class="text-xs text-slate-400">暂无待办事项</p>
+      <p class="text-xs text-slate-400">{{ t('todo.empty') }}</p>
       <button
         @click="handleOpenCreateModal"
-        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-colors shadow-xs"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-colors shadow-xs cursor-pointer"
       >
         <PlusCircle class="w-3.5 h-3.5" />
-        <span>新建第一个待办</span>
+        <span>{{ t('todo.newTodo') }}</span>
       </button>
     </div>
 
@@ -142,10 +142,10 @@
               <SlidersHorizontal v-else class="w-4 h-4" />
             </div>
             <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">
-              {{ isCreatingNew ? '新建待办事项' : '设置任务属性' }}
+              {{ isCreatingNew ? t('todo.newTodo') : t('todo.editTodo') }}
             </h3>
           </div>
-          <button @click="closeModal" class="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+          <button @click="closeModal" class="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
             <X class="w-4 h-4" />
           </button>
         </div>
@@ -153,31 +153,31 @@
         <div class="space-y-3.5 text-xs sm:text-sm">
           <div>
             <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-              任务名称 <span class="text-rose-500">*</span>
+              {{ t('common.title') }} <span class="text-rose-500">*</span>
             </label>
             <input
               v-model="editingItem.title"
               type="text"
-              placeholder="待办事项名称..."
+              :placeholder="t('todo.quickAddPlaceholder')"
               class="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:border-blue-500"
               @keyup.enter="saveDetails"
             />
           </div>
 
           <div v-if="projects && projects.length > 0">
-            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">所属项目</label>
+            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{{ t('todo.project') }}</label>
             <select
               v-model="editingItem.projectId"
-              class="w-full px-2.5 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950"
+              class="w-full px-2.5 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 cursor-pointer"
             >
-              <option :value="null">无项目 (收件箱/杂项)</option>
+              <option :value="null">{{ t('common.none') }}</option>
               <option v-for="p in projects" :key="p.id" :value="p.id">{{ p.title }}</option>
             </select>
           </div>
 
           <div>
             <div class="flex items-center justify-between mb-1.5">
-              <label class="text-xs font-medium text-slate-700 dark:text-slate-300">重要程度 (优先级)</label>
+              <label class="text-xs font-medium text-slate-700 dark:text-slate-300">{{ t('todo.priority') }}</label>
               <span
                 v-if="editingItem"
                 :class="['px-2 py-0.5 rounded text-xs font-mono font-bold border transition-colors', getPriorityStyle(editingItem.importance).badgeClass]"
@@ -293,11 +293,11 @@
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">备注信息</label>
+            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{{ t('common.details') }}</label>
             <textarea
               v-model="editingItem.notes"
               rows="3"
-              placeholder="补充说明、细节或参考资料..."
+              placeholder="..."
               class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:border-blue-500"
             ></textarea>
           </div>
@@ -309,23 +309,23 @@
               v-if="!isCreatingNew && editingItem.id"
               type="button"
               @click="handleDeleteFromModal"
-              class="px-3 py-2 rounded-lg text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+              class="px-3 py-2 rounded-lg text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
             >
-              删除任务
+              {{ t('common.delete') }}
             </button>
           </div>
           <div class="flex items-center gap-2">
             <button
               @click="closeModal"
-              class="px-4 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors"
+              class="px-4 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
             >
-              取消
+              {{ t('common.cancel') }}
             </button>
             <button
               @click="saveDetails"
-              class="px-5 py-2 rounded-lg text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-colors"
+              class="px-5 py-2 rounded-lg text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-colors cursor-pointer"
             >
-              {{ isCreatingNew ? '立即创建' : '保存更改' }}
+              {{ isCreatingNew ? t('common.create') : t('common.save') }}
             </button>
           </div>
         </div>
@@ -335,8 +335,8 @@
     <!-- 移动端悬浮快捷新建按钮 -->
     <button
       @click="handleOpenCreateModal"
-      class="sm:hidden fixed right-4 bottom-20 z-30 w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 active:scale-95 text-white shadow-lg flex items-center justify-center transition-all"
-      title="新建待办"
+      class="sm:hidden fixed right-4 bottom-20 z-30 w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 active:scale-95 text-white shadow-lg flex items-center justify-center transition-all cursor-pointer"
+      :title="t('todo.newTodo')"
     >
       <Plus class="w-6 h-6" />
     </button>
@@ -350,6 +350,7 @@ import TodoTreeItem from '@/components/TodoTreeItem.vue'
 import type { TodoItem, Project } from '@/types'
 import { buildTodoTree, calculateLinkedTodoCompletion, getDescendantTodoIds } from '@/utils/tree'
 import { getPriorityStyle, normalizePriority } from '@/utils/priority'
+import { t } from '@/utils/i18n'
 import confetti from 'canvas-confetti'
 
 const props = defineProps<{

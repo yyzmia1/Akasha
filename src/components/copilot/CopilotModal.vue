@@ -631,6 +631,7 @@ import {
 } from 'lucide-vue-next'
 import type { Area, Project, ScheduleItem, Habit } from '@/types'
 import type { CopilotMode, CopilotPlanResult, AiProviderConfig, AiProviderType } from '@/types/copilot'
+import { t } from '@/utils/i18n'
 import {
   loadAiConfig,
   saveAiConfig,
@@ -815,12 +816,12 @@ async function handleTestConnectionInModal() {
   }
 }
 
-const modeOptions: { label: string; value: CopilotMode; icon: any }[] = [
-  { label: '智能复合', value: 'smart', icon: Sparkles },
-  { label: '仅排日程', value: 'schedule', icon: Calendar },
-  { label: '仅提待办', value: 'todo', icon: CheckSquare },
-  { label: '仅建习惯', value: 'habit', icon: Flame },
-]
+const modeOptions = computed<{ label: string; value: CopilotMode; icon: any }[]>(() => [
+  { label: '智能', value: 'smart', icon: Sparkles },
+  { label: t('nav.schedules'), value: 'schedule', icon: Calendar },
+  { label: t('nav.todos'), value: 'todo', icon: CheckSquare },
+  { label: t('nav.habits'), value: 'habit', icon: Flame },
+])
 
 const promptChips = [
   '📷 识图排程：上传作息/日程截图',

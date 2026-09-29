@@ -13,21 +13,21 @@
           ref="searchInputRef"
           v-model="query"
           type="text"
-          placeholder="搜索项目、待办、日程、习惯、日记..."
+          :placeholder="t('search.placeholder')"
           class="w-full py-3.5 sm:py-4 text-xs sm:text-base bg-transparent text-slate-800 dark:text-slate-100 placeholder-slate-400 outline-none"
           @keydown="handleKeyDown"
         />
         <button
           v-if="query"
           @click="query = ''"
-          class="p-1.5 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 mr-1 sm:mr-2"
+          class="p-1.5 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 mr-1 sm:mr-2 cursor-pointer"
         >
           <X class="w-4 h-4" />
         </button>
         <button
           @click="$emit('close')"
-          class="sm:hidden p-1.5 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-          aria-label="关闭"
+          class="sm:hidden p-1.5 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+          :aria-label="t('common.close')"
         >
           <X class="w-4 h-4" />
         </button>
@@ -42,7 +42,7 @@
           :key="cat.id"
           @click="selectedCategory = cat.id"
           :class="[
-            'px-2.5 py-1 rounded-lg font-medium transition-all whitespace-nowrap shrink-0',
+            'px-2.5 py-1 rounded-lg font-medium transition-all whitespace-nowrap shrink-0 cursor-pointer',
             selectedCategory === cat.id
               ? 'bg-blue-600 text-white shadow-sm'
               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800'
@@ -58,8 +58,8 @@
           v-if="filteredResults.length === 0"
           class="py-12 text-center text-slate-400 text-xs sm:text-sm"
         >
-          <p v-if="query.trim()">未找到匹配项</p>
-          <p v-else>输入关键词开始检索...</p>
+          <p v-if="query.trim()">{{ t('search.noResults') }}</p>
+          <p v-else>{{ t('search.placeholder') }}</p>
         </div>
 
         <div
@@ -141,6 +141,7 @@ import {
   Sparkles,
   BookOpen,
 } from 'lucide-vue-next'
+import { t } from '@/utils/i18n'
 import type {
   Project,
   TodoItem,
@@ -336,30 +337,30 @@ watch(
 )
 
 const categories = computed(() => [
-  { id: 'all' as SearchCategory, label: '全部' },
+  { id: 'all' as SearchCategory, label: t('common.all') },
   {
     id: 'project' as SearchCategory,
-    label: '项目',
+    label: t('search.projects'),
     count: allIndexItems.value.filter((i) => i.type === 'project').length,
   },
   {
     id: 'todo' as SearchCategory,
-    label: '待办',
+    label: t('search.todos'),
     count: allIndexItems.value.filter((i) => i.type === 'todo').length,
   },
   {
     id: 'schedule' as SearchCategory,
-    label: '日程',
+    label: t('search.schedules'),
     count: allIndexItems.value.filter((i) => i.type === 'schedule').length,
   },
   {
     id: 'habit' as SearchCategory,
-    label: '习惯',
+    label: t('search.habits'),
     count: allIndexItems.value.filter((i) => i.type === 'habit').length,
   },
   {
     id: 'journal' as SearchCategory,
-    label: '日记',
+    label: t('search.journals'),
     count: allIndexItems.value.filter((i) => i.type === 'journal').length,
   },
 ])

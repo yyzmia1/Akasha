@@ -98,7 +98,7 @@
             :title="typeFilters.schedules ? '点击隐藏固定日程' : '点击显示固定日程'"
           >
             <CalendarDays class="w-3.5 h-3.5" :class="typeFilters.schedules ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'" />
-            <span class="hidden sm:inline">日程</span>
+            <span class="hidden sm:inline">{{ t('nav.schedules') }}</span>
             <span v-if="schedules.length > 0" class="text-[10px] opacity-75 font-mono">({{ schedules.length }})</span>
           </button>
 
@@ -114,7 +114,7 @@
             :title="typeFilters.todos ? '点击隐藏待办事项' : '点击显示待办事项'"
           >
             <CheckSquare class="w-3.5 h-3.5" :class="typeFilters.todos ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'" />
-            <span class="hidden sm:inline">待办</span>
+            <span class="hidden sm:inline">{{ t('nav.todos') }}</span>
             <span v-if="datedTodos.length > 0" class="text-[10px] opacity-75 font-mono">({{ datedTodos.length }})</span>
           </button>
 
@@ -130,7 +130,7 @@
             :title="typeFilters.habits ? '点击隐藏习惯打卡' : '点击显示习惯打卡'"
           >
             <Sparkles class="w-3.5 h-3.5" :class="typeFilters.habits ? 'text-amber-500' : 'text-slate-400'" />
-            <span class="hidden sm:inline">习惯</span>
+            <span class="hidden sm:inline">{{ t('nav.habits') }}</span>
           </button>
         </div>
       </div>
@@ -804,14 +804,6 @@
                   <span class="text-[11px] px-2 py-0.5 rounded-full font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                     {{ dayTimedEvents.length }}
                   </span>
-                  <span
-                    v-if="hasOverlappingEvents"
-                    class="text-[10px] px-2 py-0.5 rounded-full font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-900/60 flex items-center gap-1"
-                    title="检测到同时段存在并行业务排期，已自动启用多栏防重叠并列视图"
-                  >
-                    <AlertCircle class="w-3 h-3 text-amber-500" />
-                    含时段重叠并列
-                  </span>
                 </div>
               </div>
             </div>
@@ -840,7 +832,7 @@
                       ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-2xs font-semibold'
                       : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                   ]"
-                  title="专业时间网格视图（真实时长比例与多栏防重叠布局）"
+                  title="专业时间网格视图（真实时长比例与并列排布）"
                 >
                   <LayoutGrid class="w-3.5 h-3.5" />
                   <span>网格</span>
@@ -1001,13 +993,6 @@
                       </div>
 
                       <div class="flex items-center gap-1 shrink-0">
-                        <span
-                          v-if="item.hasOverlap"
-                          class="text-[9px] px-1 py-0.2 rounded font-mono font-bold bg-amber-200/70 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200"
-                          title="此时段与并行业务存在重叠，已并列展示"
-                        >
-                          重叠
-                        </span>
                         <span class="text-[9px] px-1.5 py-0.2 rounded font-medium bg-white/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700">
                           {{ formatDuration(item.durationMinutes) }}
                         </span>
@@ -1149,12 +1134,6 @@
                         </span>
                         <span :class="['font-semibold text-xs sm:text-sm truncate text-slate-800 dark:text-slate-100', item.completed ? 'line-through text-slate-400' : '']">
                           {{ item.title }}
-                        </span>
-                        <span
-                          v-if="item.overlapWithNext > 0"
-                          class="text-[10px] px-1.5 py-0.2 rounded font-medium bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200/80 dark:border-amber-900/60"
-                        >
-                          与下项重叠 {{ item.overlapWithNext }} 分钟
                         </span>
                       </div>
                       <div v-if="item.projectName || item.data?.location" class="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1.5 truncate">

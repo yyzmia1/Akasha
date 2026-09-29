@@ -21,8 +21,8 @@
           <div class="relative shrink-0">
             <button
               @click="showMoodPicker = !showMoodPicker"
-              class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-base sm:text-lg transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
-              title="选择心情"
+              class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-base sm:text-lg transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700 cursor-pointer"
+              :title="t('journal.mood')"
             >
               <span>{{ activeEntry?.mood || '😊' }}</span>
             </button>
@@ -35,7 +35,7 @@
                 v-for="m in ['😊', '💪', '😐', '☕', '🌧️', '🔥']"
                 :key="m"
                 @click="setMood(m)"
-                class="w-7 h-7 rounded hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center text-base"
+                class="w-7 h-7 rounded hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center text-base cursor-pointer"
               >
                 {{ m }}
               </button>
@@ -47,7 +47,7 @@
           <textarea
             v-model="journalContent"
             @input="handleAutoSave"
-            placeholder="写下今天的日记与随笔..."
+            :placeholder="t('journal.writePlaceholder')"
             class="w-full flex-1 min-h-[260px] sm:min-h-[420px] resize-none bg-transparent text-slate-700 dark:text-slate-200 text-sm sm:text-base focus:outline-none placeholder:text-slate-400 tracking-wide"
             style="line-height: 2.2;"
           ></textarea>
@@ -55,7 +55,7 @@
 
         <div class="flex items-center justify-between pt-3 sm:pt-4 border-t border-slate-100 dark:border-slate-800/80 text-xs text-slate-400">
           <span class="text-[11px] text-slate-400">
-            {{ autoSaveStatus || '已自动保存' }}
+            {{ autoSaveStatus || t('journal.saveSuccess') }}
           </span>
 
           <button
@@ -282,6 +282,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { t } from '@/utils/i18n'
 import {
   ChevronLeft,
   ChevronRight,

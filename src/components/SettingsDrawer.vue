@@ -307,9 +307,9 @@
             <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-2.5">
               <div class="flex items-center justify-between">
                 <div>
-                  <div class="text-xs font-medium text-slate-800 dark:text-slate-200">字体大小</div>
+                  <div class="text-xs font-medium text-slate-800 dark:text-slate-200">{{ t('settings.fontSize') }}</div>
                   <div class="text-[11px] text-slate-400 mt-0.5">
-                    全局基础字号微调
+                    {{ t('settings.fontSizeDesc') }}
                   </div>
                 </div>
                 <span class="text-xs font-medium text-blue-600 dark:text-blue-400">
@@ -353,8 +353,8 @@
                 </span>
               </div>
 
-              <!-- 5 种语言切换按钮组: 中文 / 英文 / 日文 / 法文 / 德文 -->
-              <div class="grid grid-cols-5 gap-1.5 p-1 bg-slate-200/60 dark:bg-slate-800 rounded-lg text-xs">
+              <!-- 3 种语言切换按钮组: 中文 / 英文 / 日文 -->
+              <div class="grid grid-cols-3 gap-1.5 p-1 bg-slate-200/60 dark:bg-slate-800 rounded-lg text-xs">
                 <button
                   v-for="lang in LANGUAGE_OPTIONS"
                   :key="lang.value"
@@ -389,10 +389,10 @@
                 </div>
                 <div class="min-w-0">
                   <div class="text-xs font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-                    <span>AI 个人效能与识图配置 (Copilot)</span>
+                    <span>{{ t('settings.copilotTitle') }}</span>
                   </div>
                   <div class="text-[11px] text-slate-400 truncate mt-0.5">
-                    {{ aiConfig.apiKey ? `已启用 · ${aiConfig.model || '通用模型'} · 点击管理配置` : '点击展开配置 API 密钥与视觉识图模型' }}
+                    {{ aiConfig.apiKey ? t('settings.copilotActive', { model: aiConfig.model || 'AI' }) : t('settings.copilotInactive') }}
                   </div>
                 </div>
               </div>
@@ -403,13 +403,13 @@
                   class="text-[10px] px-2 py-0.5 rounded-full font-medium bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/40 flex items-center gap-1"
                 >
                   <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  已配置
+                  {{ t('settings.configured') }}
                 </span>
                 <span
                   v-else
                   class="text-[10px] px-2 py-0.5 rounded-full font-medium bg-slate-100 dark:bg-slate-800 text-slate-400"
                 >
-                  未配置
+                  {{ t('common.none') }}
                 </span>
                 <ChevronDown
                   class="w-4 h-4 text-slate-400 transition-transform duration-200"
@@ -601,7 +601,7 @@
                 <div class="flex items-center justify-between">
                   <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                     <Sparkles class="w-3.5 h-3.5 text-indigo-500" />
-                    <span>同步数据范围</span>
+                    <span>{{ t('settings.syncScopeLabel') }}</span>
                   </label>
                   <span
                     :class="[
@@ -611,7 +611,7 @@
                         : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
                     ]"
                   >
-                    {{ syncCopilotOption === 'include_copilot' ? '包含 Copilot 配置' : '仅业务数据' }}
+                    {{ syncCopilotOption === 'include_copilot' ? t('settings.syncIncludeCopilot') : t('settings.syncBusinessOnly') }}
                   </span>
                 </div>
 
@@ -622,15 +622,15 @@
                     @change="handleSyncCopilotChange"
                     class="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-600 text-xs font-medium focus:outline-hidden focus:border-indigo-500 cursor-pointer shadow-2xs"
                   >
-                    <option value="business_only">仅同步业务数据 (日程、清单、项目、习惯、笔记)</option>
-                    <option value="include_copilot">包含 AI Copilot 配置 (多端同步 API Key、接口与模型)</option>
+                    <option value="business_only">{{ t('settings.syncBusinessDesc') }}</option>
+                    <option value="include_copilot">{{ t('settings.syncIncludeCopilotDesc') }}</option>
                   </select>
                 </div>
 
                 <div class="text-[10px] text-slate-400 dark:text-slate-400 leading-normal">
                   {{ syncCopilotOption === 'include_copilot'
-                    ? '✨ 手机与电脑之间将自动同步 AI 模型、接口与密钥，多端免重复手动配置。'
-                    : '🔒 API Key 与模型等 AI 配置仅保存在当前设备本地，不上传云端。' }}
+                    ? t('settings.syncCopilotTipInclude')
+                    : t('settings.syncCopilotTipExclude') }}
                 </div>
               </div>
 
@@ -642,7 +642,7 @@
                   class="flex items-center justify-center gap-2 w-full py-2 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-98 disabled:opacity-50 text-white text-xs font-medium transition-all shadow-xs"
                 >
                   <RefreshCw :class="['w-3.5 h-3.5', isSyncing ? 'animate-spin' : '']" />
-                  <span>{{ isSyncing ? '正在同步中...' : '立即双向同步' }}</span>
+                  <span>{{ isSyncing ? t('syncStatus.syncing') : t('settings.syncNow') }}</span>
                 </button>
 
                 <div class="grid grid-cols-2 gap-2">
@@ -650,17 +650,15 @@
                     @click="handleUploadAll"
                     :disabled="isSyncing"
                     class="py-1.5 px-2 rounded-lg bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-600 text-[11px] font-medium transition-colors"
-                    title="将本地已有全部数据批量推送到云端"
                   >
-                    本地数据推送到云端
+                    {{ t('settings.uploadAllBtn') }}
                   </button>
                   <button
                     @click="handleDownloadAll"
                     :disabled="isSyncing"
                     class="py-1.5 px-2 rounded-lg bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-600 text-[11px] font-medium transition-colors"
-                    title="从云端拉取全量覆盖当前本地（常用于新设备首次同步）"
                   >
-                    从云端重新拉取全量
+                    {{ t('settings.downloadAllBtn') }}
                   </button>
                 </div>
               </div>
@@ -675,24 +673,24 @@
               <!-- Server URL config -->
               <div>
                 <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-300 mb-1">
-                  服务器地址 (Server URL)
+                  {{ t('settings.serverUrlLabel') }}
                 </label>
                 <div class="flex items-center gap-1.5">
                   <input
                     v-model="inputServerUrl"
                     type="text"
-                    placeholder="例如: https://your-domain.com 或 http://IP:8090"
+                    placeholder="https://your-domain.com"
                     class="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-hidden focus:border-blue-500"
                   />
                   <button
                     @click="handleSaveServerUrl"
                     class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
                   >
-                    保存
+                    {{ t('common.save') }}
                   </button>
                 </div>
                 <div class="text-[10px] text-slate-400 mt-1">
-                  若已配置 Nginx 反代，可留空或使用当前网址
+                  {{ t('settings.serverUrlHint') }}
                 </div>
               </div>
 
@@ -708,7 +706,7 @@
                       : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                   ]"
                 >
-                  登录已有账号
+                  {{ t('settings.loginTab') }}
                 </button>
                 <button
                   type="button"
@@ -720,7 +718,7 @@
                       : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                   ]"
                 >
-                  注册新账号
+                  {{ t('settings.registerTab') }}
                 </button>
               </div>
 
@@ -728,12 +726,12 @@
               <div class="space-y-2.5">
                 <div>
                   <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-300 mb-1">
-                    账号 / 邮箱 (Account)
+                    {{ t('settings.accountLabel') }}
                   </label>
                   <input
                     v-model="authEmail"
                     type="text"
-                    placeholder="输入用户名 (如 admin) 或邮箱 (如 you@example.com)"
+                    :placeholder="t('settings.accountPlaceholder')"
                     class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-hidden focus:border-blue-500"
                   />
                   <div v-if="authEmail.trim() && !authEmail.includes('@')" class="text-[10px] text-blue-600 dark:text-blue-400 mt-1 flex items-center gap-1">
@@ -742,12 +740,12 @@
                 </div>
                 <div>
                   <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-300 mb-1">
-                    密码 (Password)
+                    {{ t('settings.passwordLabel') }}
                   </label>
                   <input
                     v-model="authPassword"
                     type="password"
-                    :placeholder="authMode === 'register' ? '设置密码 (最少 8 位，如 12345678)' : '输入账号密码'"
+                    :placeholder="authMode === 'register' ? t('settings.passwordPlaceholderRegister') : t('settings.passwordPlaceholderLogin')"
                     class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-hidden focus:border-blue-500"
                   />
                 </div>
@@ -763,7 +761,7 @@
                 class="flex items-center justify-center gap-2 w-full py-2 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-medium transition-all shadow-xs"
               >
                 <RefreshCw v-if="isAuthLoading" class="w-3.5 h-3.5 animate-spin" />
-                <span>{{ isAuthLoading ? '正在验证...' : (authMode === 'login' ? '登录并开启同步' : '注册账号并开启同步') }}</span>
+                <span>{{ isAuthLoading ? t('common.loading') : (authMode === 'login' ? t('settings.loginSync') : t('settings.registerTab')) }}</span>
               </button>
             </div>
           </section>
@@ -803,17 +801,17 @@
             <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">
               <span class="flex items-center gap-1.5">
                 <Info class="w-3.5 h-3.5 text-blue-500" />
-                <span>系统与版本信息</span>
+                <span>{{ t('settings.systemInfo') }}</span>
               </span>
               <span class="text-[10px] px-2 py-0.5 rounded-full font-medium bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200/50 dark:border-indigo-800/40">
-                内测阶段 (Beta)
+                {{ t('settings.betaStage') }}
               </span>
             </h3>
 
             <div class="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850/40 space-y-2.5 text-xs">
               <!-- 版本号 (从 0. 开始的内测版) -->
               <div class="flex items-center justify-between">
-                <span class="text-slate-500 dark:text-slate-400">系统版本</span>
+                <span class="text-slate-500 dark:text-slate-400">{{ t('settings.appVersion') }}</span>
                 <span class="font-bold text-slate-800 dark:text-slate-100 font-mono flex items-center gap-1.5">
                   <span>{{ versionInfo.fullVersionString }}</span>
                   <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
@@ -822,7 +820,7 @@
 
               <!-- 分支信息与是否分支 -->
               <div class="flex items-center justify-between">
-                <span class="text-slate-500 dark:text-slate-400">代码分支</span>
+                <span class="text-slate-500 dark:text-slate-400">{{ t('settings.branch') }}</span>
                 <div class="flex items-center gap-1.5 font-mono text-[11px]">
                   <GitBranch class="w-3.5 h-3.5 text-indigo-500" />
                   <span :class="versionInfo.isBranch ? 'text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-slate-700 dark:text-slate-300'">
@@ -836,14 +834,14 @@
                         : 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300'
                     ]"
                   >
-                    {{ versionInfo.isBranch ? '独立分支' : '主线稳定' }}
+                    {{ versionInfo.isBranch ? t('settings.featureBranch') : t('settings.mainStable') }}
                   </span>
                 </div>
               </div>
 
               <!-- Commit 提交节点 -->
               <div v-if="versionInfo.commit" class="flex items-center justify-between">
-                <span class="text-slate-500 dark:text-slate-400">代码节点</span>
+                <span class="text-slate-500 dark:text-slate-400">{{ t('settings.commit') }}</span>
                 <span class="font-mono text-[11px] text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-slate-700/60">
                   {{ versionInfo.commit }}
                 </span>
@@ -851,9 +849,9 @@
 
               <!-- 存储引擎 -->
               <div class="flex items-center justify-between">
-                <span class="text-slate-500 dark:text-slate-400">离线存储</span>
+                <span class="text-slate-500 dark:text-slate-400">{{ t('settings.offlineStorage') }}</span>
                 <span class="text-slate-600 dark:text-slate-300 font-medium">
-                  IndexedDB 本地强隔离 · 离线全功能
+                  {{ t('settings.offlineStorageDesc') }}
                 </span>
               </div>
             </div>
@@ -862,18 +860,18 @@
           <section class="space-y-3">
             <h3 class="text-xs font-semibold text-rose-500 uppercase tracking-wider flex items-center gap-1.5">
               <AlertTriangle class="w-3.5 h-3.5 text-rose-500" />
-              <span>危险区域</span>
+              <span>{{ t('settings.dangerZone') }}</span>
             </h3>
             <div class="p-4 rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50/50 dark:bg-rose-950/20 space-y-3">
               <div class="text-xs text-rose-700 dark:text-rose-300">
-                清空数据将永久删除本地所有项目、待办、日程、习惯及日记，且无法撤销。
+                {{ t('settings.dangerDesc') }}
               </div>
               <button
                 @click="$emit('clear-all')"
                 class="flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium transition-colors"
               >
                 <Trash2 class="w-3.5 h-3.5" />
-                <span>清空全系统数据</span>
+                <span>{{ t('settings.clearAllBtn') }}</span>
               </button>
             </div>
           </section>
@@ -881,7 +879,7 @@
 
         <div class="px-4 sm:px-6 py-3.5 pb-safe border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 flex items-center justify-between text-xs text-slate-400">
           <div class="flex items-center gap-1.5 truncate">
-            <span class="font-mono font-medium text-slate-600 dark:text-slate-300">Akasha {{ versionInfo.version }} 内测版</span>
+            <span class="font-mono font-medium text-slate-600 dark:text-slate-300">Akasha {{ versionInfo.version }} {{ t('settings.betaStage') }}</span>
             <span class="text-slate-300 dark:text-slate-700">·</span>
             <span class="text-[11px] font-mono text-indigo-500 dark:text-indigo-400 truncate">{{ versionInfo.branch }}</span>
           </div>
@@ -889,7 +887,7 @@
             @click="$emit('close')"
             class="px-4 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 font-medium transition-colors cursor-pointer shrink-0 ml-2"
           >
-            完成
+            {{ t('settings.done') }}
           </button>
         </div>
       </div>
@@ -1115,15 +1113,15 @@ const isSyncing = computed(() => syncStatus.value === 'syncing')
 const syncStatusLabel = computed(() => {
   switch (syncStatus.value) {
     case 'synced':
-      return '已同步'
+      return t('syncStatus.synced')
     case 'syncing':
-      return '正在同步'
+      return t('syncStatus.syncing')
     case 'error':
-      return '同步异常'
+      return t('syncStatus.error')
     case 'offline':
-      return '离线'
+      return t('syncStatus.offline')
     default:
-      return '未连接'
+      return t('syncStatus.notSynced')
   }
 })
 
@@ -1226,36 +1224,35 @@ async function handleDownloadAll() {
 }
 
 
-const uiScaleOptions: { value: UiScale; label: string }[] = [
-  { value: 'compact', label: '紧凑 90%' },
-  { value: 'standard', label: '标准 100%' },
-  { value: 'comfortable', label: '舒适 108%' },
-  { value: 'large', label: '大屏 118%' },
-]
+const uiScaleOptions = computed<{ value: UiScale; label: string }[]>(() => [
+  { value: 'compact', label: t('settings.scaleCompact') },
+  { value: 'standard', label: t('settings.scaleStandard') },
+  { value: 'comfortable', label: t('settings.scaleComfort') },
+])
 
 const currentUiScaleLabel = computed(() => {
-  return uiScaleOptions.find((o) => o.value === props.uiScale)?.label || '标准 100%'
+  return uiScaleOptions.value.find((o) => o.value === props.uiScale)?.label || t('settings.scaleStandard')
 })
 
-const fontFamilyOptions: { value: FontFamily; label: string }[] = [
-  { value: 'wenkai', label: '霞鹜文楷' },
-  { value: 'system', label: '现代黑体' },
-  { value: 'serif', label: '典雅宋体' },
-]
+const fontFamilyOptions = computed<{ value: FontFamily; label: string }[]>(() => [
+  { value: 'wenkai', label: t('settings.defaultFont') },
+  { value: 'system', label: t('settings.modernSans') },
+  { value: 'serif', label: t('settings.elegantSerif') },
+])
 
 const currentFontFamilyLabel = computed(() => {
-  return fontFamilyOptions.find((o) => o.value === props.fontFamily)?.label || '霞鹜文楷'
+  return fontFamilyOptions.value.find((o) => o.value === props.fontFamily)?.label || t('settings.defaultFont')
 })
 
-const fontSizeOptions: { value: FontSize; label: string }[] = [
-  { value: 'small', label: '小号' },
-  { value: 'standard', label: '标准' },
-  { value: 'large', label: '大号' },
-  { value: 'xlarge', label: '特大' },
-]
+const fontSizeOptions = computed<{ value: FontSize; label: string }[]>(() => [
+  { value: 'small', label: t('settings.fontSmall') },
+  { value: 'standard', label: t('settings.fontMedium') },
+  { value: 'large', label: t('settings.fontLarge') },
+  { value: 'xlarge', label: t('settings.fontXLarge') },
+])
 
 const currentFontSizeLabel = computed(() => {
-  return fontSizeOptions.find((o) => o.value === props.fontSize)?.label || '标准'
+  return fontSizeOptions.value.find((o) => o.value === props.fontSize)?.label || t('settings.fontMedium')
 })
 
 const currentLanguageLabel = computed(() => {

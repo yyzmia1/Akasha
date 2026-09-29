@@ -4,25 +4,25 @@
       <div>
         <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
           <FolderKanban class="w-5 h-5 text-blue-600" />
-          <span>我的项目</span>
+          <span>{{ t('project.title') }}</span>
         </h2>
       </div>
 
       <div class="flex items-center gap-2 w-full sm:w-auto">
         <button
           @click="openNewProjectModal()"
-          class="flex-1 sm:flex-none justify-center flex items-center gap-1.5 px-3.5 py-2 sm:py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-medium shadow-sm transition-all"
+          class="flex-1 sm:flex-none justify-center flex items-center gap-1.5 px-3.5 py-2 sm:py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-medium shadow-sm transition-all cursor-pointer"
         >
           <Plus class="w-4 h-4" />
-          <span>新建项目</span>
+          <span>{{ t('project.newProject') }}</span>
         </button>
 
         <button
           @click="showAddAreaModal = true"
-          class="flex-1 sm:flex-none justify-center flex items-center gap-1.5 px-3.5 py-2 sm:py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 text-xs font-medium transition-all"
+          class="flex-1 sm:flex-none justify-center flex items-center gap-1.5 px-3.5 py-2 sm:py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 text-xs font-medium transition-all cursor-pointer"
         >
           <FolderPlus class="w-3.5 h-3.5" />
-          <span>新建领域</span>
+          <span>{{ t('project.newArea') }}</span>
         </button>
       </div>
     </div>
@@ -38,7 +38,7 @@
             : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
         ]"
       >
-        <span>全部领域</span>
+        <span>{{ t('common.all') }}</span>
         <span class="text-[10px] px-1.5 py-0.2 rounded-full font-mono" :class="selectedAreaId === 'all' ? 'bg-blue-50 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300' : 'bg-slate-200/60 dark:bg-slate-800 text-slate-500'">
           {{ projects.length }}
         </span>
@@ -77,16 +77,16 @@
         <FolderPlus class="w-6 h-6" />
       </div>
       <div class="space-y-1">
-        <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-200">暂无项目与领域</h3>
-        <p class="text-xs text-slate-400">请先创建一个领域，随后即可在领域中规划项目与待办。</p>
+        <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ t('project.empty') }}</h3>
+        <p class="text-xs text-slate-400">{{ t('project.emptyDesc') }}</p>
       </div>
       <div>
         <button
           @click="showAddAreaModal = true"
-          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium shadow-sm transition-all"
+          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium shadow-sm transition-all cursor-pointer"
         >
           <Plus class="w-4 h-4" />
-          <span>新建第一个领域</span>
+          <span>{{ t('project.newArea') }}</span>
         </button>
       </div>
     </div>
@@ -1216,6 +1216,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { t } from '@/utils/i18n'
 import {
   FolderKanban,
   FolderPlus,

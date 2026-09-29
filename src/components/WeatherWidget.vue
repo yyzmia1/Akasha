@@ -17,7 +17,8 @@ import {
   Search,
   Loader2,
   LocateFixed,
-  X
+  X,
+  ExternalLink
 } from 'lucide-vue-next'
 import {
   fetchWeather,

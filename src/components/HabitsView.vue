@@ -5,25 +5,25 @@
         <div>
           <h2 class="text-base sm:text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <Sparkles class="w-5 h-5 text-amber-500" />
-            <span>日常习惯</span>
+            <span>{{ t('habit.title') }}</span>
             <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300">
-              今日已完成 {{ todayCompletedCount }}/{{ dailyHabits.length }}
+              {{ t('habit.checkedIn') }} {{ todayCompletedCount }}/{{ dailyHabits.length }}
             </span>
           </h2>
         </div>
 
         <button
           @click="showAddForm = !showAddForm"
-          class="flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-medium shadow-sm transition-all w-full sm:w-auto"
+          class="flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-medium shadow-sm transition-all w-full sm:w-auto cursor-pointer"
         >
           <Plus class="w-4 h-4" />
-          <span>新建习惯</span>
+          <span>{{ t('habit.newHabit') }}</span>
         </button>
       </div>
 
       <div v-if="showAddForm" class="p-4 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50/40 dark:bg-blue-950/20 space-y-3 text-xs">
         <div class="flex items-center justify-between">
-          <h4 class="text-xs font-semibold text-slate-800 dark:text-slate-200">新建习惯</h4>
+          <h4 class="text-xs font-semibold text-slate-800 dark:text-slate-200">{{ t('habit.newHabit') }}</h4>
           <button @click="showAddForm = false" class="text-slate-400 hover:text-slate-600">
             <X class="w-4 h-4" />
           </button>
@@ -950,6 +950,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
 import { Sparkles, Plus, X, Check, Trash2, Pencil, Calendar, CalendarOff } from 'lucide-vue-next'
+import { t } from '@/utils/i18n'
 import type { Habit, HabitLog, HabitFrequency, TimeSlot, TimingType, Project } from '@/types'
 import { formatDate, getWeekKey, getMonday } from '@/utils/date'
 import {
