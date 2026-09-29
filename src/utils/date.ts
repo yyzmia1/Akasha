@@ -1,3 +1,5 @@
+import { currentLocale } from './i18n'
+
 export function formatDate(date: Date): string {
   const y = date.getFullYear()
   const m = String(date.getMonth() + 1).padStart(2, '0')
@@ -11,11 +13,31 @@ export function parseDate(dateStr: string): Date {
   return new Date(year, month - 1, day)
 }
 
+export function getWeekdayName(dayOfWeek: number): string {
+  const loc = currentLocale?.value || 'zh'
+  if (loc === 'en') {
+    return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dayOfWeek]
+  }
+  if (loc === 'ja') {
+    return ['日', '月', '火', '水', '木', '金', '土'][dayOfWeek]
+  }
+  return ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][dayOfWeek]
+}
+
 export function formatDisplayDate(dateStr: string): string {
   if (!dateStr) return ''
   const date = parseDate(dateStr)
-  const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
-  return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${weekdays[date.getDay()]}`
+  const loc = currentLocale?.value || 'zh'
+  const dayOfWeek = date.getDay()
+  const w = getWeekdayName(dayOfWeek)
+  if (loc === 'en') {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    return `${w}, ${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`
+  }
+  if (loc === 'ja') {
+    return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 (${w})`
+  }
+  return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${w}`
 }
 
 export function isSameDay(d1: string | Date, d2: string | Date): boolean {
@@ -124,18 +146,28 @@ export interface CalendarDay {
   isWeekend: boolean
 }
 
-const WEEKDAY_NAMES_MAP = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
-
 export function formatPeriodTitle(mode: CalendarViewMode, baseDate: Date): string {
+  const loc = currentLocale?.value || 'zh'
+  const monthsEn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
   if (mode === 'day') {
     const y = baseDate.getFullYear()
     const m = baseDate.getMonth() + 1
     const d = baseDate.getDate()
-    const w = WEEKDAY_NAMES_MAP[baseDate.getDay()]
+    const w = getWeekdayName(baseDate.getDay())
+    if (loc === 'en') {
+      return `${monthsEn[baseDate.getMonth()]} ${d}, ${y} (${w})`
+    }
+    if (loc === 'ja') {
+      return `${y}年${m}月${d}日 (${w})`
+    }
     return `${y}年${m}月${d}日 ${w}`
   }
 
   if (mode === 'month') {
+    if (loc === 'en') {
+      return `${monthsEn[baseDate.getMonth()]} ${baseDate.getFullYear()}`
+    }
     return `${baseDate.getFullYear()}年 ${baseDate.getMonth() + 1}月`
   }
 
@@ -152,11 +184,15 @@ export function formatPeriodTitle(mode: CalendarViewMode, baseDate: Date): strin
   } else if (mode === 'week') {
     startD = getMonday(baseDate)
     endD = addDays(startD, 6)
-    suffix = ` (第${getISOWeekNumber(startD)}周)`
+    const weekNum = getISOWeekNumber(startD)
+    suffix = loc === 'en' ? ` (Week ${weekNum})` : loc === 'ja' ? ` (第${weekNum}週)` : ` (第${weekNum}周)`
   } else if (mode === '2weeks') {
     startD = getMonday(baseDate)
     endD = addDays(startD, 13)
   } else {
+    if (loc === 'en') {
+      return `${monthsEn[baseDate.getMonth()]} ${baseDate.getFullYear()}`
+    }
     return `${baseDate.getFullYear()}年 ${baseDate.getMonth() + 1}月`
   }
 
@@ -168,6 +204,18 @@ export function formatPeriodTitle(mode: CalendarViewMode, baseDate: Date): strin
   const m2 = endD.getMonth() + 1
   const d2 = endD.getDate()
 
+  if (loc === 'en') {
+    if (y1 === y2) {
+      return `${monthsEn[m1 - 1]} ${d1} - ${monthsEn[m2 - 1]} ${d2}, ${y1}${suffix}`
+    }
+    return `${monthsEn[m1 - 1]} ${d1}, ${y1} - ${monthsEn[m2 - 1]} ${d2}, ${y2}${suffix}`
+  }
+  if (loc === 'ja') {
+    if (y1 === y2) {
+      return `${y1}年${m1}月${d1}日 - ${m2}月${d2}日${suffix}`
+    }
+    return `${y1}年${m1}月${d1}日 - ${y2}年${m2}月${d2}日${suffix}`
+  }
   if (y1 === y2) {
     return `${y1}年${m1}月${d1}日 - ${m2}月${d2}日${suffix}`
   }
@@ -194,7 +242,7 @@ export function getCalendarDays(year: number, month: number): CalendarDay[] {
       dateStr,
       dayNumber: d.getDate(),
       dayOfWeek,
-      weekdayName: WEEKDAY_NAMES_MAP[dayOfWeek],
+      weekdayName: getWeekdayName(dayOfWeek),
       isCurrentMonth: false,
       isToday: dateStr === todayStr,
       isWeekend: dayOfWeek === 0 || dayOfWeek === 6,
@@ -210,7 +258,7 @@ export function getCalendarDays(year: number, month: number): CalendarDay[] {
       dateStr,
       dayNumber: day,
       dayOfWeek,
-      weekdayName: WEEKDAY_NAMES_MAP[dayOfWeek],
+      weekdayName: getWeekdayName(dayOfWeek),
       isCurrentMonth: true,
       isToday: dateStr === todayStr,
       isWeekend: dayOfWeek === 0 || dayOfWeek === 6,
@@ -228,7 +276,7 @@ export function getCalendarDays(year: number, month: number): CalendarDay[] {
         dateStr,
         dayNumber: day,
         dayOfWeek,
-        weekdayName: WEEKDAY_NAMES_MAP[dayOfWeek],
+        weekdayName: getWeekdayName(dayOfWeek),
         isCurrentMonth: false,
         isToday: dateStr === todayStr,
         isWeekend: dayOfWeek === 0 || dayOfWeek === 6,
@@ -278,7 +326,7 @@ export function getViewDays(mode: CalendarViewMode, baseDate: Date): CalendarDay
       dateStr,
       dayNumber: d.getDate(),
       dayOfWeek,
-      weekdayName: WEEKDAY_NAMES_MAP[dayOfWeek],
+      weekdayName: getWeekdayName(dayOfWeek),
       // 注意：非月视图下所有日子均是该视角的有效排期日，跨月绝不判为半透明灰色
       isCurrentMonth: true,
       isToday: dateStr === todayStr,
