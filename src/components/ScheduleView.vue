@@ -164,6 +164,11 @@
             <h4 class="text-sm font-semibold text-slate-800 dark:text-slate-100 leading-snug break-words">
               {{ s.title }}
             </h4>
+
+            <!-- Notes / Details -->
+            <p v-if="s.notes" class="text-xs text-slate-500 dark:text-slate-400 mt-1.5 line-clamp-2 bg-white/70 dark:bg-slate-900/60 p-2 rounded-lg border border-slate-100 dark:border-slate-800/80 leading-relaxed">
+              {{ s.notes }}
+            </p>
           </div>
 
           <!-- Actions Bar -->
@@ -323,6 +328,19 @@
                 />
               </div>
             </div>
+          </div>
+
+          <!-- Notes / Details -->
+          <div class="space-y-1">
+            <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              {{ t('common.details') }}说明 (可选)
+            </label>
+            <textarea
+              v-model="formNotes"
+              rows="3"
+              placeholder="地点、会议议程、准备事项或详细备忘..."
+              class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            ></textarea>
           </div>
         </div>
 
@@ -518,6 +536,7 @@ const showModal = ref(false)
 const editingId = ref<string | null>(null)
 const formTitle = ref('')
 const formProjectId = ref<string | null>(null)
+const formNotes = ref('')
 const isScheduleAllDay = ref(false)
 const scheduleStartDateTime = ref('')
 const scheduleEndDateTime = ref('')
@@ -551,6 +570,7 @@ function openCreateModal() {
   editingId.value = null
   formTitle.value = ''
   formProjectId.value = selectedProjectId.value === 'all' ? null : selectedProjectId.value
+  formNotes.value = ''
   const today = formatDate(new Date())
   isScheduleAllDay.value = false
   scheduleStartDateTime.value = `${today}T09:00`
@@ -564,6 +584,7 @@ function openEditModal(s: ScheduleItem) {
   editingId.value = s.id
   formTitle.value = s.title
   formProjectId.value = s.projectId || null
+  formNotes.value = s.notes || s.description || ''
 
   if (s.time || s.endTime) {
     isScheduleAllDay.value = false
@@ -638,6 +659,7 @@ function handleSubmit() {
     time,
     endDate,
     endTime,
+    notes: formNotes.value.trim() || undefined,
   }
 
   if (editingId.value) {

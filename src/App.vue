@@ -544,6 +544,7 @@ async function handleApplyCopilotPlan(plan: CopilotPlanResult) {
       endTime: sd.endTime,
       recurringType: sd.recurringType || 'none',
       recurringDayOfWeek: sd.recurringDayOfWeek,
+      notes: sd.notes,
       createdAt: new Date().toISOString(),
       updatedAt: now,
     }
@@ -618,6 +619,7 @@ async function handleApplyCopilotPlan(plan: CopilotPlanResult) {
       time: hd.time,
       targetDaysOfWeek: hd.targetDaysOfWeek,
       showOnCalendar: true,
+      description: hd.description,
       createdAt: new Date().toISOString(),
       updatedAt: now,
     }
@@ -939,9 +941,12 @@ async function handleSaveSchedule(scheduleData: Partial<ScheduleItem>) {
       title: scheduleData.title || '新日程',
       date: scheduleData.date,
       time: scheduleData.time,
+      endDate: scheduleData.endDate,
+      endTime: scheduleData.endTime,
       recurringType: scheduleData.recurringType || 'none',
       recurringDayOfWeek: scheduleData.recurringDayOfWeek,
       recurringDayOfMonth: scheduleData.recurringDayOfMonth,
+      notes: scheduleData.notes,
       createdAt: new Date().toISOString(),
       updatedAt: now,
     }
@@ -1141,6 +1146,7 @@ async function handleSaveHabit(habitData: Partial<Habit>) {
       weekPatterns: habitData.weekPatterns,
       showOnCalendar: habitData.showOnCalendar ?? false,
       color: habitData.color || '#2563eb',
+      description: habitData.description,
       createdAt: new Date().toISOString(),
       updatedAt: now,
     }

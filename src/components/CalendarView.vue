@@ -1660,6 +1660,13 @@
               {{ formatScheduleDetailTiming(selectedSchedule) }}
             </div>
           </div>
+
+          <div v-if="selectedSchedule.notes">
+            <div class="text-[11px] text-slate-400 mb-0.5">{{ t('common.details') }}说明</div>
+            <p class="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 leading-relaxed">
+              {{ selectedSchedule.notes }}
+            </p>
+          </div>
         </div>
 
         <div class="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
@@ -1771,6 +1778,19 @@
               type="time"
               class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             />
+          </div>
+
+          <!-- Notes / Details -->
+          <div class="space-y-1">
+            <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              {{ t('common.details') }}说明 (可选)
+            </label>
+            <textarea
+              v-model="scheduleFormNotes"
+              rows="3"
+              placeholder="地点、会议议程、准备事项或详细备忘..."
+              class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            ></textarea>
           </div>
         </div>
 
@@ -2573,6 +2593,7 @@ const scheduleFormDate = ref('')
 const scheduleFormDayOfWeek = ref(1)
 const scheduleFormDayOfMonth = ref(1)
 const scheduleFormTime = ref('')
+const scheduleFormNotes = ref('')
 
 const scheduleWeekdayOptions = [
   { value: 1, label: '周一' },
@@ -2591,6 +2612,7 @@ function openCreateScheduleModal(dateStr?: string) {
   scheduleFormRecurringType.value = 'none'
   scheduleFormDate.value = dateStr || formatDate(new Date())
   scheduleFormTime.value = ''
+  scheduleFormNotes.value = ''
   showScheduleEditModal.value = true
 }
 
@@ -2601,6 +2623,7 @@ function openEditScheduleModal(s: ScheduleItem) {
   scheduleFormRecurringType.value = 'none'
   scheduleFormDate.value = s.date || formatDate(new Date())
   scheduleFormTime.value = s.time || ''
+  scheduleFormNotes.value = s.notes || s.description || ''
   showScheduleEditModal.value = true
 }
 
@@ -2624,6 +2647,7 @@ function handleSaveScheduleSubmit() {
     recurringType: 'none',
     date: scheduleFormDate.value,
     time: scheduleFormTime.value.trim() || undefined,
+    notes: scheduleFormNotes.value.trim() || undefined,
   }
   if (scheduleEditId.value) {
     payload.id = scheduleEditId.value

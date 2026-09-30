@@ -316,6 +316,33 @@ describe('aiService (AI 规划解析与上下文构建)', () => {
     expect(plan.todos).toHaveLength(0)
     expect(plan.habits).toHaveLength(0)
   })
+
+  it('支持项目、日程、习惯和待办的详细说明（description/notes）完整解析', () => {
+    const rawAiOutput = `\`\`\`json
+{
+  "reasoning": "全量包含详情说明",
+  "areas": [],
+  "projects": [
+    { "title": "开源知识库", "description": "构建高可用多端同构文档系统" }
+  ],
+  "schedules": [
+    { "title": "架构复盘会", "date": "2026-10-01", "time": "14:00", "notes": "会议室B3，讨论服务下线方案" }
+  ],
+  "todos": [
+    { "title": "更新数据库脚本", "importance": 4, "notes": "注意执行前先备份" }
+  ],
+  "habits": [
+    { "title": "深蹲锻炼", "frequency": "daily", "description": "每组20次，共完成3组" }
+  ]
+}
+\`\`\``
+
+    const plan = parsePlanResultFromText(rawAiOutput)
+    expect(plan.projects[0].description).toBe('构建高可用多端同构文档系统')
+    expect(plan.schedules[0].notes).toBe('会议室B3，讨论服务下线方案')
+    expect(plan.todos[0].notes).toBe('注意执行前先备份')
+    expect(plan.habits[0].description).toBe('每组20次，共完成3组')
+  })
 })
 
 

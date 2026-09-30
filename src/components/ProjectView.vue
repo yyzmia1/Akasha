@@ -381,6 +381,11 @@
                   </span>
                 </div>
 
+                <!-- 项目详细描述 / 备注 -->
+                <p v-if="proj.description" class="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 my-1 leading-relaxed">
+                  {{ proj.description }}
+                </p>
+
                 <div class="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500 my-3">
                   <span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-medium">
                     习惯 {{ getHabitsForProject(proj.id).length }}
@@ -462,6 +467,9 @@
                 <span>•</span>
                 <span>待办完成率 {{ getProjectProgress(activeProject.id) }}%</span>
               </div>
+              <p v-if="activeProject.description" class="text-xs text-slate-600 dark:text-slate-300 mt-2 bg-slate-100/70 dark:bg-slate-850 p-2.5 rounded-lg border border-slate-200/60 dark:border-slate-800 whitespace-pre-wrap leading-relaxed">
+                {{ activeProject.description }}
+              </p>
             </div>
           </div>
 
@@ -725,6 +733,18 @@
               class="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100"
               @keyup.enter="handleSaveProject"
             />
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+              {{ t('common.details') }}说明 (可选)
+            </label>
+            <textarea
+              v-model="modalProjectDescription"
+              rows="3"
+              placeholder="项目核心目标、阶段规划、交付成果或备忘说明..."
+              class="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-blue-500"
+            ></textarea>
           </div>
 
           <div>
@@ -2257,6 +2277,7 @@ const showProjectModal = ref(false)
 const editingProjectId = ref<string | null>(null)
 const modalAreaId = ref('')
 const modalProjectTitle = ref('')
+const modalProjectDescription = ref('')
 const modalProjectColor = ref('#3b82f6')
 const colorOptions = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#ec4899', '#64748b']
 
@@ -2274,6 +2295,7 @@ function openNewProjectModal(defaultAreaId?: string) {
     modalAreaId.value = flatAreaTree.value[0]?.id || props.areas[0]?.id || ''
   }
   modalProjectTitle.value = ''
+  modalProjectDescription.value = ''
   modalProjectColor.value = '#3b82f6'
   showProjectModal.value = true
 }
@@ -2282,6 +2304,7 @@ function openEditProjectModal(proj: Project) {
   editingProjectId.value = proj.id
   modalAreaId.value = proj.areaId
   modalProjectTitle.value = proj.title
+  modalProjectDescription.value = proj.description || ''
   modalProjectColor.value = proj.color || '#3b82f6'
   showProjectModal.value = true
 }
@@ -2289,6 +2312,7 @@ function openEditProjectModal(proj: Project) {
 function handleSaveProject() {
   if (!modalProjectTitle.value.trim() || !modalAreaId.value) return
   const title = modalProjectTitle.value.trim()
+  const description = modalProjectDescription.value.trim() || undefined
   const color = modalProjectColor.value
   const areaId = modalAreaId.value
 
@@ -2297,6 +2321,7 @@ function handleSaveProject() {
       id: editingProjectId.value,
       areaId,
       title,
+      description,
       color,
     })
     if (activeProject.value && activeProject.value.id === editingProjectId.value) {
@@ -2304,6 +2329,7 @@ function handleSaveProject() {
         ...activeProject.value,
         areaId,
         title,
+        description,
         color,
       }
     }
@@ -2311,6 +2337,7 @@ function handleSaveProject() {
     emit('save-project', {
       areaId,
       title,
+      description,
       color,
       order: getProjectsByArea(areaId).length,
     })

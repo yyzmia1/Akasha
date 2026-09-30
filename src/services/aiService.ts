@@ -333,6 +333,7 @@ JSON 输出协议结构如下：
     {
       "id": "proj-temp-1",
       "title": "大模型微调实践",
+      "description": "项目核心目标与主要交付成果说明",
       "color": "#3b82f6",
       "suggestedAreaTitle": "人工智能"
     }
@@ -346,6 +347,7 @@ JSON 输出协议结构如下：
       "endDate": "${dateStr}",
       "endTime": "16:00",
       "recurringType": "none",
+      "notes": "会议地点、议程或详细说明",
       "suggestedProjectTitle": "大模型微调实践"
     }
   ],
@@ -369,6 +371,7 @@ JSON 输出协议结构如下：
       "timeSlot": "morning",
       "time": "08:30",
       "targetDaysOfWeek": [1, 2, 3, 4, 5],
+      "description": "习惯执行细则、奖励或动机提示",
       "suggestedProjectTitle": "大模型微调实践"
     }
   ]
@@ -485,6 +488,7 @@ export function parsePlanResultFromText(text: string): CopilotPlanResult {
       })),
       schedules: (obj.schedules || []).map((s: any, idx: number) => ({
         id: s.id || `sch-draft-${Date.now()}-${idx}`,
+        type: 'schedule',
         title: s.title || '拟定日程',
         date: s.date || new Date().toISOString().substring(0, 10),
         time: s.time || undefined,
@@ -492,11 +496,13 @@ export function parsePlanResultFromText(text: string): CopilotPlanResult {
         endTime: s.endTime || undefined,
         recurringType: s.recurringType || 'none',
         recurringDayOfWeek: s.recurringDayOfWeek,
+        notes: s.notes || s.description || undefined,
         suggestedProjectTitle: s.suggestedProjectTitle,
         selected: true,
       })),
       todos: (obj.todos || []).map((t: any, idx: number) => ({
         id: t.id || `todo-draft-${Date.now()}-${idx}`,
+        type: 'todo',
         title: t.title || '拟定待办',
         importance: t.importance || 2,
         startDate: t.startDate,
@@ -510,11 +516,13 @@ export function parsePlanResultFromText(text: string): CopilotPlanResult {
       })),
       habits: (obj.habits || []).map((h: any, idx: number) => ({
         id: h.id || `habit-draft-${Date.now()}-${idx}`,
+        type: 'habit',
         title: h.title || '拟定习惯',
         frequency: h.frequency || 'daily',
         timeSlot: h.timeSlot || 'anytime',
         time: h.time,
         targetDaysOfWeek: h.targetDaysOfWeek,
+        description: h.description || h.notes || undefined,
         suggestedProjectTitle: h.suggestedProjectTitle,
         selected: true,
       })),
@@ -591,6 +599,7 @@ export function convertVisionDataToPlanResult(parsed: any): CopilotPlanResult {
         endTime: s.endTime,
         recurringType: s.recurringType || 'none',
         recurringDayOfWeek: s.recurringDayOfWeek,
+        notes: s.notes || s.description || undefined,
         suggestedProjectTitle: s.suggestedProjectTitle,
         selected: true,
       })
@@ -618,6 +627,7 @@ export function convertVisionDataToPlanResult(parsed: any): CopilotPlanResult {
         endTime: endTime,
         recurringType: 'weekly',
         recurringDayOfWeek: Number(c.dayOfWeek) || 1,
+        notes: [c.location ? `地点: ${c.location}` : '', c.teacher ? `讲师/负责人: ${c.teacher}` : ''].filter(Boolean).join(' | ') || undefined,
         suggestedProjectTitle: parsed.semesterInfo?.semesterName || '日程排期',
         selected: true,
       })
@@ -665,6 +675,7 @@ export function convertVisionDataToPlanResult(parsed: any): CopilotPlanResult {
         timeSlot: h.timeSlot || 'anytime',
         time: h.time,
         targetDaysOfWeek: h.targetDaysOfWeek,
+        description: h.description || h.notes || undefined,
         suggestedProjectTitle: h.suggestedProjectTitle,
         selected: true,
       })

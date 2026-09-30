@@ -44,6 +44,8 @@ export interface ScheduleItem {
   recurringType: ScheduleRecurringType
   recurringDayOfWeek?: number
   recurringDayOfMonth?: number
+  notes?: string
+  description?: string
   createdAt: string
   updatedAt?: number | string
 }

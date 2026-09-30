@@ -37,6 +37,16 @@
           @keyup.enter="handleCreate"
         />
 
+        <div>
+          <label class="block text-[11px] text-slate-500 mb-1">详细说明 / 备注 (可选)</label>
+          <textarea
+            v-model="newDescription"
+            rows="2"
+            placeholder="习惯执行细则、奖励机制或动机提示..."
+            class="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-none focus:border-blue-500 text-slate-800 dark:text-slate-100 text-xs"
+          ></textarea>
+        </div>
+
         <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
           <div v-if="projects && projects.length > 0">
             <label class="block text-[11px] text-slate-500 mb-1">所属项目</label>
@@ -285,34 +295,41 @@
                 highlightedHabitId === h.id ? 'ring-2 ring-emerald-500 shadow-md scale-[1.01]' : ''
               ]"
             >
-              <div class="flex items-center gap-2.5">
+              <div class="flex items-start gap-2.5 flex-1 min-w-0">
                 <div
                   :class="[
-                    'w-4 h-4 rounded border flex items-center justify-center transition-all',
+                    'w-4 h-4 rounded border flex items-center justify-center transition-all shrink-0 mt-0.5',
                     isDoneToday(h.id) ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-300 dark:border-slate-600'
                   ]"
                 >
                   <Check v-if="isDoneToday(h.id)" class="w-3 h-3 stroke-[3]" />
                 </div>
-                <span :class="['text-xs font-medium', isDoneToday(h.id) ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-200']">
-                  {{ h.title }}
-                </span>
-                <span
-                  v-if="h.time"
-                  class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0 font-semibold"
-                >
-                  🕒 {{ h.time }}
-                </span>
-                <span
-                  v-if="getProject(h.projectId)"
-                  class="px-1.5 py-0.2 rounded text-[10px] font-medium shrink-0"
-                  :style="{
-                    backgroundColor: (getProject(h.projectId)?.color || '#3b82f6') + '20',
-                    color: getProject(h.projectId)?.color || '#3b82f6'
-                  }"
-                >
-                  {{ getProject(h.projectId)?.title }}
-                </span>
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span :class="['text-xs font-medium', isDoneToday(h.id) ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-200']">
+                      {{ h.title }}
+                    </span>
+                    <span
+                      v-if="h.time"
+                      class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0 font-semibold"
+                    >
+                      🕒 {{ h.time }}
+                    </span>
+                    <span
+                      v-if="getProject(h.projectId)"
+                      class="px-1.5 py-0.2 rounded text-[10px] font-medium shrink-0"
+                      :style="{
+                        backgroundColor: (getProject(h.projectId)?.color || '#3b82f6') + '20',
+                        color: getProject(h.projectId)?.color || '#3b82f6'
+                      }"
+                    >
+                      {{ getProject(h.projectId)?.title }}
+                    </span>
+                  </div>
+                  <p v-if="h.description" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                    {{ h.description }}
+                  </p>
+                </div>
               </div>
 
               <div class="flex items-center gap-1 shrink-0">
@@ -411,6 +428,9 @@
                         {{ getProject(h.projectId)?.title }}
                       </span>
                     </div>
+                    <p v-if="h.description" class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2 leading-relaxed">
+                      {{ h.description }}
+                    </p>
                     <div class="text-[11px] text-slate-400 mt-0.5">
                       本周进度：{{ getWeeklyCount(h) }}/{{ h.targetCount || 1 }} 次
                     </div>
@@ -526,6 +546,10 @@
                       </span>
                     </div>
 
+                    <p v-if="h.description" class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2 leading-relaxed">
+                      {{ h.description }}
+                    </p>
+
                     <div class="text-[11px] mt-0.5 flex items-center gap-2 flex-wrap">
                       <span
                         :class="[
@@ -635,6 +659,9 @@
                       {{ getProject(h.projectId)?.title }}
                     </span>
                   </div>
+                  <p v-if="h.description" class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2 leading-relaxed">
+                    {{ h.description }}
+                  </p>
                 </div>
 
                 <div class="flex items-center gap-1 shrink-0">
@@ -715,6 +742,18 @@
               class="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:border-blue-500 text-slate-800 dark:text-slate-100"
               @keyup.enter="handleSaveEdit"
             />
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+              {{ t('common.details') }}说明 (可选)
+            </label>
+            <textarea
+              v-model="editingHabit.description"
+              rows="3"
+              placeholder="习惯执行细则、奖励机制或动机提示..."
+              class="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:border-blue-500 text-slate-800 dark:text-slate-100"
+            ></textarea>
           </div>
 
           <div v-if="projects && projects.length > 0">
@@ -1014,6 +1053,7 @@ const currentWeek = computed(() => getWeekKey(todayStr.value))
 
 const showAddForm = ref(false)
 const newTitle = ref('')
+const newDescription = ref('')
 const newProjectId = ref<string | null>(null)
 const newFrequency = ref<HabitFrequency>('daily')
 const newSlot = ref<TimeSlot>('morning')
@@ -1090,6 +1130,7 @@ interface EditingHabitState {
   cycleWeeks: number
   weekPatterns: Record<number, number[]>
   showOnCalendar: boolean
+  description?: string
 }
 
 const editingHabit = ref<EditingHabitState | null>(null)
@@ -1127,6 +1168,7 @@ function openEditHabit(habit: Habit) {
     cycleWeeks,
     weekPatterns: initialPatterns,
     showOnCalendar: habit.showOnCalendar ?? false,
+    description: habit.description || '',
   }
   isEditModalOpen.value = true
 }
@@ -1204,6 +1246,7 @@ function handleSaveEdit() {
     cycleWeeks: editingHabit.value.frequency === 'rotating' ? (editingHabit.value.cycleWeeks || 2) : undefined,
     weekPatterns: editingHabit.value.frequency === 'rotating' ? editingHabit.value.weekPatterns : undefined,
     showOnCalendar: editingHabit.value.showOnCalendar,
+    description: editingHabit.value.description?.trim() || undefined,
   }
   emit('save-habit', payload)
   closeEditModal()
@@ -1307,9 +1350,11 @@ function handleCreate() {
     anchorDate: newFrequency.value === 'rotating' ? newAnchorDate.value : todayStr.value,
     cycleWeeks: newFrequency.value === 'rotating' ? newCycleWeeks.value : undefined,
     weekPatterns: newFrequency.value === 'rotating' ? newWeekPatterns.value : undefined,
+    description: newDescription.value.trim() || undefined,
   }
   emit('save-habit', payload)
   newTitle.value = ''
+  newDescription.value = ''
   newTime.value = ''
   newProjectId.value = null
   showAddForm.value = false

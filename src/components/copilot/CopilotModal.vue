@@ -677,41 +677,46 @@
                 ]"
               >
                 <!-- 正常展示模式 -->
-                <div v-if="editingDraftId !== p.id" class="flex items-center justify-between gap-2">
-                  <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
-                    <input
-                      type="checkbox"
-                      v-model="p.selected"
-                      class="rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
-                    />
-                    <span
-                      class="w-2.5 h-2.5 rounded-full shrink-0"
-                      :style="{ backgroundColor: p.color || '#3b82f6' }"
-                    ></span>
-                    <span class="font-semibold text-slate-800 dark:text-slate-100 truncate">{{ p.title }}</span>
-                  </label>
+                <div v-if="editingDraftId !== p.id" class="space-y-1">
+                  <div class="flex items-center justify-between gap-2">
+                    <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
+                      <input
+                        type="checkbox"
+                        v-model="p.selected"
+                        class="rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      />
+                      <span
+                        class="w-2.5 h-2.5 rounded-full shrink-0"
+                        :style="{ backgroundColor: p.color || '#3b82f6' }"
+                      ></span>
+                      <span class="font-semibold text-slate-800 dark:text-slate-100 truncate">{{ p.title }}</span>
+                    </label>
 
-                  <div class="flex items-center gap-1.5 shrink-0">
-                    <span v-if="p.suggestedAreaTitle" class="px-2 py-0.5 rounded-md text-[10px] bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 max-w-[140px] truncate">
-                      {{ p.suggestedAreaTitle }}
-                    </span>
-                    <button
-                      type="button"
-                      @click="startEditDraft(p.id)"
-                      class="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
-                      title="编辑此项目"
-                    >
-                      <Pencil class="w-3 h-3" />
-                    </button>
-                    <button
-                      type="button"
-                      @click="deleteDraft('projects', p.id)"
-                      class="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
-                      title="移除此项"
-                    >
-                      <Trash2 class="w-3 h-3" />
-                    </button>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                      <span v-if="p.suggestedAreaTitle" class="px-2 py-0.5 rounded-md text-[10px] bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 max-w-[140px] truncate">
+                        {{ p.suggestedAreaTitle }}
+                      </span>
+                      <button
+                        type="button"
+                        @click="startEditDraft(p.id)"
+                        class="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                        title="编辑此项目"
+                      >
+                        <Pencil class="w-3 h-3" />
+                      </button>
+                      <button
+                        type="button"
+                        @click="deleteDraft('projects', p.id)"
+                        class="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                        title="移除此项"
+                      >
+                        <Trash2 class="w-3 h-3" />
+                      </button>
+                    </div>
                   </div>
+                  <p v-if="p.description" class="text-[11px] text-slate-500 dark:text-slate-400 pl-6 line-clamp-2 leading-relaxed">
+                    {{ p.description }}
+                  </p>
                 </div>
 
                 <!-- 行内修改模式 -->
@@ -724,6 +729,15 @@
                       class="flex-1 px-2 py-1 text-xs rounded border border-blue-400 dark:border-blue-500 bg-white dark:bg-slate-900 focus:outline-hidden"
                       placeholder="项目名称"
                     />
+                  </div>
+                  <div class="space-y-1">
+                    <span class="text-[11px] text-slate-400 font-medium">项目描述 / 详情:</span>
+                    <textarea
+                      v-model="p.description"
+                      rows="2"
+                      placeholder="项目目标、关键里程碑或交付物说明..."
+                      class="w-full px-2 py-1 text-xs rounded border border-blue-400 dark:border-blue-500 bg-white dark:bg-slate-900 focus:outline-hidden"
+                    ></textarea>
                   </div>
                   <div class="flex flex-wrap items-center justify-between gap-2 text-[11px]">
                     <div class="flex items-center gap-1.5 flex-1 min-w-[180px]">
@@ -847,6 +861,10 @@
                       <span>{{ s.conflictReason || '存在时间冲突' }}</span>
                     </span>
                   </div>
+
+                  <p v-if="s.notes" class="text-[11px] text-slate-500 dark:text-slate-400 pl-5 pt-0.5 line-clamp-2 leading-relaxed">
+                    {{ s.notes }}
+                  </p>
                 </div>
 
                 <!-- 行内修改模式 -->
@@ -858,6 +876,15 @@
                       type="text"
                       class="flex-1 px-2 py-1 text-xs rounded border border-blue-400 dark:border-blue-500 bg-white dark:bg-slate-900 focus:outline-hidden"
                     />
+                  </div>
+                  <div class="space-y-1">
+                    <span class="text-[11px] text-slate-400 font-medium">日程备注 / 详情:</span>
+                    <textarea
+                      v-model="s.notes"
+                      rows="2"
+                      placeholder="地点、会议议程或准备事项..."
+                      class="w-full px-2 py-1 text-xs rounded border border-blue-400 dark:border-blue-500 bg-white dark:bg-slate-900 focus:outline-hidden"
+                    ></textarea>
                   </div>
                   <div class="flex flex-wrap items-center gap-2 text-[11px]">
                     <span class="text-slate-400 font-medium shrink-0">日期:</span>
@@ -1011,6 +1038,15 @@
                       />
                     </div>
                   </div>
+                  <div class="space-y-1">
+                    <span class="text-[11px] text-slate-400 font-medium">待办备注 / 详情:</span>
+                    <textarea
+                      v-model="t.notes"
+                      rows="2"
+                      placeholder="任务细则、执行步骤或注意事项..."
+                      class="w-full px-2 py-1 text-xs rounded border border-blue-400 dark:border-blue-500 bg-white dark:bg-slate-900 focus:outline-hidden"
+                    ></textarea>
+                  </div>
                   <div class="flex items-center justify-end gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
                     <button
                       type="button"
@@ -1053,40 +1089,45 @@
                 ]"
               >
                 <!-- 正常展示模式 -->
-                <div v-if="editingDraftId !== h.id" class="flex items-center justify-between gap-2">
-                  <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
-                    <input
-                      type="checkbox"
-                      v-model="h.selected"
-                      class="rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
-                    />
-                    <span class="font-semibold text-slate-800 dark:text-slate-100 truncate">{{ h.title }}</span>
-                  </label>
+                <div v-if="editingDraftId !== h.id" class="space-y-1">
+                  <div class="flex items-center justify-between gap-2">
+                    <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
+                      <input
+                        type="checkbox"
+                        v-model="h.selected"
+                        class="rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      />
+                      <span class="font-semibold text-slate-800 dark:text-slate-100 truncate">{{ h.title }}</span>
+                    </label>
 
-                  <div class="flex items-center gap-1.5 shrink-0">
-                    <span class="px-2 py-0.5 rounded-md text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-                      {{ h.frequency === 'daily' ? '每日' : '每周' }}
-                    </span>
-                    <span v-if="h.time" class="font-mono text-blue-600 dark:text-blue-400 font-medium text-[11px]">
-                      {{ h.time }}
-                    </span>
-                    <button
-                      type="button"
-                      @click="startEditDraft(h.id)"
-                      class="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
-                      title="编辑此习惯"
-                    >
-                      <Pencil class="w-3 h-3" />
-                    </button>
-                    <button
-                      type="button"
-                      @click="deleteDraft('habits', h.id)"
-                      class="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
-                      title="移除此项"
-                    >
-                      <Trash2 class="w-3 h-3" />
-                    </button>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                      <span class="px-2 py-0.5 rounded-md text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                        {{ h.frequency === 'daily' ? '每日' : '每周' }}
+                      </span>
+                      <span v-if="h.time" class="font-mono text-blue-600 dark:text-blue-400 font-medium text-[11px]">
+                        {{ h.time }}
+                      </span>
+                      <button
+                        type="button"
+                        @click="startEditDraft(h.id)"
+                        class="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                        title="编辑此习惯"
+                      >
+                        <Pencil class="w-3 h-3" />
+                      </button>
+                      <button
+                        type="button"
+                        @click="deleteDraft('habits', h.id)"
+                        class="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                        title="移除此项"
+                      >
+                        <Trash2 class="w-3 h-3" />
+                      </button>
+                    </div>
                   </div>
+                  <p v-if="h.description" class="text-[11px] text-slate-500 dark:text-slate-400 pl-6 line-clamp-2 leading-relaxed">
+                    {{ h.description }}
+                  </p>
                 </div>
 
                 <!-- 行内修改模式 -->
@@ -1098,6 +1139,15 @@
                       type="text"
                       class="flex-1 px-2 py-1 text-xs rounded border border-blue-400 dark:border-blue-500 bg-white dark:bg-slate-900 focus:outline-hidden"
                     />
+                  </div>
+                  <div class="space-y-1">
+                    <span class="text-[11px] text-slate-400 font-medium">习惯细则 / 备注:</span>
+                    <textarea
+                      v-model="h.description"
+                      rows="2"
+                      placeholder="执行细则、奖励机制或动机提示..."
+                      class="w-full px-2 py-1 text-xs rounded border border-blue-400 dark:border-blue-500 bg-white dark:bg-slate-900 focus:outline-hidden"
+                    ></textarea>
                   </div>
                   <div class="flex items-center justify-between gap-2 text-[11px]">
                     <div class="flex items-center gap-1.5">
