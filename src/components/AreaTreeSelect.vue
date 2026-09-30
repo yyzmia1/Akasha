@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import {
-  Folder,
-  FolderOpen,
   ChevronRight,
   ChevronDown,
   Check,
@@ -135,7 +133,7 @@ const filteredFlatNodes = computed(() => {
           </span>
         </template>
         <template v-else>
-          <Folder class="w-4 h-4 text-slate-400 shrink-0" />
+          <Layers class="w-4 h-4 text-slate-400 shrink-0" />
           <span class="text-slate-400 dark:text-slate-500 truncate">
             {{ placeholder }}
           </span>

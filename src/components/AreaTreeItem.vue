@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import {
-  Folder,
-  FolderOpen,
+  Layers,
   ChevronRight,
   Plus,
   Edit2,
@@ -187,15 +186,14 @@ function handleDrop(e: DragEvent) {
         </button>
         <span v-else class="w-3 inline-block shrink-0"></span>
 
-        <!-- 文件夹图标 -->
-        <component
-          :is="hasChildren && !isCollapsed ? FolderOpen : Folder"
+        <!-- 领域图层图标 -->
+        <Layers
           class="w-3.5 h-3.5 shrink-0"
           :class="[
             isSelected
               ? 'text-blue-600 dark:text-blue-400'
               : hasChildren
-                ? 'text-amber-500/90 dark:text-amber-400/80'
+                ? 'text-indigo-500/90 dark:text-indigo-400/80'
                 : 'text-slate-400 dark:text-slate-500'
           ]"
           :style="node.color ? { color: node.color } : {}"

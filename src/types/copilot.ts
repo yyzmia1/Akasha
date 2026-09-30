@@ -59,6 +59,7 @@ export interface ScheduleDraft extends BaseDraftItem {
   recurringDayOfWeek?: number
   projectId?: string | null
   suggestedProjectTitle?: string
+  suggestedAreaTitle?: string
   notes?: string
 }
 
@@ -73,6 +74,7 @@ export interface TodoDraft extends BaseDraftItem {
   notes?: string
   projectId?: string | null
   suggestedProjectTitle?: string
+  suggestedAreaTitle?: string
   subtasks?: string[]
 }
 
@@ -89,6 +91,7 @@ export interface HabitDraft extends BaseDraftItem {
   description?: string
   projectId?: string | null
   suggestedProjectTitle?: string
+  suggestedAreaTitle?: string
 }
 
 export interface ProjectDraft extends BaseDraftItem {

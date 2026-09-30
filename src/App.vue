@@ -531,6 +531,37 @@ async function handleApplyCopilotPlan(plan: CopilotPlanResult) {
     projectTitleMap.set(newProj.title.trim().toLowerCase(), newProj.id)
   }
 
+  // 辅助函数：当日程/待办/习惯直接关联到领域时，解析该领域下已有项目或自动创建常规项目
+  const resolveOrCreateProjectForArea = async (areaRef: string): Promise<string | null> => {
+    const resolvedAreaId = resolveParentAreaId(areaRef)
+    if (!resolvedAreaId) return null
+
+    // 优先在该领域中寻找已存在的项目（包含刚刚创建的）
+    const existingProj = projects.value.find((p) => p.areaId === resolvedAreaId)
+    if (existingProj) {
+      return existingProj.id
+    }
+
+    // 若该领域下暂无任何项目，则自动为其创建默认项目以保证标准项目层级
+    const targetArea = areas.value.find((a) => a.id === resolvedAreaId)
+    const projectTitle = targetArea ? `${targetArea.title}常规事务` : '常规事务'
+    const newProj: Project = {
+      id: 'proj-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
+      areaId: resolvedAreaId,
+      title: projectTitle,
+      color: targetArea?.color || '#3b82f6',
+      order: projects.value.length + createdProjectIds.length,
+      createdAt: new Date().toISOString(),
+      updatedAt: now,
+    }
+    await db.projects.add(newProj)
+    enqueueChange('project', newProj.id, newProj)
+    createdProjectIds.push(newProj.id)
+    projects.value.push(newProj)
+    projectTitleMap.set(newProj.title.trim().toLowerCase(), newProj.id)
+    return newProj.id
+  }
+
   // 2. 创建日程
   for (const sd of selectedSchedules) {
     let assignedProjectId: string | null = null
@@ -539,6 +570,9 @@ async function handleApplyCopilotPlan(plan: CopilotPlanResult) {
     }
     if (!assignedProjectId && sd.projectId && projects.value.some((p) => p.id === sd.projectId)) {
       assignedProjectId = sd.projectId
+    }
+    if (!assignedProjectId && sd.suggestedAreaTitle) {
+      assignedProjectId = await resolveOrCreateProjectForArea(sd.suggestedAreaTitle)
     }
 
     const newSch: ScheduleItem = {
@@ -568,6 +602,9 @@ async function handleApplyCopilotPlan(plan: CopilotPlanResult) {
     }
     if (!assignedProjectId && td.projectId && projects.value.some((p) => p.id === td.projectId)) {
       assignedProjectId = td.projectId
+    }
+    if (!assignedProjectId && td.suggestedAreaTitle) {
+      assignedProjectId = await resolveOrCreateProjectForArea(td.suggestedAreaTitle)
     }
 
     const parentId = 'todo-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7)
@@ -621,6 +658,9 @@ async function handleApplyCopilotPlan(plan: CopilotPlanResult) {
     }
     if (!assignedProjectId && hd.projectId && projects.value.some((p) => p.id === hd.projectId)) {
       assignedProjectId = hd.projectId
+    }
+    if (!assignedProjectId && hd.suggestedAreaTitle) {
+      assignedProjectId = await resolveOrCreateProjectForArea(hd.suggestedAreaTitle)
     }
 
     const newHabit: Habit = {

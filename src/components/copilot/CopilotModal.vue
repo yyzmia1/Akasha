@@ -655,7 +655,7 @@
           <div v-if="currentPlan.projects && currentPlan.projects.length > 0" class="space-y-2">
             <div class="flex items-center justify-between text-xs font-semibold text-slate-500 tracking-wider">
               <span class="flex items-center gap-1.5">
-                <Folder class="w-3.5 h-3.5 text-blue-500" />
+                <FolderKanban class="w-3.5 h-3.5 text-blue-500" />
                 <span>拟定项目 ({{ currentPlan.projects.length }})</span>
               </span>
               <button
@@ -694,8 +694,9 @@
                     </label>
 
                     <div class="flex items-center gap-1.5 shrink-0">
-                      <span v-if="p.suggestedAreaTitle" class="px-2 py-0.5 rounded-md text-[10px] bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 max-w-[140px] truncate">
-                        {{ p.suggestedAreaTitle }}
+                      <span v-if="p.suggestedAreaTitle" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 max-w-[140px] truncate">
+                        <Layers class="w-2.5 h-2.5 shrink-0" />
+                        <span>{{ p.suggestedAreaTitle }}</span>
                       </span>
                       <button
                         type="button"
@@ -825,9 +826,17 @@
                     <div class="flex items-center gap-1.5 shrink-0">
                       <span
                         v-if="s.suggestedProjectTitle"
-                        class="text-[10px] px-2 py-0.5 rounded-full bg-blue-100/70 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 shrink-0"
+                        class="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-blue-100/70 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 shrink-0"
                       >
-                        {{ s.suggestedProjectTitle }}
+                        <FolderKanban class="w-3 h-3 shrink-0" />
+                        <span>{{ s.suggestedProjectTitle }}</span>
+                      </span>
+                      <span
+                        v-else-if="s.suggestedAreaTitle"
+                        class="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-indigo-100/70 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 shrink-0"
+                      >
+                        <Layers class="w-3 h-3 shrink-0" />
+                        <span>{{ s.suggestedAreaTitle }}</span>
                       </span>
                       <button
                         type="button"
@@ -911,18 +920,32 @@
                   <div class="flex items-center gap-1.5 text-[11px]">
                     <span class="text-slate-400 font-medium shrink-0">所属项目/领域:</span>
                     <select
-                      :value="s.suggestedProjectTitle || ''"
-                      @change="handleDraftProjectChange(s, ($event.target as HTMLSelectElement).value)"
+                      :value="getDraftSelectedValue(s)"
+                      @change="handleDraftProjectOrAreaChange(s, ($event.target as HTMLSelectElement).value)"
                       class="flex-1 max-w-[280px] px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 truncate"
                     >
                       <option value="">无所属项目（公用日程）</option>
-                      <option
-                        v-for="opt in allAvailableProjectOptions"
-                        :key="opt.title"
-                        :value="opt.title"
-                      >
-                        {{ opt.title }} ({{ opt.areaTitle ? `领域: ${opt.areaTitle}` : '无所属领域' }}) {{ opt.isDraft ? '[本次拟定]' : '' }}
-                      </option>
+                      <optgroup label="── 关联到项目 ──">
+                        <option v-if="allAvailableProjectOptions.length === 0" disabled value="">
+                          （暂无可用项目）
+                        </option>
+                        <option
+                          v-for="opt in allAvailableProjectOptions"
+                          :key="'proj:' + opt.title"
+                          :value="'proj:' + opt.title"
+                        >
+                          {{ opt.title }} ({{ opt.areaTitle ? `领域: ${opt.areaTitle}` : '无所属领域' }}) {{ opt.isDraft ? '[本次拟定]' : '' }}
+                        </option>
+                      </optgroup>
+                      <optgroup label="── 直接关联到领域 ──">
+                        <option
+                          v-for="areaTitle in allAvailableAreaTitles"
+                          :key="'area:' + areaTitle"
+                          :value="'area:' + areaTitle"
+                        >
+                          {{ areaTitle }}（自动关联/创建项目）
+                        </option>
+                      </optgroup>
                     </select>
                   </div>
                   <div class="flex items-center justify-end gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
@@ -989,9 +1012,17 @@
                     <div class="flex items-center gap-1.5 shrink-0">
                       <span
                         v-if="t.suggestedProjectTitle"
-                        class="text-[10px] px-2 py-0.5 rounded-full bg-blue-100/70 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 shrink-0"
+                        class="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-blue-100/70 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 shrink-0"
                       >
-                        {{ t.suggestedProjectTitle }}
+                        <FolderKanban class="w-3 h-3 shrink-0" />
+                        <span>{{ t.suggestedProjectTitle }}</span>
+                      </span>
+                      <span
+                        v-else-if="t.suggestedAreaTitle"
+                        class="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-indigo-100/70 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 shrink-0"
+                      >
+                        <Layers class="w-3 h-3 shrink-0" />
+                        <span>{{ t.suggestedAreaTitle }}</span>
                       </span>
                       <span
                         v-if="t.dueDate"
@@ -1075,18 +1106,32 @@
                   <div class="flex items-center gap-1.5 text-[11px]">
                     <span class="text-slate-400 font-medium shrink-0">所属项目/领域:</span>
                     <select
-                      :value="t.suggestedProjectTitle || ''"
-                      @change="handleDraftProjectChange(t, ($event.target as HTMLSelectElement).value)"
+                      :value="getDraftSelectedValue(t)"
+                      @change="handleDraftProjectOrAreaChange(t, ($event.target as HTMLSelectElement).value)"
                       class="flex-1 max-w-[280px] px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 truncate"
                     >
                       <option value="">无所属项目（独立待办）</option>
-                      <option
-                        v-for="opt in allAvailableProjectOptions"
-                        :key="opt.title"
-                        :value="opt.title"
-                      >
-                        {{ opt.title }} ({{ opt.areaTitle ? `领域: ${opt.areaTitle}` : '无所属领域' }}) {{ opt.isDraft ? '[本次拟定]' : '' }}
-                      </option>
+                      <optgroup label="── 关联到项目 ──">
+                        <option v-if="allAvailableProjectOptions.length === 0" disabled value="">
+                          （暂无可用项目）
+                        </option>
+                        <option
+                          v-for="opt in allAvailableProjectOptions"
+                          :key="'proj:' + opt.title"
+                          :value="'proj:' + opt.title"
+                        >
+                          {{ opt.title }} ({{ opt.areaTitle ? `领域: ${opt.areaTitle}` : '无所属领域' }}) {{ opt.isDraft ? '[本次拟定]' : '' }}
+                        </option>
+                      </optgroup>
+                      <optgroup label="── 直接关联到领域 ──">
+                        <option
+                          v-for="areaTitle in allAvailableAreaTitles"
+                          :key="'area:' + areaTitle"
+                          :value="'area:' + areaTitle"
+                        >
+                          {{ areaTitle }}（自动关联/创建项目）
+                        </option>
+                      </optgroup>
                     </select>
                   </div>
                   <div class="flex items-center justify-end gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
@@ -1145,9 +1190,17 @@
                     <div class="flex items-center gap-1.5 shrink-0">
                       <span
                         v-if="h.suggestedProjectTitle"
-                        class="text-[10px] px-2 py-0.5 rounded-full bg-blue-100/70 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 shrink-0"
+                        class="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-blue-100/70 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 shrink-0"
                       >
-                        {{ h.suggestedProjectTitle }}
+                        <FolderKanban class="w-3 h-3 shrink-0" />
+                        <span>{{ h.suggestedProjectTitle }}</span>
+                      </span>
+                      <span
+                        v-else-if="h.suggestedAreaTitle"
+                        class="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-indigo-100/70 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 shrink-0"
+                      >
+                        <Layers class="w-3 h-3 shrink-0" />
+                        <span>{{ h.suggestedAreaTitle }}</span>
                       </span>
                       <span class="px-2 py-0.5 rounded-md text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
                         {{ h.frequency === 'daily' ? '每日' : '每周' }}
@@ -1220,18 +1273,32 @@
                   <div class="flex items-center gap-1.5 text-[11px]">
                     <span class="text-slate-400 font-medium shrink-0">所属项目/领域:</span>
                     <select
-                      :value="h.suggestedProjectTitle || ''"
-                      @change="handleDraftProjectChange(h, ($event.target as HTMLSelectElement).value)"
+                      :value="getDraftSelectedValue(h)"
+                      @change="handleDraftProjectOrAreaChange(h, ($event.target as HTMLSelectElement).value)"
                       class="flex-1 max-w-[280px] px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 truncate"
                     >
                       <option value="">无所属项目（通用习惯）</option>
-                      <option
-                        v-for="opt in allAvailableProjectOptions"
-                        :key="opt.title"
-                        :value="opt.title"
-                      >
-                        {{ opt.title }} ({{ opt.areaTitle ? `领域: ${opt.areaTitle}` : '无所属领域' }}) {{ opt.isDraft ? '[本次拟定]' : '' }}
-                      </option>
+                      <optgroup label="── 关联到项目 ──">
+                        <option v-if="allAvailableProjectOptions.length === 0" disabled value="">
+                          （暂无可用项目）
+                        </option>
+                        <option
+                          v-for="opt in allAvailableProjectOptions"
+                          :key="'proj:' + opt.title"
+                          :value="'proj:' + opt.title"
+                        >
+                          {{ opt.title }} ({{ opt.areaTitle ? `领域: ${opt.areaTitle}` : '无所属领域' }}) {{ opt.isDraft ? '[本次拟定]' : '' }}
+                        </option>
+                      </optgroup>
+                      <optgroup label="── 直接关联到领域 ──">
+                        <option
+                          v-for="areaTitle in allAvailableAreaTitles"
+                          :key="'area:' + areaTitle"
+                          :value="'area:' + areaTitle"
+                        >
+                          {{ areaTitle }}（自动关联/创建项目）
+                        </option>
+                      </optgroup>
                     </select>
                   </div>
                   <div class="flex items-center justify-end gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
@@ -1294,7 +1361,7 @@ import {
   CheckSquare,
   Flame,
   Layers,
-  Folder,
+  FolderKanban,
   Pencil,
   Trash2,
   CornerDownRight,
@@ -1812,10 +1879,35 @@ function handleProjectAreaChange(p: ProjectDraft, title: string) {
   p.areaId = matchingArea ? matchingArea.id : null
 }
 
-function handleDraftProjectChange(draft: ScheduleDraft | TodoDraft | HabitDraft, projectTitle: string) {
-  draft.suggestedProjectTitle = projectTitle || undefined
-  const matchingProj = props.projects.find((p) => p.title.trim().toLowerCase() === projectTitle.trim().toLowerCase())
-  draft.projectId = matchingProj ? matchingProj.id : null
+function getDraftSelectedValue(draft: ScheduleDraft | TodoDraft | HabitDraft): string {
+  if (draft.suggestedProjectTitle) {
+    return 'proj:' + draft.suggestedProjectTitle
+  }
+  if (draft.suggestedAreaTitle) {
+    return 'area:' + draft.suggestedAreaTitle
+  }
+  return ''
+}
+
+function handleDraftProjectOrAreaChange(draft: ScheduleDraft | TodoDraft | HabitDraft, val: string) {
+  if (!val) {
+    draft.suggestedProjectTitle = undefined
+    draft.projectId = null
+    draft.suggestedAreaTitle = undefined
+    return
+  }
+  if (val.startsWith('proj:')) {
+    const title = val.slice(5)
+    draft.suggestedProjectTitle = title
+    draft.suggestedAreaTitle = undefined
+    const matchingProj = props.projects.find((p) => p.title.trim().toLowerCase() === title.trim().toLowerCase())
+    draft.projectId = matchingProj ? matchingProj.id : null
+  } else if (val.startsWith('area:')) {
+    const title = val.slice(5)
+    draft.suggestedProjectTitle = undefined
+    draft.projectId = null
+    draft.suggestedAreaTitle = title
+  }
 }
 
 async function handleStartGenerate() {

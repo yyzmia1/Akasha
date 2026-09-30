@@ -28,7 +28,7 @@
           @click="openAddAreaModal(null)"
           class="flex-1 sm:flex-none justify-center flex items-center gap-1.5 px-3.5 py-2 sm:py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs sm:text-sm font-medium transition-all cursor-pointer border border-transparent hover:border-slate-300 dark:hover:border-slate-700"
         >
-          <FolderPlus class="w-3.5 h-3.5" />
+          <Layers class="w-3.5 h-3.5" />
           <span>{{ t('project.newArea') }}</span>
         </button>
       </div>
@@ -37,7 +37,7 @@
     <!-- 无领域时的空状态提示 -->
     <div v-if="areas.length === 0" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-8 sm:p-12 text-center space-y-3 shadow-xs">
       <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mx-auto">
-        <FolderPlus class="w-6 h-6" />
+        <Layers class="w-6 h-6" />
       </div>
       <div class="space-y-1">
         <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ t('project.empty') }}</h3>
@@ -65,7 +65,7 @@
             @click="isMobileDirectoryCollapsed = !isMobileDirectoryCollapsed"
             class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer lg:cursor-default"
           >
-            <FolderTree class="w-4 h-4 text-blue-500" />
+            <Layers class="w-4 h-4 text-blue-500" />
             <span>{{ t('project.areaDirectory') }}</span>
             <span class="text-[10px] px-1.5 py-0.5 rounded-full font-mono bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
               {{ areas.length }}
@@ -237,7 +237,7 @@
                 class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium transition-colors cursor-pointer"
                 title="新建子领域"
               >
-                <FolderPlus class="w-3.5 h-3.5" />
+                <Layers class="w-3.5 h-3.5" />
                 <span>{{ t('project.newSubArea') }}</span>
               </button>
 
@@ -286,7 +286,7 @@
         <div v-if="currentSubAreas.length > 0" class="space-y-3">
           <div class="flex items-center justify-between">
             <h3 class="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-              <Folder class="w-3.5 h-3.5 text-amber-500" />
+              <Layers class="w-3.5 h-3.5 text-indigo-500" />
               <span>{{ t('project.subAreas') }} ({{ currentSubAreas.length }})</span>
             </h3>
             <button
@@ -320,7 +320,7 @@
                       color: sub.color || '#3b82f6'
                     }"
                   >
-                    <Folder class="w-4 h-4" />
+                    <Layers class="w-4 h-4" />
                   </div>
                   <div class="min-w-0">
                     <h4 class="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
@@ -393,7 +393,7 @@
                 <!-- 领域标签 (在全部视图或穿透子级时显示) -->
                 <div v-if="selectedAreaId === 'all' || (includeSubAreaProjects && proj.areaId !== selectedAreaId)" class="mb-2">
                   <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-medium">
-                    <Folder class="w-3 h-3 text-slate-400" />
+                    <Layers class="w-3 h-3 text-slate-400" />
                     <span>{{ getAreaTitle(proj.areaId) }}</span>
                   </span>
                 </div>
@@ -480,7 +480,10 @@
                 {{ activeProject.title }}
               </h3>
               <div class="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
-                <span>{{ getAreaTitle(activeProject.areaId) }}</span>
+                <span class="inline-flex items-center gap-1">
+                  <Layers class="w-3 h-3 text-slate-400" />
+                  <span>{{ getAreaTitle(activeProject.areaId) }}</span>
+                </span>
                 <span>•</span>
                 <span>待办完成率 {{ getProjectProgress(activeProject.id) }}%</span>
               </div>
@@ -1517,10 +1520,6 @@ import { ref, computed, watch } from 'vue'
 import { t } from '@/utils/i18n'
 import {
   FolderKanban,
-  FolderPlus,
-  FolderTree,
-  Folder,
-  FolderOpen,
   Layers,
   Square,
   Plus,
