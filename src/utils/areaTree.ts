@@ -224,3 +224,82 @@ export function getProjectsInAreaBranch(
   const branchAreaIds = new Set<string>([areaId, ...getAreaDescendantIds(areaId, allAreas)])
   return allProjects.filter((p) => p.areaId && branchAreaIds.has(p.areaId))
 }
+
+/**
+ * 拖拽调整领域层级或同级排序
+ * @param draggedId 被拖拽的领域 ID
+ * @param targetId 目标领域 ID（如果是 'all' 则置为顶级根领域末尾）
+ * @param position 投放位置：'before'（排在目标前）、'after'（排在目标后）、'inside'（成为目标的子领域）
+ * @param allAreas 所有领域列表
+ * @returns 调整后的新 Area 数组（已更新 parentId 与 order），如果操作不合法（如循环嵌套）则返回 null
+ */
+export function reorderAreaNode(
+  draggedId: string,
+  targetId: string,
+  position: 'before' | 'after' | 'inside',
+  allAreas: Area[]
+): Area[] | null {
+  const dragged = allAreas.find((a) => a.id === draggedId)
+  if (!dragged) return null
+
+  // 1. 如果拖到 "all"，表示移到顶级根目录末尾
+  if (targetId === 'all' || targetId === 'root') {
+    const rootAreas = allAreas
+      .filter((a) => !a.parentId && a.id !== draggedId)
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    const updatedAreas = allAreas.map((a) => ({ ...a }))
+    const targetItem = updatedAreas.find((a) => a.id === draggedId)!
+    targetItem.parentId = null
+    targetItem.order = rootAreas.length
+    return updatedAreas
+  }
+
+  const target = allAreas.find((a) => a.id === targetId)
+  if (!target || target.id === draggedId) return null
+
+  // 2. 作为子节点拖入 inside
+  if (position === 'inside') {
+    if (!canSetAreaParent(draggedId, target.id, allAreas)) return null
+    const existingChildren = allAreas
+      .filter((a) => a.parentId === target.id && a.id !== draggedId)
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+
+    const updatedAreas = allAreas.map((a) => ({ ...a }))
+    const draggedItem = updatedAreas.find((a) => a.id === draggedId)!
+    draggedItem.parentId = target.id
+    draggedItem.order = existingChildren.length
+    return updatedAreas
+  }
+
+  // 3. 作为同级前后排序 before / after
+  const newParentId = target.parentId ?? null
+  if (!canSetAreaParent(draggedId, newParentId, allAreas)) return null
+
+  const siblings = allAreas
+    .filter((a) => (a.parentId ?? null) === newParentId && a.id !== draggedId)
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+
+  const targetIndex = siblings.findIndex((a) => a.id === target.id)
+  if (targetIndex === -1) return null
+
+  const insertIndex = position === 'before' ? targetIndex : targetIndex + 1
+  siblings.splice(insertIndex, 0, dragged)
+
+  // 重新分配该层级下所有 siblings 的 order
+  const updatedAreas = allAreas.map((a) => ({ ...a }))
+  const orderMap = new Map<string, number>()
+  siblings.forEach((item, idx) => {
+    orderMap.set(item.id, idx)
+  })
+
+  for (const a of updatedAreas) {
+    if (orderMap.has(a.id)) {
+      a.order = orderMap.get(a.id)!
+      if (a.id === draggedId) {
+        a.parentId = newParentId
+      }
+    }
+  }
+
+  return updatedAreas
+}

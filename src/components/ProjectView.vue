@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-6">
+  <div class="space-y-6 pb-20 sm:pb-6">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
       <div class="flex items-center gap-3">
         <div class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200/60 dark:border-blue-800/40 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
@@ -92,11 +92,15 @@
             isMobileDirectoryCollapsed ? 'hidden lg:block' : 'block'
           ]"
         >
-          <!-- 全部领域选项 -->
+          <!-- 全部领域选项（支持拖拽领域至此提升为顶级根分类） -->
           <div
+            @dragover.prevent="isDragOverAllAreas = true"
+            @dragleave="isDragOverAllAreas = false"
+            @drop="handleDropOnAllAreas"
             @click="selectArea('all')"
             :class="[
               'group flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs transition-all cursor-pointer border border-transparent select-none',
+              isDragOverAllAreas ? 'bg-blue-100 dark:bg-blue-900/60 ring-2 ring-blue-500/80 text-blue-700 dark:text-blue-200' : '',
               selectedAreaId === 'all'
                 ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-300 font-semibold border-blue-200/60 dark:border-blue-800/40 shadow-2xs'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-800/60'
@@ -127,6 +131,8 @@
               @add-subarea="openAddAreaModal($event)"
               @edit-area="openEditAreaModal($event)"
               @delete-area="handleDeleteAreaClick($event)"
+              @drop-area="handleDropArea($event)"
+              @drop-project="handleDropProject($event)"
             />
           </div>
         </div>
@@ -280,8 +286,12 @@
             <div
               v-for="sub in currentSubAreasWithCounts"
               :key="sub.id"
+              draggable="true"
+              @dragstart="handleAreaCardDragStart($event, sub.id)"
+              @dragover.prevent
+              @drop="handleAreaCardDrop($event, sub.id)"
               @click="selectArea(sub.id)"
-              class="group p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800/90 hover:border-blue-400 dark:hover:border-blue-500 bg-white dark:bg-slate-900/90 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
+              class="group p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800/90 hover:border-blue-400 dark:hover:border-blue-500 bg-white dark:bg-slate-900/90 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between active:cursor-grabbing"
             >
               <div class="flex items-start justify-between gap-2">
                 <div class="flex items-center gap-2.5 min-w-0">
@@ -333,8 +343,10 @@
             <div
               v-for="proj in displayedProjects"
               :key="proj.id"
+              draggable="true"
+              @dragstart="handleProjectDragStart($event, proj.id)"
               @click="openProjectDetail(proj)"
-              class="group p-4 rounded-xl border border-slate-200/90 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer bg-white dark:bg-slate-900 flex flex-col justify-between relative"
+              class="group p-4 rounded-xl border border-slate-200/90 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer bg-white dark:bg-slate-900 flex flex-col justify-between relative active:cursor-grabbing"
             >
               <div>
                 <div class="flex items-start justify-between gap-2 mb-2">
@@ -695,18 +707,13 @@
         <div class="space-y-3.5 text-xs sm:text-sm">
           <div>
             <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{{ t('project.area') }}</label>
-            <select
+            <AreaTreeSelect
               v-model="modalAreaId"
-              class="w-full px-2.5 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100"
-            >
-              <option
-                v-for="a in flatAreaTree"
-                :key="a.id"
-                :value="a.id"
-              >
-                {{ getIndentedAreaOptionLabel(a) }}
-              </option>
-            </select>
+              :areas="areas"
+              :projects="projects"
+              :allow-root="false"
+              placeholder="请选择归属领域"
+            />
           </div>
 
           <div>
@@ -756,7 +763,7 @@
     <!-- Add / Edit Area Modal -->
     <div
       v-if="showAddAreaModal"
-      class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm"
+      class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm"
       @click.self="showAddAreaModal = false"
     >
       <div class="w-full sm:max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-2xl sm:rounded-xl p-5 space-y-4 shadow-xl pb-safe animate-in slide-in-from-bottom-6 sm:slide-in-from-bottom-2 duration-200">
@@ -777,19 +784,15 @@
             <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
               {{ t('project.parentArea') }}
             </label>
-            <select
+            <AreaTreeSelect
               v-model="areaModalParentId"
-              class="w-full px-2.5 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100"
-            >
-              <option :value="null">{{ t('project.noParentArea') }}</option>
-              <option
-                v-for="a in selectableParentAreas"
-                :key="a.id"
-                :value="a.id"
-              >
-                {{ getIndentedAreaOptionLabel(a) }}
-              </option>
-            </select>
+              :areas="areas"
+              :projects="projects"
+              :allow-root="true"
+              :root-label="t('project.noParentArea')"
+              :disabled-area-ids="disabledParentAreaIds"
+              :placeholder="t('project.parentArea')"
+            />
           </div>
 
           <!-- 领域名称 Area Title -->
@@ -1490,6 +1493,7 @@ import {
 } from 'lucide-vue-next'
 import TodoTreeItem from '@/components/TodoTreeItem.vue'
 import AreaTreeItem from '@/components/AreaTreeItem.vue'
+import AreaTreeSelect from '@/components/AreaTreeSelect.vue'
 import type {
   Area,
   AreaTreeNode,
@@ -1511,6 +1515,7 @@ import {
   getAreaAncestorIds,
   canSetAreaParent,
   getProjectsInAreaBranch,
+  reorderAreaNode,
 } from '@/utils/areaTree'
 import { getPriorityStyle, normalizePriority } from '@/utils/priority'
 import { buildTodoTree, calculateLinkedTodoCompletion, getDescendantTodoIds } from '@/utils/tree'
@@ -2335,10 +2340,71 @@ function openEditAreaModal(area: Area) {
   showAddAreaModal.value = true
 }
 
-const selectableParentAreas = computed(() => {
-  if (!editingAreaId.value) return flatAreaTree.value
-  return flatAreaTree.value.filter((a) => canSetAreaParent(editingAreaId.value!, a.id, props.areas))
+const disabledParentAreaIds = computed(() => {
+  if (!editingAreaId.value) return []
+  return [editingAreaId.value, ...getAreaDescendantIds(editingAreaId.value, props.areas)]
 })
+
+const isDragOverAllAreas = ref(false)
+
+function handleDropOnAllAreas(e: DragEvent) {
+  isDragOverAllAreas.value = false
+  const dt = e.dataTransfer
+  if (!dt) return
+  const draggedAreaId = dt.getData('application/x-akasha-area') || dt.getData('text/plain')
+  if (draggedAreaId) {
+    handleDropArea({ draggedId: draggedAreaId, targetId: 'all', position: 'inside' })
+  }
+}
+
+function handleDropArea(payload: { draggedId: string; targetId: string; position: 'before' | 'after' | 'inside' }) {
+  const result = reorderAreaNode(payload.draggedId, payload.targetId, payload.position, props.areas)
+  if (result) {
+    emit('reorder-areas', result)
+    if (payload.position === 'inside' && payload.targetId !== 'all') {
+      collapsedAreaMap.value[payload.targetId] = false
+    }
+  }
+}
+
+function handleDropProject(payload: { projectId: string; targetAreaId: string }) {
+  const proj = props.projects.find((p) => p.id === payload.projectId)
+  if (proj && proj.areaId !== payload.targetAreaId) {
+    emit('save-project', {
+      ...proj,
+      areaId: payload.targetAreaId,
+    })
+  }
+}
+
+function handleProjectDragStart(e: DragEvent, projectId: string) {
+  if (e.dataTransfer) {
+    e.dataTransfer.setData('application/x-akasha-project', projectId)
+    e.dataTransfer.setData('text/plain', projectId)
+    e.dataTransfer.effectAllowed = 'move'
+  }
+}
+
+function handleAreaCardDragStart(e: DragEvent, areaId: string) {
+  if (e.dataTransfer) {
+    e.dataTransfer.setData('application/x-akasha-area', areaId)
+    e.dataTransfer.setData('text/plain', areaId)
+    e.dataTransfer.effectAllowed = 'move'
+  }
+}
+
+function handleAreaCardDrop(e: DragEvent, targetAreaId: string) {
+  const dt = e.dataTransfer
+  if (!dt) return
+  const draggedAreaId = dt.getData('application/x-akasha-area')
+  const draggedProjectId = dt.getData('application/x-akasha-project')
+
+  if (draggedProjectId) {
+    handleDropProject({ projectId: draggedProjectId, targetAreaId })
+  } else if (draggedAreaId && draggedAreaId !== targetAreaId) {
+    handleDropArea({ draggedId: draggedAreaId, targetId: targetAreaId, position: 'inside' })
+  }
+}
 
 function handleSaveAreaModal() {
   if (!areaModalTitle.value.trim()) return

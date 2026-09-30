@@ -733,7 +733,11 @@ async function handleSaveArea(areaData: Partial<Area>) {
 async function handleReorderAreas(reorderedAreas: Area[]) {
   const now = Date.now()
   for (const a of reorderedAreas) {
-    await db.areas.update(a.id, { order: a.order, updatedAt: now })
+    await db.areas.update(a.id, {
+      order: a.order,
+      parentId: a.parentId ?? null,
+      updatedAt: now,
+    })
     const saved = await db.areas.get(a.id)
     if (saved) enqueueChange('area', saved.id, saved)
   }

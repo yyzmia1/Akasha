@@ -8,6 +8,7 @@ import {
   getAreaBreadcrumbs,
   canSetAreaParent,
   getProjectsInAreaBranch,
+  reorderAreaNode,
 } from '../src/utils/areaTree'
 
 describe('areaTree utility', () => {
@@ -148,5 +149,32 @@ describe('areaTree utility', () => {
 
     const lifeProjects = getProjectsInAreaBranch('life', mockAreas, mockProjects)
     expect(lifeProjects.map((p) => p.id)).toEqual(['p-life'])
+  })
+
+  it('handles reorderAreaNode correctly for inside, sibling before/after, and root promotion', () => {
+    // 1. Move embedded into cs as child (inside)
+    const movedInside = reorderAreaNode('embedded', 'cs', 'inside', mockAreas)
+    expect(movedInside).not.toBeNull()
+    const embInCs = movedInside!.find((a) => a.id === 'embedded')!
+    expect(embInCs.parentId).toBe('cs')
+
+    // 2. Reject moving tech inside rtos (cyclic loop prevention)
+    const cyclicMove = reorderAreaNode('tech', 'rtos', 'inside', mockAreas)
+    expect(cyclicMove).toBeNull()
+
+    // 3. Move embedded before cs under tech
+    const movedBefore = reorderAreaNode('embedded', 'cs', 'before', mockAreas)
+    expect(movedBefore).not.toBeNull()
+    const csArea = movedBefore!.find((a) => a.id === 'cs')!
+    const embArea = movedBefore!.find((a) => a.id === 'embedded')!
+    expect(embArea.parentId).toBe('tech')
+    expect(csArea.parentId).toBe('tech')
+    expect(embArea.order).toBeLessThan(csArea.order)
+
+    // 4. Promote rtos to root level by dropping onto 'all'
+    const promotedToRoot = reorderAreaNode('rtos', 'all', 'inside', mockAreas)
+    expect(promotedToRoot).not.toBeNull()
+    const rtosRoot = promotedToRoot!.find((a) => a.id === 'rtos')!
+    expect(rtosRoot.parentId).toBeNull()
   })
 })
