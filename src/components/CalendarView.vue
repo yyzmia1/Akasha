@@ -2221,6 +2221,7 @@ import {
   formatDisplayDate,
 } from '@/utils/date'
 import { getPriorityStyle } from '@/utils/priority'
+import { scheduleOccursOn, scheduleOccurrence } from '@/utils/schedule'
 import { isHabitScheduledForDay } from '@/utils/habit'
 import { getAreaDescendantIds } from '@/utils/areaTree'
 import {
@@ -2734,22 +2735,12 @@ function getProjectColor(projectId?: string | null): string {
 }
 
 function getSchedulesForDay(dateStr: string): ScheduleItem[] {
-  return visibleSchedules.value.filter((s) => {
-    if (s.endDate) {
-      return isDateInRange(dateStr, s.date, s.endDate)
-    }
-    return s.date === dateStr
-  })
+  return visibleSchedules.value.filter(s => scheduleOccursOn(s, dateStr)).map(s => scheduleOccurrence(s, dateStr))
 }
 
 function getGhostSchedulesForDay(dateStr: string): ScheduleDraft[] {
   if (!props.ghostSchedules || props.ghostSchedules.length === 0) return []
-  return props.ghostSchedules.filter((s) => {
-    if (s.endDate) {
-      return isDateInRange(dateStr, s.date, s.endDate)
-    }
-    return s.date === dateStr
-  })
+  return props.ghostSchedules.filter(s => scheduleOccursOn(s, dateStr)).map(s => scheduleOccurrence(s, dateStr))
 }
 
 function getDayScheduledTodos(dateStr: string): TodoItem[] {

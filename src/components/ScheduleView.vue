@@ -128,7 +128,7 @@
             <div class="flex items-center justify-between gap-2 mb-2">
               <div class="flex items-center gap-1.5 flex-wrap">
                 <span class="text-xs font-bold px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 font-mono">
-                  {{ formatDisplayDateOnly(s.date) }}
+                  {{ formatDisplayDateOnly(s.recurringType !== 'none' ? nextScheduleDate(s) || s.date : s.date) }}
                 </span>
                 <span v-if="s.time" class="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1 font-mono">
                   <Clock class="w-3.5 h-3.5 text-slate-400" />
@@ -260,6 +260,23 @@
             </select>
           </div>
 
+          <div class="space-y-1">
+            <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">重复</label>
+            <select v-model="formRecurringType" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs">
+              <option value="none">不重复</option>
+              <option value="weekly">每周</option>
+              <option value="monthly">每月</option>
+            </select>
+            <select v-if="formRecurringType === 'weekly'" v-model="formRecurringDayOfWeek" aria-label="重复星期" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs">
+              <option v-for="(day, index) in ['周日', '周一', '周二', '周三', '周四', '周五', '周六']" :key="index" :value="index">{{ day }}</option>
+            </select>
+            <input v-if="formRecurringType === 'monthly'" v-model.number="formRecurringDayOfMonth" type="number" min="1" max="31" aria-label="每月日期" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs" />
+            <label v-if="formRecurringWeeks && formRecurringType === 'weekly'" class="block text-xs text-slate-500">
+              课程第1周日期（仅在第 {{ formRecurringWeeks.join('、') }} 周发生）
+              <input v-model="formCourseStartDate" type="date" aria-label="课程第1周日期" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900" />
+            </label>
+          </div>
+
           <div class="space-y-2">
             <div class="flex items-center justify-between">
               <label class="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
@@ -277,7 +294,7 @@
               </label>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div v-if="formRecurringType === 'none'" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <!-- Box 1: 开始时间 -->
               <div>
                 <div class="flex items-center justify-between mb-1">
@@ -330,6 +347,11 @@
             </div>
           </div>
 
+          <div v-if="formRecurringType !== 'none' && !isScheduleAllDay" class="grid grid-cols-2 gap-3">
+            <input v-model="recurringStartTime" type="time" aria-label="周期日程开始时间" class="px-2.5 py-1.5 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900" />
+            <input v-model="recurringEndTime" type="time" aria-label="周期日程结束时间" class="px-2.5 py-1.5 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900" />
+          </div>
+
           <!-- Notes / Details -->
           <div class="space-y-1">
             <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">
@@ -379,6 +401,8 @@ import {
 } from 'lucide-vue-next'
 import type { ScheduleItem, Project } from '@/types'
 import { formatDate, parseDate, isDateInRange } from '@/utils/date'
+import { nextScheduleDate } from '@/utils/schedule'
+import { useToday } from '@/composables/useToday'
 import { t } from '@/utils/i18n'
 
 const props = defineProps<{
@@ -394,6 +418,7 @@ const emit = defineEmits<{
 }>()
 
 const highlightedScheduleId = ref<string | null>(null)
+const { todayStr } = useToday()
 const selectedProjectId = ref<string>('all')
 const activeCategory = ref<'upcoming' | 'past' | 'all'>('upcoming')
 
@@ -436,25 +461,22 @@ const filteredSchedules = computed(() => {
 
 const sortedSchedules = computed(() => {
   return [...filteredSchedules.value].sort((a, b) => {
-    const dateComp = (a.date || '').localeCompare(b.date || '')
+    const dateComp = (nextScheduleDate(a, todayStr.value) || a.date || '').localeCompare(nextScheduleDate(b, todayStr.value) || b.date || '')
     if (dateComp !== 0) return dateComp
     return (a.time || '').localeCompare(b.time || '')
   })
 })
 
 const upcomingSchedules = computed(() => {
-  const todayStr = formatDate(new Date())
-  return sortedSchedules.value.filter((s) => {
-    const lastDate = s.endDate || s.date || ''
-    return lastDate >= todayStr
-  })
+  return sortedSchedules.value.filter(s => !!nextScheduleDate(s, todayStr.value))
 })
 
 const pastSchedules = computed(() => {
-  const todayStr = formatDate(new Date())
+  const today = todayStr.value
   return sortedSchedules.value.filter((s) => {
+    if (s.recurringType !== 'none') return !nextScheduleDate(s, today)
     const lastDate = s.endDate || s.date
-    return !!lastDate && lastDate < todayStr
+    return !!lastDate && lastDate < today
   })
 })
 
@@ -537,6 +559,13 @@ const editingId = ref<string | null>(null)
 const formTitle = ref('')
 const formProjectId = ref<string | null>(null)
 const formNotes = ref('')
+const formRecurringType = ref<ScheduleItem['recurringType']>('none')
+const formRecurringDayOfWeek = ref(new Date().getDay())
+const formRecurringDayOfMonth = ref(new Date().getDate())
+const formRecurringWeeks = ref<number[] | undefined>()
+const formCourseStartDate = ref('')
+const recurringStartTime = ref('09:00')
+const recurringEndTime = ref('10:00')
 const isScheduleAllDay = ref(false)
 const scheduleStartDateTime = ref('')
 const scheduleEndDateTime = ref('')
@@ -571,6 +600,13 @@ function openCreateModal() {
   formTitle.value = ''
   formProjectId.value = selectedProjectId.value === 'all' ? null : selectedProjectId.value
   formNotes.value = ''
+  formRecurringType.value = 'none'
+  formRecurringWeeks.value = undefined
+  formCourseStartDate.value = ''
+  formRecurringDayOfWeek.value = new Date().getDay()
+  formRecurringDayOfMonth.value = new Date().getDate()
+  recurringStartTime.value = '09:00'
+  recurringEndTime.value = '10:00'
   const today = formatDate(new Date())
   isScheduleAllDay.value = false
   scheduleStartDateTime.value = `${today}T09:00`
@@ -585,8 +621,17 @@ function openEditModal(s: ScheduleItem) {
   formTitle.value = s.title
   formProjectId.value = s.projectId || null
   formNotes.value = s.notes || s.description || ''
+  formRecurringType.value = s.recurringType || 'none'
+  formRecurringWeeks.value = s.recurringWeeks
+  formCourseStartDate.value = s.date || ''
+  formRecurringDayOfWeek.value = s.recurringDayOfWeek ?? new Date().getDay()
+  formRecurringDayOfMonth.value = s.recurringDayOfMonth ?? new Date().getDate()
+  recurringStartTime.value = s.time || ''
+  recurringEndTime.value = s.endTime || ''
 
-  if (s.time || s.endTime) {
+  if (formRecurringType.value !== 'none') {
+    isScheduleAllDay.value = !s.time && !s.endTime
+  } else if (s.time || s.endTime) {
     isScheduleAllDay.value = false
   } else if (s.date) {
     isScheduleAllDay.value = true
@@ -631,7 +676,18 @@ function handleSubmit() {
   let endDate: string | undefined
   let endTime: string | undefined
 
-  if (isScheduleAllDay.value) {
+  if (formRecurringType.value !== 'none') {
+    if (formRecurringWeeks.value && !formCourseStartDate.value) {
+      alert('课程需要填写第1周日期')
+      return
+    }
+    if (formRecurringType.value === 'monthly' && (!Number.isInteger(formRecurringDayOfMonth.value) || formRecurringDayOfMonth.value < 1 || formRecurringDayOfMonth.value > 31)) {
+      alert('每月日期必须为 1 至 31')
+      return
+    }
+    time = isScheduleAllDay.value ? undefined : recurringStartTime.value || undefined
+    endTime = isScheduleAllDay.value ? undefined : recurringEndTime.value || undefined
+  } else if (isScheduleAllDay.value) {
     date = scheduleStartDateOnly.value?.trim() || formatDate(new Date())
     time = undefined
     endDate = scheduleEndDateOnly.value?.trim() || undefined
@@ -654,10 +710,13 @@ function handleSubmit() {
   const payload: Partial<ScheduleItem> = {
     title: formTitle.value.trim(),
     projectId: formProjectId.value,
-    recurringType: 'none',
-    date,
+    recurringType: formRecurringType.value,
+    recurringDayOfWeek: formRecurringType.value === 'weekly' ? formRecurringDayOfWeek.value : undefined,
+    recurringDayOfMonth: formRecurringType.value === 'monthly' ? formRecurringDayOfMonth.value : undefined,
+    recurringWeeks: formRecurringType.value === 'weekly' ? formRecurringWeeks.value : undefined,
+    ...(formRecurringWeeks.value && formRecurringType.value === 'weekly' ? { date: formCourseStartDate.value } : {}),
+    ...(formRecurringType.value === 'none' ? { date, endDate } : {}),
     time,
-    endDate,
     endTime,
     notes: formNotes.value.trim() || undefined,
   }
