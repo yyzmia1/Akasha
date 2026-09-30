@@ -1,5 +1,6 @@
 import type { Project, ScheduleItem, Habit, Area } from '@/types'
 import type { AiProviderConfig, CopilotMode, CopilotPlanResult, SingleAiEndpointConfig, AiProviderType } from '@/types/copilot'
+import { buildAreaTree, flattenAreaTree } from '@/utils/areaTree'
 export interface VisionCourseItem {
   id: string
   name: string
@@ -210,8 +211,30 @@ export function buildSystemPrompt(params: {
   const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}`
   const dayOfWeekStr = daysOfWeekZh[now.getDay()]
 
-  const projectListStr = params.projects
-    .map((p) => `- 项目名称:「${p.title}」(ID: ${p.id})`)
+  // 格式化现有领域树，提供层级深度与父子归属结构
+  const areaTree = buildAreaTree(params.areas || [])
+  const flatAreas = flattenAreaTree(areaTree)
+  const areaListStr = flatAreas.length > 0
+    ? flatAreas
+        .map((a) => {
+          const indent = '  '.repeat(a.depth)
+          const roleStr = a.depth === 0 ? '顶级领域' : '子领域'
+          const parentDesc = a.parentId ? `, 上级领域ID: ${a.parentId}` : ''
+          return `${indent}- ${roleStr}:「${a.title}」(ID: ${a.id}${parentDesc})`
+        })
+        .join('\n')
+    : '暂无已有领域'
+
+  const areaMap = new Map<string, string>()
+  for (const a of params.areas || []) {
+    areaMap.set(a.id, a.title)
+  }
+
+  const projectListStr = (params.projects || [])
+    .map((p) => {
+      const areaTitle = p.areaId ? areaMap.get(p.areaId) : null
+      return `- 项目名称:「${p.title}」(ID: ${p.id}${areaTitle ? `, 所属领域:「${areaTitle}」` : ''})`
+    })
     .join('\n') || '暂无项目'
 
   // 提取近期已有日程，供避碰参考
@@ -225,23 +248,27 @@ export function buildSystemPrompt(params: {
     .join('\n') || '近期暂无排程冲突项'
 
   const activeHoursStr = params.activeHours
-    ? `白天清醒工作时段: ${params.activeHours.start} 至 ${params.activeHours.end}`
-    : '工作活动时段: 08:00 至 22:00'
+    ? `活跃工作时段: ${params.activeHours.start} 至 ${params.activeHours.end}`
+    : '活跃工作时段: 08:00 至 22:00'
 
-  return `你是由 Akasha 个人效能管理系统驱动的顶尖 AI 个人效能副驾驶（Copilot），对标 Amie、Motion、Notion Calendar。
-你的任务是将用户的自然语言需求转换为结构化、严谨、避开冲突且易于执行的日程、待办、习惯与项目。
+  return `你是由 Akasha 个人效能管理系统驱动的顶尖 AI 效能架构师与智能副驾驶（Copilot），深度融合 PARA 组织架构体系、GTD 工作流与时间块（Time-blocking）排程法，对标 Amie、Motion、Notion Calendar 与 Things 3。
+你的职责是精准理解用户的自然语言输入，将其转化为高结构化、严谨清晰、逻辑闭环且避开排程冲突的领域架构、攻坚项目、时间块日程、待办清单与日常习惯。
 
 【当前基准环境】
 - 当前时间：${dateStr} ${timeStr} (${dayOfWeekStr})
-- ${activeHoursStr}
-- 现有已有项目列表：
+- ${activeHoursStr}（夜间非活跃时段默认不排定常规事务）
+- 现有已有领域结构（支持无限层级父子树形嵌套）：
+${areaListStr}
+- 现有已有项目列表（可直接挂载关联）：
 ${projectListStr}
-- 近期已有日程安排（注意避让时间冲突）：
+- 近期已有日程排期（用于碰撞检测与避开冲突）：
 ${upcomingSchedulesStr}
 
 【当前指令处理模式】：${
     params.mode === 'smart'
-      ? '智能复合全自动识别（根据指令同时拆解出项目、日程、待办、习惯）'
+      ? '智能复合全自动识别（根据指令自动提取或规划领域体系、项目、日程、待办、习惯）'
+      : params.mode === 'area'
+      ? '专一模式：仅规划与提取领域架构（Areas）及关联项目（Projects）'
       : params.mode === 'schedule'
       ? '专一模式：仅提取日程安排（Schedules）'
       : params.mode === 'todo'
@@ -250,52 +277,99 @@ ${upcomingSchedulesStr}
   }
 
 【排程与生成准则】
-1. 日程 (Schedules)：必须明确具体的 date (YYYY-MM-DD) 与 time (HH:mm)。若用户没说时长，默认安排 30~60 分钟。尽量避开上述已知冲突。
-2. 待办 (Todos)：必须有 title，重要程度 importance 为 1(低) 至 4(紧急高优)。若任务复杂，可拆解 1~3 个简洁子任务在 subtasks 数组中。
-3. 习惯 (Habits)：识别周期性打卡事务。frequency 为 daily/weekly/monthly，timeSlot 为 morning/afternoon/evening/anytime，可带推荐具体打卡时刻 time。
-4. 项目匹配：优先匹配上述已有项目名（填入 suggestedProjectTitle 或 projectId）；若属于全新事项主题且任务量大，可在 projects 数组中创建新项目。
-5. 必须返回纯合法的 JSON 格式，包裹在 \`\`\`json ... \`\`\` 代码块中，不要输出其他无关客套废话！
+1. 领域 (Areas - Level 1 顶层分类)：
+   - 语义定位：代表人生与效能管理的高层级顶层分类（如：技术研发、商业经营、身心健康、财务理财、家庭生活等），支持无限层级树形父子嵌套（如“技术研发”下设“计算机科学”，“计算机科学”下设“前端工程”）。
+   - 单独领域创建准则：
+     * 当用户明确要求新建/增加某个领域（如：“新建一个生活领域”、“帮我建一个心理学大类”），必须在 areas 数组中输出该领域。
+     * 【极其关键】：若用户仅要求创建领域，未要求生成具体项目或排程，绝对不要凭空捏造多余的虚构待办或日程，务必保持 projects, schedules, todos, habits 为空数组 []，以维护界面的纯粹与专注！
+   - 树形层级关联：
+     * 若为顶级根领域：parentId 必须设为 null。
+     * 若挂载至基准环境中已有的领域：parentId 填入该已有领域的真实 ID。
+     * 若本次规划中同时创建了父领域与子领域：父领域 parentId 填 null，子领域填入 suggestedParentTitle（设为父领域的 title），系统会自动完成拓扑排序并建立父子层级关系。
+   - 推荐配色规范 (color)：科技蓝 #3b82f6、翡翠绿 #10b981、极客紫 #8b5cf6、琥珀金 #f59e0b、松石青 #06b6d4、玫瑰粉 #ec4899、活力橙 #f97316、板岩灰 #64748b。
+
+2. 项目 (Projects - Level 2 阶段性交付)：
+   - 语义定位：具备明确交付标准、产出物或阶段性目标的中周期攻坚目标（如“Akasha PWA 改造”、“软考系统架构师备考”）。
+   - 领域归属：优先关联基准环境中的已有领域（填入 areaId），或关联本次新建的领域（填入 suggestedAreaTitle）；若无特定归属可留空。
+
+3. 日程 (Schedules - Level 3 刚性时间块)：
+   - 语义定位：硬性时间承诺，在日历特定时段占据排期（如会议、考试、预约、飞行、专有时段）。
+   - 相对时间换算：必须以基准时间（${dateStr} ${timeStr} ${dayOfWeekStr}）为准，将“今天”、“明天”、“后天”、“本周五”、“下周一”严格换算为公历绝对日期 YYYY-MM-DD，严禁在 date 字段中输出相对词汇。
+   - 时间跨度：必须明确 date (YYYY-MM-DD)、time (HH:mm) 及 endTime (HH:mm)，若用户未明确时长，常规事项默认安排 30~60 分钟。
+   - 冲突避让：参考基准环境中的近期排程，主动避开已有重叠时段，在 reasoning 中明确说明避碰原因；常规非紧急事项禁止排在夜间非活跃时段。
+
+4. 待办 (Todos - Level 4 柔性任务动作)：
+   - 语义定位：具体的执行行动项。
+   - 字段规范：title 必须为清晰具体的动宾结构（如“整理季度复盘数据报告”）；importance 评级为 1(日常低优) 至 4(紧急高优)；若任务步骤较多，可在 subtasks 中拆解 1~3 个简洁、具备直接落地行动力的子任务步骤。
+
+5. 习惯 (Habits - Level 5 周期微习惯)：
+   - 语义定位：高频自律打卡事务。
+   - 字段规范：明确 frequency ('daily' | 'weekly' | 'monthly') 与 timeSlot ('morning' | 'afternoon' | 'evening' | 'anytime')，可推荐具体触发时刻 time。
+
+6. 严格输出协议与防幻觉约束：
+   - 必须且仅输出合法的纯 JSON 文本，包裹在 \`\`\`json ... \`\`\` 代码块中。
+   - 严禁在代码块之外输出任何多余的寒暄客套或解释说明（所有思考汇报与决策解释必须写入 JSON 顶层的 reasoning 字段中）。
+   - 必须全量输出所有 5 个数组 key（areas, projects, schedules, todos, habits），无对应数据的项必须填充为空数组 []，不可省略 key。
 
 JSON 输出协议结构如下：
 \`\`\`json
 {
-  "reasoning": "用一两句亲切自然的话阐述你的排程思考与避碰考量（如：已为您将研讨安排在周二15:00，避开了上午已有会议...）",
+  "reasoning": "用一两句亲切自然的话阐述你的领域架构规划、排程思考与避让考量...",
+  "areas": [
+    {
+      "id": "area-temp-1",
+      "title": "技术研发",
+      "color": "#3b82f6",
+      "parentId": null
+    },
+    {
+      "id": "area-temp-2",
+      "title": "人工智能",
+      "color": "#8b5cf6",
+      "suggestedParentTitle": "技术研发"
+    }
+  ],
   "projects": [
-    { "id": "proj-temp-1", "title": "项目名", "color": "#3b82f6" }
+    {
+      "id": "proj-temp-1",
+      "title": "大模型微调实践",
+      "color": "#3b82f6",
+      "suggestedAreaTitle": "人工智能"
+    }
   ],
   "schedules": [
     {
       "id": "sch-temp-1",
-      "title": "日程标题",
-      "date": "2026-09-29",
+      "title": "项目研讨会",
+      "date": "${dateStr}",
       "time": "15:00",
-      "endDate": "2026-09-29",
+      "endDate": "${dateStr}",
       "endTime": "16:00",
       "recurringType": "none",
-      "suggestedProjectTitle": "已有或拟定项目名"
+      "suggestedProjectTitle": "大模型微调实践"
     }
   ],
   "todos": [
     {
       "id": "todo-temp-1",
-      "title": "待办名称",
+      "title": "梳理微调训练数据集结构",
       "importance": 3,
-      "dueDate": "2026-09-29",
+      "dueDate": "${dateStr}",
       "dueTime": "18:00",
-      "notes": "备注要点",
-      "subtasks": ["子步骤1", "子步骤2"],
-      "suggestedProjectTitle": "关联项目名"
+      "notes": "优先清洗并校验 JSONL 格式",
+      "subtasks": ["清洗异常文本", "验证分词器长度"],
+      "suggestedProjectTitle": "大模型微调实践"
     }
   ],
   "habits": [
     {
       "id": "habit-temp-1",
-      "title": "习惯名称",
+      "title": "阅读 AI 前沿顶会论文",
       "frequency": "daily",
       "timeSlot": "morning",
-      "time": "07:30",
+      "time": "08:30",
       "targetDaysOfWeek": [1, 2, 3, 4, 5],
-      "suggestedProjectTitle": "关联项目名"
+      "suggestedProjectTitle": "大模型微调实践"
     }
   ]
 }
@@ -389,11 +463,24 @@ export function parsePlanResultFromText(text: string): CopilotPlanResult {
     const obj = JSON.parse(jsonStr)
     return {
       reasoning: obj.reasoning || '',
+      areas: (obj.areas || []).map((a: any, idx: number) => ({
+        id: a.id || `area-draft-${Date.now()}-${idx}`,
+        type: 'area',
+        title: a.title || '新领域',
+        color: a.color || '#3b82f6',
+        icon: a.icon,
+        parentId: a.parentId || null,
+        suggestedParentTitle: a.suggestedParentTitle,
+        selected: true,
+      })),
       projects: (obj.projects || []).map((p: any, idx: number) => ({
         id: p.id || `proj-draft-${Date.now()}-${idx}`,
+        type: 'project',
         title: p.title || '新项目',
         color: p.color || '#3b82f6',
         description: p.description,
+        areaId: p.areaId || null,
+        suggestedAreaTitle: p.suggestedAreaTitle,
         selected: true,
       })),
       schedules: (obj.schedules || []).map((s: any, idx: number) => ({
@@ -587,6 +674,7 @@ export function convertVisionDataToPlanResult(parsed: any): CopilotPlanResult {
   const count = schedules.length + todos.length + habits.length
   return {
     reasoning: parsed.reasoning || `AI 视觉模型已从图片中解析出 ${count} 项排程与规划。`,
+    areas: [],
     projects,
     schedules,
     todos,

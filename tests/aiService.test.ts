@@ -239,5 +239,58 @@ describe('aiService (AI 规划解析与上下文构建)', () => {
     expect(visionCfg.model).toBe('Qwen/Qwen2.5-VL-72B-Instruct')
     expect(visionCfg.useProxy).toBe(true)
   })
+
+  it('parsePlanResultFromText 能够正确提取独立与层级领域 (Areas) 并支持与项目关联', () => {
+    const rawAiOutput = `\`\`\`json
+{
+  "reasoning": "为您规划了技术研发顶级领域及下设的人工智能子领域，并在其下设立相关实践项目",
+  "areas": [
+    { "id": "area-1", "title": "技术研发", "color": "#3b82f6", "parentId": null },
+    { "id": "area-2", "title": "人工智能", "color": "#8b5cf6", "suggestedParentTitle": "技术研发" }
+  ],
+  "projects": [
+    { "title": "大模型微调实战", "suggestedAreaTitle": "人工智能" }
+  ],
+  "schedules": [],
+  "todos": [{ "title": "准备训练数据集", "suggestedProjectTitle": "大模型微调实战" }],
+  "habits": []
+}
+\`\`\``
+
+    const plan = parsePlanResultFromText(rawAiOutput)
+    expect(plan.areas).toHaveLength(2)
+    expect(plan.areas[0].title).toBe('技术研发')
+    expect(plan.areas[0].selected).toBe(true)
+    expect(plan.areas[0].parentId).toBeNull()
+    expect(plan.areas[1].title).toBe('人工智能')
+    expect(plan.areas[1].suggestedParentTitle).toBe('技术研发')
+    expect(plan.projects[0].suggestedAreaTitle).toBe('人工智能')
+    expect(plan.todos[0].suggestedProjectTitle).toBe('大模型微调实战')
+  })
+
+  it('buildSystemPrompt 能格式化层级领域树并支持 area 模式', () => {
+    const mockAreas = [
+      { id: 'a-root', title: '主业工作', color: '#3b82f6', parentId: null, order: 0, createdAt: '' },
+      { id: 'a-sub', title: '后端架构', color: '#10b981', parentId: 'a-root', order: 0, createdAt: '' }
+    ]
+    const mockProjects = [
+      { id: 'p-1', title: '微服务重构', areaId: 'a-sub', color: '#10b981', order: 0, createdAt: '' }
+    ]
+
+    const promptArea = buildSystemPrompt({
+      mode: 'area',
+      areas: mockAreas,
+      projects: mockProjects,
+      schedules: [],
+      habits: [],
+    })
+
+    expect(promptArea).toContain('专一模式：仅规划与提取领域架构（Areas）')
+    expect(promptArea).toContain('顶级领域:「主业工作」')
+    expect(promptArea).toContain('子领域:「后端架构」')
+    expect(promptArea).toContain('所属领域:「后端架构」')
+    expect(promptArea).toContain('"areas": [')
+  })
 })
+
 

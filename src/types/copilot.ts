@@ -30,13 +30,22 @@ export interface AiProviderConfig {
   visionUseProxy?: boolean
 }
 
-export type CopilotMode = 'smart' | 'schedule' | 'todo' | 'habit'
+export type CopilotMode = 'smart' | 'area' | 'schedule' | 'todo' | 'habit'
 
 export interface BaseDraftItem {
   id: string
   selected: boolean
   isConflict?: boolean
   conflictReason?: string
+}
+
+export interface AreaDraft extends BaseDraftItem {
+  type: 'area'
+  title: string
+  color?: string
+  icon?: string
+  parentId?: string | null
+  suggestedParentTitle?: string
 }
 
 export interface ScheduleDraft extends BaseDraftItem {
@@ -85,11 +94,13 @@ export interface ProjectDraft extends BaseDraftItem {
   title: string
   color?: string
   description?: string
-  areaId?: string
+  areaId?: string | null
+  suggestedAreaTitle?: string
 }
 
 export interface CopilotPlanResult {
   reasoning: string
+  areas: AreaDraft[]
   projects: ProjectDraft[]
   schedules: ScheduleDraft[]
   todos: TodoDraft[]

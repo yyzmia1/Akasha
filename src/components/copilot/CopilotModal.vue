@@ -514,6 +514,102 @@
           </div>
 
           <!-- 分组卡片列表 -->
+          <!-- 0. 领域体系 (Areas) -->
+          <div v-if="currentPlan.areas && currentPlan.areas.length > 0" class="space-y-2">
+            <div class="flex items-center justify-between text-xs font-semibold text-slate-500 tracking-wider">
+              <span class="flex items-center gap-1.5">
+                <Layers class="w-3.5 h-3.5 text-indigo-500" />
+                <span>拟定领域体系 ({{ currentPlan.areas.length }})</span>
+              </span>
+              <button
+                @click="toggleGroupSelection('areas')"
+                class="text-[11px] text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+              >
+                全选/反选
+              </button>
+            </div>
+
+            <div :class="isExpanded ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5' : 'space-y-2'">
+              <div
+                v-for="a in currentPlan.areas"
+                :key="a.id"
+                :class="[
+                  'p-3 rounded-xl border transition-all text-xs flex items-center justify-between gap-2',
+                  a.selected
+                    ? 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 shadow-2xs'
+                    : 'bg-slate-50/60 dark:bg-slate-850/40 border-slate-200/60 dark:border-slate-800 opacity-60'
+                ]"
+              >
+                <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
+                  <input
+                    type="checkbox"
+                    v-model="a.selected"
+                    class="rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                  />
+                  <span
+                    class="w-2.5 h-2.5 rounded-full shrink-0"
+                    :style="{ backgroundColor: a.color || '#3b82f6' }"
+                  ></span>
+                  <span class="font-semibold text-slate-800 dark:text-slate-100 truncate">{{ a.title }}</span>
+                </label>
+
+                <div class="flex items-center gap-1 text-[10px] text-slate-400 shrink-0">
+                  <span class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                    {{ a.suggestedParentTitle ? `上级: ${a.suggestedParentTitle}` : (a.parentId ? '子领域' : '顶级分类') }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 0.5. 拟定项目 (Projects) -->
+          <div v-if="currentPlan.projects && currentPlan.projects.length > 0" class="space-y-2">
+            <div class="flex items-center justify-between text-xs font-semibold text-slate-500 tracking-wider">
+              <span class="flex items-center gap-1.5">
+                <Folder class="w-3.5 h-3.5 text-blue-500" />
+                <span>拟定项目 ({{ currentPlan.projects.length }})</span>
+              </span>
+              <button
+                @click="toggleGroupSelection('projects')"
+                class="text-[11px] text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+              >
+                全选/反选
+              </button>
+            </div>
+
+            <div :class="isExpanded ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5' : 'space-y-2'">
+              <div
+                v-for="p in currentPlan.projects"
+                :key="p.id"
+                :class="[
+                  'p-3 rounded-xl border transition-all text-xs flex items-center justify-between gap-2',
+                  p.selected
+                    ? 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 shadow-2xs'
+                    : 'bg-slate-50/60 dark:bg-slate-850/40 border-slate-200/60 dark:border-slate-800 opacity-60'
+                ]"
+              >
+                <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
+                  <input
+                    type="checkbox"
+                    v-model="p.selected"
+                    class="rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                  />
+                  <span
+                    class="w-2.5 h-2.5 rounded-full shrink-0"
+                    :style="{ backgroundColor: p.color || '#3b82f6' }"
+                  ></span>
+                  <span class="font-semibold text-slate-800 dark:text-slate-100 truncate">{{ p.title }}</span>
+                </label>
+
+                <div v-if="p.suggestedAreaTitle" class="flex items-center gap-1 text-[10px] text-slate-400 shrink-0">
+                  <span class="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300">
+                    {{ p.suggestedAreaTitle }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- 1. 日程列表 (Schedules) -->
           <div v-if="currentPlan.schedules.length > 0" class="space-y-2">
             <div class="flex items-center justify-between text-xs font-semibold text-slate-500 tracking-wider">
@@ -737,6 +833,8 @@ import {
   Calendar,
   CheckSquare,
   Flame,
+  Layers,
+  Folder,
   Maximize2,
   Minimize2,
   Send,
@@ -1024,6 +1122,7 @@ async function handleTestConnection() {
 
 const modeOptions = computed<{ label: string; value: CopilotMode; icon: any }[]>(() => [
   { label: '智能', value: 'smart', icon: Sparkles },
+  { label: '领域/项目', value: 'area', icon: Layers },
   { label: t('nav.schedules'), value: 'schedule', icon: Calendar },
   { label: t('nav.todos'), value: 'todo', icon: CheckSquare },
   { label: t('nav.habits'), value: 'habit', icon: Flame },
@@ -1031,6 +1130,7 @@ const modeOptions = computed<{ label: string; value: CopilotMode; icon: any }[]>
 
 const promptChips = [
   '📷 识图排程：上传作息/日程截图',
+  '📁 规划计算机与全栈技术领域架构',
   '🚀 帮我规划明天全天的高效日程',
   '📊 拆解下周二复盘汇报任务及准备事项',
   '🏃 制定每周一三五晨间慢跑打卡习惯',
@@ -1070,6 +1170,8 @@ watch(
 const totalItemsCount = computed(() => {
   if (!currentPlan.value) return 0
   return (
+    (currentPlan.value.areas?.length || 0) +
+    (currentPlan.value.projects?.length || 0) +
     currentPlan.value.schedules.length +
     currentPlan.value.todos.length +
     currentPlan.value.habits.length
@@ -1078,10 +1180,12 @@ const totalItemsCount = computed(() => {
 
 const totalSelectedCount = computed(() => {
   if (!currentPlan.value) return 0
+  const aCount = (currentPlan.value.areas || []).filter((a) => a.selected).length
+  const pCount = (currentPlan.value.projects || []).filter((p) => p.selected).length
   const sCount = currentPlan.value.schedules.filter((s) => s.selected).length
   const tCount = currentPlan.value.todos.filter((t) => t.selected).length
   const hCount = currentPlan.value.habits.filter((h) => h.selected).length
-  return sCount + tCount + hCount
+  return aCount + pCount + sCount + tCount + hCount
 })
 
 function handleDraftSelectionChanged() {
@@ -1091,9 +1195,9 @@ function handleDraftSelectionChanged() {
   emit('update-ghosts', activeGhostSchedules)
 }
 
-function toggleGroupSelection(group: 'schedules' | 'todos' | 'habits') {
+function toggleGroupSelection(group: 'areas' | 'projects' | 'schedules' | 'todos' | 'habits') {
   if (!currentPlan.value) return
-  const items = currentPlan.value[group]
+  const items = (currentPlan.value[group] || []) as any[]
   const hasUnselected = items.some((i) => !i.selected)
   items.forEach((i) => {
     i.selected = hasUnselected

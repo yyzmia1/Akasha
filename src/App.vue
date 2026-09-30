@@ -410,11 +410,13 @@ function handleGlobalKeydown(e: KeyboardEvent) {
 }
 
 async function handleApplyCopilotPlan(plan: CopilotPlanResult) {
+  const selectedAreas = (plan.areas || []).filter((a) => a.selected)
   const selectedProjects = (plan.projects || []).filter((p) => p.selected)
   const selectedSchedules = (plan.schedules || []).filter((s) => s.selected)
   const selectedTodos = (plan.todos || []).filter((t) => t.selected)
   const selectedHabits = (plan.habits || []).filter((h) => h.selected)
 
+  const createdAreaIds: string[] = []
   const createdProjectIds: string[] = []
   const createdScheduleIds: string[] = []
   const createdTodoIds: string[] = []
@@ -422,16 +424,61 @@ async function handleApplyCopilotPlan(plan: CopilotPlanResult) {
 
   const now = Date.now()
 
-  // 1. 创建新项目 (如果有)
+  // 0. 创建新领域 (Areas)
+  const areaTitleMap = new Map<string, string>()
+  for (const a of areas.value) {
+    areaTitleMap.set(a.title.trim().toLowerCase(), a.id)
+  }
+
+  // 领域排序：顶级根领域（无 parentId 且无 suggestedParentTitle）优先创建，确保子领域能找到新建父领域 ID
+  const pendingAreas = [...selectedAreas].sort((a, b) => {
+    const aHasParent = !!(a.parentId || a.suggestedParentTitle)
+    const bHasParent = !!(b.parentId || b.suggestedParentTitle)
+    return (aHasParent ? 1 : 0) - (bHasParent ? 1 : 0)
+  })
+
+  for (const ad of pendingAreas) {
+    let resolvedParentId: string | null = ad.parentId || null
+    if (!resolvedParentId && ad.suggestedParentTitle) {
+      resolvedParentId = areaTitleMap.get(ad.suggestedParentTitle.trim().toLowerCase()) || null
+    }
+
+    const newAreaId = 'area-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7)
+    const newArea: Area = {
+      id: newAreaId,
+      title: ad.title,
+      color: ad.color || '#3b82f6',
+      parentId: resolvedParentId,
+      order: areas.value.length + createdAreaIds.length,
+      createdAt: new Date().toISOString(),
+      updatedAt: now,
+    }
+
+    await db.areas.add(newArea)
+    enqueueChange('area', newArea.id, newArea)
+    createdAreaIds.push(newArea.id)
+    areas.value.push(newArea)
+    areaTitleMap.set(newArea.title.trim().toLowerCase(), newArea.id)
+  }
+
+  // 1. 创建新项目 (Projects)
   const projectTitleMap = new Map<string, string>()
   for (const p of projects.value) {
     projectTitleMap.set(p.title.trim().toLowerCase(), p.id)
   }
 
   for (const pd of selectedProjects) {
+    let resolvedAreaId = pd.areaId || null
+    if (!resolvedAreaId && pd.suggestedAreaTitle) {
+      resolvedAreaId = areaTitleMap.get(pd.suggestedAreaTitle.trim().toLowerCase()) || null
+    }
+    if (!resolvedAreaId && areas.value.length > 0) {
+      resolvedAreaId = areas.value[0].id
+    }
+
     const newProj: Project = {
       id: 'proj-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
-      areaId: areas.value[0]?.id || 'area-1',
+      areaId: resolvedAreaId || 'area-1',
       title: pd.title,
       color: pd.color || '#3b82f6',
       order: projects.value.length + createdProjectIds.length,
@@ -441,6 +488,7 @@ async function handleApplyCopilotPlan(plan: CopilotPlanResult) {
     await db.projects.add(newProj)
     enqueueChange('project', newProj.id, newProj)
     createdProjectIds.push(newProj.id)
+    projects.value.push(newProj)
     projectTitleMap.set(newProj.title.trim().toLowerCase(), newProj.id)
   }
 
