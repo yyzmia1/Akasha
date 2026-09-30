@@ -534,29 +534,117 @@
                 v-for="a in currentPlan.areas"
                 :key="a.id"
                 :class="[
-                  'p-3 rounded-xl border transition-all text-xs flex items-center justify-between gap-2',
+                  'p-3 rounded-xl border transition-all text-xs',
+                  isAreaSub(a) && !isExpanded ? 'ml-3 sm:ml-5 border-l-4 border-l-blue-500/80 dark:border-l-blue-400' : '',
                   a.selected
-                    ? 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 shadow-2xs'
+                    ? isAreaSub(a)
+                      ? 'bg-blue-50/40 dark:bg-blue-950/20 border-blue-200/80 dark:border-blue-900/60 shadow-2xs'
+                      : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 shadow-2xs'
                     : 'bg-slate-50/60 dark:bg-slate-850/40 border-slate-200/60 dark:border-slate-800 opacity-60'
                 ]"
               >
-                <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
-                  <input
-                    type="checkbox"
-                    v-model="a.selected"
-                    class="rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
-                  />
-                  <span
-                    class="w-2.5 h-2.5 rounded-full shrink-0"
-                    :style="{ backgroundColor: a.color || '#3b82f6' }"
-                  ></span>
-                  <span class="font-semibold text-slate-800 dark:text-slate-100 truncate">{{ a.title }}</span>
-                </label>
+                <!-- 正常展示模式 -->
+                <div v-if="editingDraftId !== a.id" class="flex items-center justify-between gap-2">
+                  <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
+                    <input
+                      type="checkbox"
+                      v-model="a.selected"
+                      class="rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                    <CornerDownRight v-if="isAreaSub(a)" class="w-3.5 h-3.5 text-blue-500 shrink-0 -ml-0.5" />
+                    <span
+                      class="w-2.5 h-2.5 rounded-full shrink-0"
+                      :style="{ backgroundColor: a.color || '#3b82f6' }"
+                    ></span>
+                    <span class="font-semibold text-slate-800 dark:text-slate-100 truncate" :title="a.title">{{ a.title }}</span>
+                  </label>
 
-                <div class="flex items-center gap-1 text-[10px] text-slate-400 shrink-0">
-                  <span class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-                    {{ a.suggestedParentTitle ? `上级: ${a.suggestedParentTitle}` : (a.parentId ? '子领域' : '顶级分类') }}
-                  </span>
+                  <div class="flex items-center gap-1.5 shrink-0">
+                    <span
+                      :class="[
+                        'px-2 py-0.5 rounded-md text-[10px] font-medium max-w-[170px] truncate',
+                        isAreaSub(a)
+                          ? 'bg-blue-100/70 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
+                          : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                      ]"
+                      :title="getAreaParentName(a) || '顶级分类'"
+                    >
+                      {{ isAreaSub(a) ? `↳ 属于: ${getAreaParentName(a)}` : '顶级分类' }}
+                    </span>
+
+                    <button
+                      type="button"
+                      @click="startEditDraft(a.id)"
+                      class="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                      title="编辑此领域"
+                    >
+                      <Pencil class="w-3 h-3" />
+                    </button>
+                    <button
+                      type="button"
+                      @click="deleteDraft('areas', a.id)"
+                      class="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                      title="移除此项"
+                    >
+                      <Trash2 class="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+
+                <!-- 行内修改模式 -->
+                <div v-else class="space-y-2.5 py-0.5">
+                  <div class="flex items-center gap-2">
+                    <span class="text-[11px] text-slate-400 font-medium shrink-0">领域名称:</span>
+                    <input
+                      v-model="a.title"
+                      type="text"
+                      class="flex-1 px-2 py-1 text-xs rounded border border-blue-400 dark:border-blue-500 bg-white dark:bg-slate-900 focus:outline-hidden"
+                      placeholder="领域名称"
+                    />
+                  </div>
+
+                  <div class="flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                    <div class="flex items-center gap-1.5 flex-1 min-w-[200px]">
+                      <span class="text-slate-400 font-medium shrink-0">层级归属:</span>
+                      <select
+                        :value="a.suggestedParentTitle || a.parentId || ''"
+                        @change="handleAreaParentChange(a, ($event.target as HTMLSelectElement).value)"
+                        class="flex-1 max-w-[220px] px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 truncate"
+                      >
+                        <option value="">顶级分类（无上级）</option>
+                        <option
+                          v-for="parentOpt in getAvailableParents(a.id)"
+                          :key="parentOpt.id"
+                          :value="parentOpt.title"
+                        >
+                          ↳ 归属于: {{ parentOpt.title }} {{ parentOpt.isDraft ? '(本次拟定)' : '' }}
+                        </option>
+                      </select>
+                    </div>
+
+                    <div class="flex items-center gap-1">
+                      <button
+                        v-for="c in PRESET_COLORS"
+                        :key="c"
+                        type="button"
+                        @click="a.color = c"
+                        class="w-3.5 h-3.5 rounded-full border border-white dark:border-slate-900 transition-transform cursor-pointer"
+                        :style="{ backgroundColor: c }"
+                        :class="a.color === c ? 'ring-2 ring-blue-500 scale-125' : 'hover:scale-110'"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="flex items-center justify-end gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+                    <button
+                      type="button"
+                      @click="stopEditDraft"
+                      class="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white font-medium text-[11px] flex items-center gap-1 cursor-pointer"
+                    >
+                      <Check class="w-3 h-3" />
+                      <span>完成</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -582,29 +670,96 @@
                 v-for="p in currentPlan.projects"
                 :key="p.id"
                 :class="[
-                  'p-3 rounded-xl border transition-all text-xs flex items-center justify-between gap-2',
+                  'p-3 rounded-xl border transition-all text-xs',
                   p.selected
                     ? 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 shadow-2xs'
                     : 'bg-slate-50/60 dark:bg-slate-850/40 border-slate-200/60 dark:border-slate-800 opacity-60'
                 ]"
               >
-                <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
-                  <input
-                    type="checkbox"
-                    v-model="p.selected"
-                    class="rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
-                  />
-                  <span
-                    class="w-2.5 h-2.5 rounded-full shrink-0"
-                    :style="{ backgroundColor: p.color || '#3b82f6' }"
-                  ></span>
-                  <span class="font-semibold text-slate-800 dark:text-slate-100 truncate">{{ p.title }}</span>
-                </label>
+                <!-- 正常展示模式 -->
+                <div v-if="editingDraftId !== p.id" class="flex items-center justify-between gap-2">
+                  <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
+                    <input
+                      type="checkbox"
+                      v-model="p.selected"
+                      class="rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                    <span
+                      class="w-2.5 h-2.5 rounded-full shrink-0"
+                      :style="{ backgroundColor: p.color || '#3b82f6' }"
+                    ></span>
+                    <span class="font-semibold text-slate-800 dark:text-slate-100 truncate">{{ p.title }}</span>
+                  </label>
 
-                <div v-if="p.suggestedAreaTitle" class="flex items-center gap-1 text-[10px] text-slate-400 shrink-0">
-                  <span class="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300">
-                    {{ p.suggestedAreaTitle }}
-                  </span>
+                  <div class="flex items-center gap-1.5 shrink-0">
+                    <span v-if="p.suggestedAreaTitle" class="px-2 py-0.5 rounded-md text-[10px] bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 max-w-[140px] truncate">
+                      {{ p.suggestedAreaTitle }}
+                    </span>
+                    <button
+                      type="button"
+                      @click="startEditDraft(p.id)"
+                      class="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                      title="编辑此项目"
+                    >
+                      <Pencil class="w-3 h-3" />
+                    </button>
+                    <button
+                      type="button"
+                      @click="deleteDraft('projects', p.id)"
+                      class="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                      title="移除此项"
+                    >
+                      <Trash2 class="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+
+                <!-- 行内修改模式 -->
+                <div v-else class="space-y-2 py-0.5">
+                  <div class="flex items-center gap-2">
+                    <span class="text-[11px] text-slate-400 font-medium shrink-0">项目名称:</span>
+                    <input
+                      v-model="p.title"
+                      type="text"
+                      class="flex-1 px-2 py-1 text-xs rounded border border-blue-400 dark:border-blue-500 bg-white dark:bg-slate-900 focus:outline-hidden"
+                      placeholder="项目名称"
+                    />
+                  </div>
+                  <div class="flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                    <div class="flex items-center gap-1.5 flex-1 min-w-[180px]">
+                      <span class="text-slate-400 font-medium shrink-0">所属领域:</span>
+                      <select
+                        v-model="p.suggestedAreaTitle"
+                        class="flex-1 max-w-[200px] px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                      >
+                        <option :value="undefined">无所属领域</option>
+                        <option v-for="title in allAvailableAreaTitles" :key="title" :value="title">
+                          {{ title }}
+                        </option>
+                      </select>
+                    </div>
+                    <div class="flex items-center gap-1">
+                      <button
+                        v-for="c in PRESET_COLORS"
+                        :key="c"
+                        type="button"
+                        @click="p.color = c"
+                        class="w-3.5 h-3.5 rounded-full border border-white dark:border-slate-900 transition-transform cursor-pointer"
+                        :style="{ backgroundColor: c }"
+                        :class="p.color === c ? 'ring-2 ring-blue-500 scale-125' : 'hover:scale-110'"
+                      />
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-end gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+                    <button
+                      type="button"
+                      @click="stopEditDraft"
+                      class="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white font-medium text-[11px] flex items-center gap-1 cursor-pointer"
+                    >
+                      <Check class="w-3 h-3" />
+                      <span>完成</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -638,41 +793,102 @@
                     : 'bg-slate-50/60 dark:bg-slate-850/40 border-slate-200/60 dark:border-slate-800 opacity-60'
                 ]"
               >
-                <div class="flex items-center justify-between gap-2">
-                  <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
-                    <input
-                      type="checkbox"
-                      v-model="s.selected"
-                      @change="handleDraftSelectionChanged"
-                      class="rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
-                    />
-                    <span class="font-semibold text-slate-800 dark:text-slate-100 truncate">{{ s.title }}</span>
-                  </label>
+                <!-- 正常展示模式 -->
+                <div v-if="editingDraftId !== s.id">
+                  <div class="flex items-center justify-between gap-2">
+                    <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
+                      <input
+                        type="checkbox"
+                        v-model="s.selected"
+                        @change="handleDraftSelectionChanged"
+                        class="rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      />
+                      <span class="font-semibold text-slate-800 dark:text-slate-100 truncate">{{ s.title }}</span>
+                    </label>
 
-                  <!-- 关联项目标识 -->
-                  <span
-                    v-if="s.suggestedProjectTitle"
-                    class="text-[10px] px-2 py-0.5 rounded-full bg-blue-100/70 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 shrink-0"
-                  >
-                    {{ s.suggestedProjectTitle }}
-                  </span>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                      <span
+                        v-if="s.suggestedProjectTitle"
+                        class="text-[10px] px-2 py-0.5 rounded-full bg-blue-100/70 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 shrink-0"
+                      >
+                        {{ s.suggestedProjectTitle }}
+                      </span>
+                      <button
+                        type="button"
+                        @click="startEditDraft(s.id)"
+                        class="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                        title="编辑此日程"
+                      >
+                        <Pencil class="w-3 h-3" />
+                      </button>
+                      <button
+                        type="button"
+                        @click="deleteDraft('schedules', s.id)"
+                        class="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                        title="移除此项"
+                      >
+                        <Trash2 class="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 pl-5 pt-1">
+                    <span class="flex items-center gap-1 font-mono">
+                      <Clock class="w-3 h-3 text-slate-400" />
+                      <span>{{ s.date }}</span>
+                      <span v-if="s.time">{{ s.time }} ~ {{ s.endTime || '' }}</span>
+                    </span>
+
+                    <span
+                      v-if="s.isConflict"
+                      class="flex items-center gap-1 text-[10px] text-amber-700 dark:text-amber-400 bg-amber-100/80 dark:bg-amber-900/50 px-2 py-0.5 rounded-md font-medium"
+                    >
+                      <AlertTriangle class="w-3 h-3 text-amber-500" />
+                      <span>{{ s.conflictReason || '存在时间冲突' }}</span>
+                    </span>
+                  </div>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 pl-5">
-                  <span class="flex items-center gap-1 font-mono">
-                    <Clock class="w-3 h-3 text-slate-400" />
-                    <span>{{ s.date }}</span>
-                    <span v-if="s.time">{{ s.time }} ~ {{ s.endTime || '' }}</span>
-                  </span>
-
-                  <!-- 冲突警告标签 -->
-                  <span
-                    v-if="s.isConflict"
-                    class="flex items-center gap-1 text-[10px] text-amber-700 dark:text-amber-400 bg-amber-100/80 dark:bg-amber-900/50 px-2 py-0.5 rounded-md font-medium"
-                  >
-                    <AlertTriangle class="w-3 h-3 text-amber-500" />
-                    <span>{{ s.conflictReason || '存在时间冲突' }}</span>
-                  </span>
+                <!-- 行内修改模式 -->
+                <div v-else class="space-y-2 py-0.5">
+                  <div class="flex items-center gap-2">
+                    <span class="text-[11px] text-slate-400 font-medium shrink-0">日程标题:</span>
+                    <input
+                      v-model="s.title"
+                      type="text"
+                      class="flex-1 px-2 py-1 text-xs rounded border border-blue-400 dark:border-blue-500 bg-white dark:bg-slate-900 focus:outline-hidden"
+                    />
+                  </div>
+                  <div class="flex flex-wrap items-center gap-2 text-[11px]">
+                    <span class="text-slate-400 font-medium shrink-0">日期:</span>
+                    <input
+                      v-model="s.date"
+                      type="date"
+                      class="px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                    />
+                    <span class="text-slate-400 font-medium shrink-0 ml-1">时间:</span>
+                    <input
+                      v-model="s.time"
+                      type="time"
+                      class="px-1.5 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                    />
+                    <span class="text-slate-400 font-medium">~</span>
+                    <input
+                      v-model="s.endTime"
+                      type="time"
+                      class="px-1.5 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                    />
+                  </div>
+                  <div class="flex items-center justify-end gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+                    <button
+                      type="button"
+                      @click="stopEditDraft"
+                      class="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white font-medium text-[11px] flex items-center gap-1 cursor-pointer"
+                    >
+                      <Check class="w-3 h-3" />
+                      <span>完成</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -704,39 +920,107 @@
                     : 'bg-slate-50/60 dark:bg-slate-850/40 border-slate-200/60 dark:border-slate-800 opacity-60'
                 ]"
               >
-                <div class="flex items-center justify-between gap-2">
-                  <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
-                    <input
-                      type="checkbox"
-                      v-model="t.selected"
-                      class="rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
-                    />
-                    <!-- 优先级圆点 -->
-                    <span
-                      :class="[
-                        'w-2 h-2 rounded-full shrink-0',
-                        t.importance === 4 ? 'bg-rose-500 ring-2 ring-rose-300 dark:ring-rose-900' :
-                        t.importance === 3 ? 'bg-amber-500' :
-                        t.importance === 2 ? 'bg-blue-500' : 'bg-slate-400'
-                      ]"
-                    ></span>
-                    <span class="font-semibold text-slate-800 dark:text-slate-100 truncate">{{ t.title }}</span>
-                  </label>
+                <!-- 正常展示模式 -->
+                <div v-if="editingDraftId !== t.id">
+                  <div class="flex items-center justify-between gap-2">
+                    <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
+                      <input
+                        type="checkbox"
+                        v-model="t.selected"
+                        class="rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      />
+                      <span
+                        :class="[
+                          'w-2 h-2 rounded-full shrink-0',
+                          t.importance === 4 ? 'bg-rose-500 ring-2 ring-rose-300 dark:ring-rose-900' :
+                          t.importance === 3 ? 'bg-amber-500' :
+                          t.importance === 2 ? 'bg-blue-500' : 'bg-slate-400'
+                        ]"
+                      ></span>
+                      <span class="font-semibold text-slate-800 dark:text-slate-100 truncate">{{ t.title }}</span>
+                    </label>
 
-                  <span
-                    v-if="t.dueDate"
-                    class="text-[10px] text-slate-400 font-mono"
-                  >
-                    截止: {{ t.dueDate }} {{ t.dueTime || '' }}
-                  </span>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                      <span
+                        v-if="t.dueDate"
+                        class="text-[10px] text-slate-400 font-mono"
+                      >
+                        截止: {{ t.dueDate }} {{ t.dueTime || '' }}
+                      </span>
+                      <button
+                        type="button"
+                        @click="startEditDraft(t.id)"
+                        class="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                        title="编辑此待办"
+                      >
+                        <Pencil class="w-3 h-3" />
+                      </button>
+                      <button
+                        type="button"
+                        @click="deleteDraft('todos', t.id)"
+                        class="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                        title="移除此项"
+                      >
+                        <Trash2 class="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div v-if="t.notes || (t.subtasks && t.subtasks.length > 0)" class="pl-6 space-y-1 text-[11px] text-slate-500 dark:text-slate-400 pt-1">
+                    <p v-if="t.notes">{{ t.notes }}</p>
+                    <ul v-if="t.subtasks && t.subtasks.length > 0" class="list-disc list-inside space-y-0.5 text-[10px]">
+                      <li v-for="(sub, sIdx) in t.subtasks" :key="sIdx">{{ sub }}</li>
+                    </ul>
+                  </div>
                 </div>
 
-                <!-- 备注或子任务 -->
-                <div v-if="t.notes || (t.subtasks && t.subtasks.length > 0)" class="pl-6 space-y-1 text-[11px] text-slate-500 dark:text-slate-400">
-                  <p v-if="t.notes">{{ t.notes }}</p>
-                  <ul v-if="t.subtasks && t.subtasks.length > 0" class="list-disc list-inside space-y-0.5 text-[10px]">
-                    <li v-for="(sub, sIdx) in t.subtasks" :key="sIdx">{{ sub }}</li>
-                  </ul>
+                <!-- 行内修改模式 -->
+                <div v-else class="space-y-2 py-0.5">
+                  <div class="flex items-center gap-2">
+                    <span class="text-[11px] text-slate-400 font-medium shrink-0">待办标题:</span>
+                    <input
+                      v-model="t.title"
+                      type="text"
+                      class="flex-1 px-2 py-1 text-xs rounded border border-blue-400 dark:border-blue-500 bg-white dark:bg-slate-900 focus:outline-hidden"
+                    />
+                  </div>
+                  <div class="flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-slate-400 font-medium shrink-0">重要程度:</span>
+                      <div class="flex items-center gap-1">
+                        <button
+                          v-for="imp in [1, 2, 3, 4]"
+                          :key="imp"
+                          type="button"
+                          @click="t.importance = imp"
+                          class="px-2 py-0.5 rounded text-[10px] font-medium border transition-colors cursor-pointer"
+                          :class="t.importance === imp
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'"
+                        >
+                          P{{ imp }}
+                        </button>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-1">
+                      <span class="text-slate-400 font-medium shrink-0">截止日期:</span>
+                      <input
+                        v-model="t.dueDate"
+                        type="date"
+                        class="px-1.5 py-0.5 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                      />
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-end gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+                    <button
+                      type="button"
+                      @click="stopEditDraft"
+                      class="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white font-medium text-[11px] flex items-center gap-1 cursor-pointer"
+                    >
+                      <Check class="w-3 h-3" />
+                      <span>完成</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -762,28 +1046,89 @@
                 v-for="h in currentPlan.habits"
                 :key="h.id"
                 :class="[
-                  'p-3 rounded-xl border transition-all text-xs flex items-center justify-between gap-2',
+                  'p-3 rounded-xl border transition-all text-xs',
                   h.selected
                     ? 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 shadow-2xs'
                     : 'bg-slate-50/60 dark:bg-slate-850/40 border-slate-200/60 dark:border-slate-800 opacity-60'
                 ]"
               >
-                <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
-                  <input
-                    type="checkbox"
-                    v-model="h.selected"
-                    class="rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
-                  />
-                  <span class="font-semibold text-slate-800 dark:text-slate-100 truncate">{{ h.title }}</span>
-                </label>
+                <!-- 正常展示模式 -->
+                <div v-if="editingDraftId !== h.id" class="flex items-center justify-between gap-2">
+                  <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
+                    <input
+                      type="checkbox"
+                      v-model="h.selected"
+                      class="rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                    <span class="font-semibold text-slate-800 dark:text-slate-100 truncate">{{ h.title }}</span>
+                  </label>
 
-                <div class="flex items-center gap-1.5 text-[11px] text-slate-400 shrink-0">
-                  <span class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-                    {{ h.frequency === 'daily' ? '每日' : '每周' }}
-                  </span>
-                  <span v-if="h.time" class="font-mono text-blue-600 dark:text-blue-400 font-medium">
-                    {{ h.time }}
-                  </span>
+                  <div class="flex items-center gap-1.5 shrink-0">
+                    <span class="px-2 py-0.5 rounded-md text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                      {{ h.frequency === 'daily' ? '每日' : '每周' }}
+                    </span>
+                    <span v-if="h.time" class="font-mono text-blue-600 dark:text-blue-400 font-medium text-[11px]">
+                      {{ h.time }}
+                    </span>
+                    <button
+                      type="button"
+                      @click="startEditDraft(h.id)"
+                      class="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                      title="编辑此习惯"
+                    >
+                      <Pencil class="w-3 h-3" />
+                    </button>
+                    <button
+                      type="button"
+                      @click="deleteDraft('habits', h.id)"
+                      class="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                      title="移除此项"
+                    >
+                      <Trash2 class="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+
+                <!-- 行内修改模式 -->
+                <div v-else class="space-y-2 py-0.5">
+                  <div class="flex items-center gap-2">
+                    <span class="text-[11px] text-slate-400 font-medium shrink-0">习惯名称:</span>
+                    <input
+                      v-model="h.title"
+                      type="text"
+                      class="flex-1 px-2 py-1 text-xs rounded border border-blue-400 dark:border-blue-500 bg-white dark:bg-slate-900 focus:outline-hidden"
+                    />
+                  </div>
+                  <div class="flex items-center justify-between gap-2 text-[11px]">
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-slate-400 font-medium shrink-0">频次:</span>
+                      <select
+                        v-model="h.frequency"
+                        class="px-2 py-0.5 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                      >
+                        <option value="daily">每日打卡</option>
+                        <option value="weekly">每周打卡</option>
+                      </select>
+                    </div>
+                    <div class="flex items-center gap-1">
+                      <span class="text-slate-400 font-medium shrink-0">提醒时间:</span>
+                      <input
+                        v-model="h.time"
+                        type="time"
+                        class="px-1.5 py-0.5 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                      />
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-end gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+                    <button
+                      type="button"
+                      @click="stopEditDraft"
+                      class="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white font-medium text-[11px] flex items-center gap-1 cursor-pointer"
+                    >
+                      <Check class="w-3 h-3" />
+                      <span>完成</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -835,6 +1180,10 @@ import {
   Flame,
   Layers,
   Folder,
+  Pencil,
+  Trash2,
+  CornerDownRight,
+  Plus,
   Maximize2,
   Minimize2,
   Send,
@@ -850,7 +1199,17 @@ import {
   Lightbulb,
 } from 'lucide-vue-next'
 import type { Area, Project, ScheduleItem, Habit } from '@/types'
-import type { CopilotMode, CopilotPlanResult, AiProviderConfig, AiProviderType } from '@/types/copilot'
+import type {
+  CopilotMode,
+  CopilotPlanResult,
+  AiProviderConfig,
+  AiProviderType,
+  AreaDraft,
+  ProjectDraft,
+  ScheduleDraft,
+  TodoDraft,
+  HabitDraft,
+} from '@/types/copilot'
 import { t } from '@/utils/i18n'
 import {
   loadAiConfig,
@@ -1206,6 +1565,85 @@ function toggleGroupSelection(group: 'areas' | 'projects' | 'schedules' | 'todos
     handleDraftSelectionChanged()
   }
 }
+
+const PRESET_COLORS = [
+  '#3b82f6', // 经典蓝
+  '#10b981', // 翡翠绿
+  '#8b5cf6', // 极客紫
+  '#f59e0b', // 琥珀黄
+  '#06b6d4', // 松石青
+  '#ec4899', // 玫瑰粉
+  '#f97316', // 活力橙
+  '#64748b', // 板岩灰
+]
+
+const editingDraftId = ref<string | null>(null)
+
+function startEditDraft(id: string) {
+  editingDraftId.value = id
+}
+
+function stopEditDraft() {
+  editingDraftId.value = null
+}
+
+function deleteDraft(type: 'areas' | 'projects' | 'schedules' | 'todos' | 'habits', id: string) {
+  if (!currentPlan.value) return
+  currentPlan.value[type] = (currentPlan.value[type] as any[]).filter((item) => item.id !== id)
+  if (editingDraftId.value === id) {
+    editingDraftId.value = null
+  }
+  if (type === 'schedules') {
+    handleDraftSelectionChanged()
+  }
+}
+
+function getAreaParentName(a: AreaDraft): string | null {
+  if (a.suggestedParentTitle) return a.suggestedParentTitle
+  if (!a.parentId) return null
+  const draftParent = currentPlan.value?.areas.find((d) => d.id === a.parentId || d.title === a.parentId)
+  if (draftParent) return draftParent.title
+  const dbParent = props.areas.find((dbA) => dbA.id === a.parentId || dbA.title === a.parentId)
+  if (dbParent) return dbParent.title
+  return a.parentId
+}
+
+function isAreaSub(a: AreaDraft): boolean {
+  return !!(a.parentId || a.suggestedParentTitle)
+}
+
+function handleAreaParentChange(a: AreaDraft, parentTitleOrEmpty: string) {
+  if (!parentTitleOrEmpty) {
+    a.parentId = null
+    a.suggestedParentTitle = undefined
+  } else {
+    a.suggestedParentTitle = parentTitleOrEmpty
+    const dbArea = props.areas.find((da) => da.title === parentTitleOrEmpty)
+    if (dbArea) {
+      a.parentId = dbArea.id
+    } else {
+      a.parentId = null
+    }
+  }
+}
+
+function getAvailableParents(currentAreaId: string) {
+  if (!currentPlan.value) return []
+  const draftParents = currentPlan.value.areas
+    .filter((d) => d.id !== currentAreaId)
+    .map((d) => ({ id: d.id, title: d.title, isDraft: true }))
+  const dbParents = props.areas.map((a) => ({ id: a.id, title: a.title, isDraft: false }))
+  return [...draftParents, ...dbParents]
+}
+
+const allAvailableAreaTitles = computed(() => {
+  const titles = new Set<string>()
+  if (currentPlan.value?.areas) {
+    currentPlan.value.areas.forEach((a) => titles.add(a.title))
+  }
+  props.areas.forEach((a) => titles.add(a.title))
+  return Array.from(titles)
+})
 
 async function handleStartGenerate() {
   if (isLoading.value) return

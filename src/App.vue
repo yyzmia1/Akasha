@@ -425,23 +425,52 @@ async function handleApplyCopilotPlan(plan: CopilotPlanResult) {
   const now = Date.now()
 
   // 0. 创建新领域 (Areas)
-  const areaTitleMap = new Map<string, string>()
+  // 建立多种映射，支持按 ID、草稿临时 ID、精确标题、模糊标题反查真实数据库 ID
+  const realAreaIdMap = new Map<string, string>() // draftId -> realId
+  const areaTitleToRealId = new Map<string, string>() // title.toLowerCase() -> realId
+
+  // 先把已存数据库中的领域放入映射表
   for (const a of areas.value) {
-    areaTitleMap.set(a.title.trim().toLowerCase(), a.id)
+    areaTitleToRealId.set(a.title.trim().toLowerCase(), a.id)
   }
 
-  // 领域排序：顶级根领域（无 parentId 且无 suggestedParentTitle）优先创建，确保子领域能找到新建父领域 ID
-  const pendingAreas = [...selectedAreas].sort((a, b) => {
-    const aHasParent = !!(a.parentId || a.suggestedParentTitle)
-    const bHasParent = !!(b.parentId || b.suggestedParentTitle)
-    return (aHasParent ? 1 : 0) - (bHasParent ? 1 : 0)
-  })
-
-  for (const ad of pendingAreas) {
-    let resolvedParentId: string | null = ad.parentId || null
-    if (!resolvedParentId && ad.suggestedParentTitle) {
-      resolvedParentId = areaTitleMap.get(ad.suggestedParentTitle.trim().toLowerCase()) || null
+  function resolveParentAreaId(rawParent: string | null | undefined): string | null {
+    if (!rawParent) return null
+    const trimmed = rawParent.trim()
+    // 1. 是否是同批次草稿中映射的真实 ID
+    if (realAreaIdMap.has(trimmed)) return realAreaIdMap.get(trimmed)!
+    // 2. 是否本身就是数据库已有领域的真实 ID
+    if (areas.value.some((a) => a.id === trimmed)) return trimmed
+    // 3. 是否匹配已有或新创建领域的标题
+    const lower = trimmed.toLowerCase()
+    if (areaTitleToRealId.has(lower)) return areaTitleToRealId.get(lower)!
+    // 4. 尝试包含匹配（应对模型截断或补充前缀）
+    for (const [title, id] of areaTitleToRealId.entries()) {
+      if (title.includes(lower) || lower.includes(title)) {
+        return id
+      }
     }
+    return null
+  }
+
+  // 拓扑就绪排序处理：
+  // 先创建无父级的顶级领域；其余有父级引用的领域待父级创建产生真实 ID 后再创建
+  const remainingAreas = [...selectedAreas]
+  let guard = 0
+  const maxGuards = remainingAreas.length * 2 + 10
+
+  while (remainingAreas.length > 0 && guard < maxGuards) {
+    guard++
+    // 寻找可以在当前轮次就绪的领域：无父级，或者其父级已在映射中就绪
+    const readyIdx = remainingAreas.findIndex((ad) => {
+      const parentRef = ad.suggestedParentTitle || ad.parentId
+      if (!parentRef) return true
+      return resolveParentAreaId(parentRef) !== null
+    })
+
+    const ad = readyIdx !== -1 ? remainingAreas.splice(readyIdx, 1)[0] : remainingAreas.shift()!
+    const parentRef = ad.suggestedParentTitle || ad.parentId
+    const resolvedParentId = resolveParentAreaId(parentRef)
 
     const newAreaId = 'area-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7)
     const newArea: Area = {
@@ -458,7 +487,10 @@ async function handleApplyCopilotPlan(plan: CopilotPlanResult) {
     enqueueChange('area', newArea.id, newArea)
     createdAreaIds.push(newArea.id)
     areas.value.push(newArea)
-    areaTitleMap.set(newArea.title.trim().toLowerCase(), newArea.id)
+
+    // 登记真实 ID 映射
+    realAreaIdMap.set(ad.id, newArea.id)
+    areaTitleToRealId.set(newArea.title.trim().toLowerCase(), newArea.id)
   }
 
   // 1. 创建新项目 (Projects)
@@ -470,7 +502,10 @@ async function handleApplyCopilotPlan(plan: CopilotPlanResult) {
   for (const pd of selectedProjects) {
     let resolvedAreaId = pd.areaId || null
     if (!resolvedAreaId && pd.suggestedAreaTitle) {
-      resolvedAreaId = areaTitleMap.get(pd.suggestedAreaTitle.trim().toLowerCase()) || null
+      resolvedAreaId = areaTitleToRealId.get(pd.suggestedAreaTitle.trim().toLowerCase()) || null
+    }
+    if (resolvedAreaId && realAreaIdMap.has(resolvedAreaId)) {
+      resolvedAreaId = realAreaIdMap.get(resolvedAreaId)!
     }
     if (!resolvedAreaId && areas.value.length > 0) {
       resolvedAreaId = areas.value[0].id
