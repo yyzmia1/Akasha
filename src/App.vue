@@ -1026,10 +1026,10 @@ async function handleSaveTodo(itemData: Partial<TodoItem>) {
       ...(existing || {}),
       ...cleanData,
       importance: importanceVal,
-      startDate: itemData.startDate !== undefined ? (itemData.startDate?.trim() || undefined) : existing?.startDate,
-      startTime: itemData.startTime !== undefined ? (itemData.startTime?.trim() || undefined) : existing?.startTime,
-      dueDate: itemData.dueDate !== undefined ? (itemData.dueDate?.trim() || undefined) : existing?.dueDate,
-      dueTime: itemData.dueTime !== undefined ? (itemData.dueTime?.trim() || undefined) : existing?.dueTime,
+      startDate: Object.hasOwn(itemData, 'startDate') ? (itemData.startDate?.trim() || undefined) : existing?.startDate,
+      startTime: Object.hasOwn(itemData, 'startTime') ? (itemData.startTime?.trim() || undefined) : existing?.startTime,
+      dueDate: Object.hasOwn(itemData, 'dueDate') ? (itemData.dueDate?.trim() || undefined) : existing?.dueDate,
+      dueTime: Object.hasOwn(itemData, 'dueTime') ? (itemData.dueTime?.trim() || undefined) : existing?.dueTime,
       updatedAt: now,
     }
     await db.todos.update(itemData.id, updated)
