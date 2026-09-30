@@ -291,6 +291,31 @@ describe('aiService (AI 规划解析与上下文构建)', () => {
     expect(promptArea).toContain('所属领域:「后端架构」')
     expect(promptArea).toContain('"areas": [')
   })
+
+  it('支持纯独立领域创建输出，其余数组为空', () => {
+    const rawAiOutput = `\`\`\`json
+{
+  "reasoning": "已为您单独创建「生活日常」与「心理学研读」两个顶级领域",
+  "areas": [
+    { "title": "生活日常", "color": "#10b981", "parentId": null },
+    { "title": "心理学研读", "color": "#8b5cf6", "parentId": null }
+  ],
+  "projects": [],
+  "schedules": [],
+  "todos": [],
+  "habits": []
+}
+\`\`\``
+
+    const plan = parsePlanResultFromText(rawAiOutput)
+    expect(plan.areas).toHaveLength(2)
+    expect(plan.areas[0].title).toBe('生活日常')
+    expect(plan.areas[1].title).toBe('心理学研读')
+    expect(plan.projects).toHaveLength(0)
+    expect(plan.schedules).toHaveLength(0)
+    expect(plan.todos).toHaveLength(0)
+    expect(plan.habits).toHaveLength(0)
+  })
 })
 
 
