@@ -45,6 +45,7 @@ export interface ScheduleItem {
   recurringType: ScheduleRecurringType
   recurringDayOfWeek?: number
   recurringDayOfMonth?: number
+  recurringWeeks?: number[] // Course weeks counted from the Monday of date (week 1).
   notes?: string
   description?: string
   createdAt: string

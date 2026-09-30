@@ -57,6 +57,8 @@ export interface ScheduleDraft extends BaseDraftItem {
   endTime?: string // HH:mm
   recurringType: 'none' | 'weekly' | 'monthly'
   recurringDayOfWeek?: number
+  recurringDayOfMonth?: number
+  recurringWeeks?: number[]
   projectId?: string | null
   suggestedProjectTitle?: string
   suggestedAreaTitle?: string
@@ -66,7 +68,7 @@ export interface ScheduleDraft extends BaseDraftItem {
 export interface TodoDraft extends BaseDraftItem {
   type: 'todo'
   title: string
-  importance: number // 1-4
+  importance: number // 1-10; 10 is highest
   startDate?: string
   startTime?: string
   dueDate?: string
