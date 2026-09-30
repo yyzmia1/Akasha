@@ -247,8 +247,10 @@ export async function flushPendingChanges(): Promise<void> {
           }
         }
 
-        // Remove from pending queue on success
-        pendingChanges.delete(key)
+        // Remove from pending queue on success only if no newer mutation happened while in flight
+        if (pendingChanges.get(key) === item) {
+          pendingChanges.delete(key)
+        }
       } catch (err: any) {
         if (err?.isAbort) {
           return
@@ -256,7 +258,9 @@ export async function flushPendingChanges(): Promise<void> {
         console.warn(`[SyncEngine] Push failed for ${key}:`, err)
         // Discard invalid / 400 validation error items so they do not block the queue indefinitely
         if (err?.status === 400) {
-          pendingChanges.delete(key)
+          if (pendingChanges.get(key) === item) {
+            pendingChanges.delete(key)
+          }
           savePendingQueue()
         }
         syncStatus.value = 'error'
