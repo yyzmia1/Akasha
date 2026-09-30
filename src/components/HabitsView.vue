@@ -286,7 +286,7 @@
               v-for="h in getSlotHabits(slot.key)"
               :key="h.id"
               :id="'habit-card-' + h.id"
-              @click="toggleHabitLog(h.id, todayStr)"
+              @click="toggleHabitLog(h.id)"
               :class="[
                 'group flex items-center justify-between p-2.5 rounded-lg border transition-all cursor-pointer select-none',
                 isDoneToday(h.id)
@@ -1004,6 +1004,7 @@ import {
   calculateHabitStreak,
 } from '@/utils/habit'
 import confetti from 'canvas-confetti'
+import { useToday } from '@/composables/useToday'
 
 const props = defineProps<{
   habits: Habit[]
@@ -1048,7 +1049,7 @@ watch(
   { immediate: true }
 )
 
-const todayStr = computed(() => formatDate(new Date()))
+const { todayStr, refreshToday } = useToday()
 const currentWeek = computed(() => getWeekKey(todayStr.value))
 
 const showAddForm = ref(false)
@@ -1305,7 +1306,8 @@ function isMonthlyDone(habitId: string): boolean {
   return props.habitLogs.some((l) => l.habitId === habitId && l.completed && l.date.startsWith(month))
 }
 
-function toggleHabitLog(habitId: string, date: string) {
+function toggleHabitLog(habitId: string) {
+  const date = refreshToday()
   const done = isDoneToday(habitId)
   emit('toggle-log', { habitId, date })
   if (!done) {
@@ -1314,6 +1316,7 @@ function toggleHabitLog(habitId: string, date: string) {
 }
 
 function toggleWeekly(habit: Habit) {
+  refreshToday()
   const done = isWeeklyDone(habit)
   emit('toggle-log', { habitId: habit.id, date: todayStr.value })
   if (!done) {
@@ -1322,6 +1325,7 @@ function toggleWeekly(habit: Habit) {
 }
 
 function toggleRotating(habit: Habit) {
+  refreshToday()
   const done = isDoneToday(habit.id)
   emit('toggle-log', { habitId: habit.id, date: todayStr.value })
   if (!done) {
@@ -1330,6 +1334,7 @@ function toggleRotating(habit: Habit) {
 }
 
 function toggleMonthly(habitId: string) {
+  refreshToday()
   const done = isMonthlyDone(habitId)
   emit('toggle-log', { habitId, date: todayStr.value })
   if (!done) {

@@ -540,7 +540,7 @@
               <div
                 v-for="h in activeProjectHabits"
                 :key="h.id"
-                @click="$emit('toggle-habit', { habitId: h.id, date: todayStr })"
+                @click="toggleProjectHabit(h.id)"
                 class="group flex items-center justify-between p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-slate-300 transition-colors cursor-pointer select-none text-xs"
                 :class="[
                   (h.frequency === 'rotating' || h.frequency === 'biweekly') && !isHabitScheduledForDay(h, todayStr)
@@ -1568,6 +1568,7 @@ import {
 import { getPriorityStyle, normalizePriority } from '@/utils/priority'
 import { buildTodoTree, calculateLinkedTodoCompletion, getDescendantTodoIds } from '@/utils/tree'
 import { formatDate } from '@/utils/date'
+import { useToday } from '@/composables/useToday'
 import {
   WEEKDAY_ORDER,
   WEEKDAY_SHORT_NAMES,
@@ -1603,7 +1604,11 @@ const emit = defineEmits<{
   (e: 'batch-update', items: TodoItem[]): void
 }>()
 
-const todayStr = formatDate(new Date())
+const { todayStr, refreshToday } = useToday()
+
+function toggleProjectHabit(habitId: string) {
+  emit('toggle-habit', { habitId, date: refreshToday() })
+}
 
 const selectedAreaId = ref<string>('all')
 const collapsedAreaMap = ref<Record<string, boolean>>({})
@@ -1779,7 +1784,7 @@ const projectTodoTree = computed(() => {
 })
 
 function isHabitDoneToday(habitId: string): boolean {
-  return props.habitLogs.some((l) => l.habitId === habitId && l.date === todayStr && l.completed)
+  return props.habitLogs.some((l) => l.habitId === habitId && l.date === todayStr.value && l.completed)
 }
 
 function formatFrequency(freq: HabitFrequency): string {
@@ -1820,7 +1825,7 @@ function openCreateProjectHabit() {
     time: '',
     timingType: 'anytime',
     targetCount: 1,
-    anchorDate: todayStr,
+    anchorDate: todayStr.value,
     cycleWeeks: 2,
     weekPatterns: { 1: [1, 2, 3, 4, 5], 2: [1, 2, 3, 4, 5] },
     showOnCalendar: true,
@@ -1866,7 +1871,7 @@ function openEditHabit(habit: Habit) {
     time: habit.time || '',
     timingType: habit.timingType || 'anytime',
     targetCount: habit.targetCount || 1,
-    anchorDate: habit.anchorDate || todayStr,
+    anchorDate: habit.anchorDate || todayStr.value,
     cycleWeeks: cycle,
     weekPatterns: habit.weekPatterns ? JSON.parse(JSON.stringify(habit.weekPatterns)) : initialPatterns,
     showOnCalendar: habit.showOnCalendar ?? false,
@@ -1922,7 +1927,7 @@ const editProjectRotatingPreview = computed(() => {
     editingProjectHabit.value.cycleWeeks || 2,
     editingProjectHabit.value.weekPatterns || {},
     editingProjectHabit.value.anchorDate,
-    todayStr
+    todayStr.value
   )
 })
 
@@ -1930,7 +1935,7 @@ function saveProjectHabitEdit() {
   if (!editingProjectHabit.value || !editingProjectHabit.value.title.trim()) return
   const payload: Partial<Habit> = {
     title: editingProjectHabit.value.title.trim(),
-    projectId: editingProjectHabit.value.projectId || activeProject.value?.id || null,
+    projectId: editingProjectHabit.value.projectId ?? null,
     frequency: editingProjectHabit.value.frequency,
     timeSlot: editingProjectHabit.value.timeSlot,
     time: editingProjectHabit.value.time ? editingProjectHabit.value.time.trim() : undefined,
@@ -1967,10 +1972,10 @@ function openCreateProjectSchedule() {
   scheduleModalTitle.value = ''
   scheduleModalProjectId.value = activeProject.value?.id || null
   scheduleModalIsAllDay.value = false
-  scheduleModalStartDateTime.value = `${todayStr}T09:00`
-  scheduleModalEndDateTime.value = `${todayStr}T18:00`
-  scheduleModalStartDateOnly.value = todayStr
-  scheduleModalEndDateOnly.value = todayStr
+  scheduleModalStartDateTime.value = `${todayStr.value}T09:00`
+  scheduleModalEndDateTime.value = `${todayStr.value}T18:00`
+  scheduleModalStartDateOnly.value = todayStr.value
+  scheduleModalEndDateOnly.value = todayStr.value
   scheduleModalNotes.value = ''
   showProjectScheduleModal.value = true
 }
@@ -1985,12 +1990,12 @@ function openEditProjectSchedule(s: ScheduleItem) {
   scheduleModalIsAllDay.value = isAllDay
 
   if (isAllDay) {
-    scheduleModalStartDateOnly.value = s.date || todayStr
-    scheduleModalEndDateOnly.value = s.endDate || s.date || todayStr
+    scheduleModalStartDateOnly.value = s.date || todayStr.value
+    scheduleModalEndDateOnly.value = s.endDate || s.date || todayStr.value
     scheduleModalStartDateTime.value = `${scheduleModalStartDateOnly.value}T09:00`
     scheduleModalEndDateTime.value = `${scheduleModalEndDateOnly.value}T18:00`
   } else {
-    const sDate = s.date || todayStr
+    const sDate = s.date || todayStr.value
     const eDate = s.endDate || sDate
     const sTime = s.time || '09:00'
     const eTime = s.endTime || '18:00'
@@ -2035,7 +2040,7 @@ function handleSaveProjectSchedule() {
   let endTime: string | undefined
 
   if (scheduleModalIsAllDay.value) {
-    date = scheduleModalStartDateOnly.value || todayStr
+    date = scheduleModalStartDateOnly.value || todayStr.value
     endDate = scheduleModalEndDateOnly.value || date
     time = undefined
     endTime = undefined
@@ -2045,7 +2050,7 @@ function handleSaveProjectSchedule() {
       date = d
       time = t
     } else {
-      date = todayStr
+      date = todayStr.value
       time = '09:00'
     }
 
@@ -2058,7 +2063,7 @@ function handleSaveProjectSchedule() {
 
   const payload: Partial<ScheduleItem> = {
     title: scheduleModalTitle.value.trim(),
-    projectId: scheduleModalProjectId.value || activeProject.value?.id || null,
+    projectId: scheduleModalProjectId.value,
     date,
     time,
     endDate: endDate !== date ? endDate : undefined,
@@ -2088,10 +2093,10 @@ function openCreateProjectTodo(parentId?: string) {
   }
 
   isProjectTodoAllDay.value = false
-  projectTodoStartDateTime.value = `${todayStr}T09:00`
-  projectTodoEndDateTime.value = `${todayStr}T18:00`
-  projectTodoStartDateOnly.value = todayStr
-  projectTodoEndDateOnly.value = todayStr
+  projectTodoStartDateTime.value = `${todayStr.value}T09:00`
+  projectTodoEndDateTime.value = `${todayStr.value}T18:00`
+  projectTodoStartDateOnly.value = todayStr.value
+  projectTodoEndDateOnly.value = todayStr.value
 }
 
 function handleAddTodoChild(parentId: string) {
