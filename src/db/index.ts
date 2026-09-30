@@ -47,13 +47,15 @@ export const DEFAULT_JOURNAL_TEMPLATE = `· 今日速记与心境：
 `
 
 export async function clearAllDatabaseData() {
-  await db.areas.clear()
-  await db.projects.clear()
-  await db.schedules.clear()
-  await db.todos.clear()
-  await db.habits.clear()
-  await db.habitLogs.clear()
-  await db.journals.clear()
+  await db.transaction('rw', db.tables, async () => {
+    await db.areas.clear()
+    await db.projects.clear()
+    await db.schedules.clear()
+    await db.todos.clear()
+    await db.habits.clear()
+    await db.habitLogs.clear()
+    await db.journals.clear()
+  })
 }
 
 export async function initSeedData() {
