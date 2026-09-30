@@ -342,7 +342,7 @@ export const messages: Record<SupportedLocale, Record<string, any>> = {
       subAreas: '子分类',
       parentArea: '上级领域',
       noParentArea: '无（顶级根分类）',
-      includeSubProjects: '穿透包含子分类项目',
+      includeSubProjects: '包含子分类',
       directProjectsOnly: '仅直属项目',
       manageAreas: '管理领域'
     },
@@ -728,8 +728,8 @@ export const messages: Record<SupportedLocale, Record<string, any>> = {
       subAreas: 'Sub-areas',
       parentArea: 'Parent Area',
       noParentArea: 'None (Root Area)',
-      includeSubProjects: 'Include sub-area projects',
-      directProjectsOnly: 'Direct projects only',
+      includeSubProjects: 'Include sub-areas',
+      directProjectsOnly: 'Direct only',
       manageAreas: 'Manage Areas'
     },
     habit: {
@@ -1114,8 +1114,8 @@ export const messages: Record<SupportedLocale, Record<string, any>> = {
       subAreas: 'サブエリア',
       parentArea: '親エリア',
       noParentArea: 'なし（ルートエリア）',
-      includeSubProjects: 'サブエリアのプロジェクトを含める',
-      directProjectsOnly: '直接のプロジェクトのみ',
+      includeSubProjects: 'サブエリアを含む',
+      directProjectsOnly: '直属のみ',
       manageAreas: 'エリア管理'
     },
     habit: {

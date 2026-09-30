@@ -60,13 +60,21 @@
       <div class="lg:col-span-4 xl:col-span-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 sm:p-4 shadow-xs space-y-3">
         <!-- 目录树顶部操作栏 -->
         <div class="flex items-center justify-between px-1 pb-2 border-b border-slate-100 dark:border-slate-800">
-          <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
+          <button
+            type="button"
+            @click="isMobileDirectoryCollapsed = !isMobileDirectoryCollapsed"
+            class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer lg:cursor-default"
+          >
             <FolderTree class="w-4 h-4 text-blue-500" />
             <span>{{ t('project.areaDirectory') }}</span>
-            <span class="text-[10px] px-1.5 py-0.2 rounded-full font-mono bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+            <span class="text-[10px] px-1.5 py-0.5 rounded-full font-mono bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
               {{ areas.length }}
             </span>
-          </div>
+            <ChevronRight
+              class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200 lg:hidden"
+              :class="!isMobileDirectoryCollapsed ? 'rotate-90' : ''"
+            />
+          </button>
           <button
             type="button"
             @click="openAddAreaModal(null)"
@@ -77,8 +85,13 @@
           </button>
         </div>
 
-        <!-- 目录树内容容器 -->
-        <div class="space-y-1">
+        <!-- 目录树内容容器 (移动端可折叠，大屏始终展开) -->
+        <div
+          :class="[
+            'space-y-1 transition-all',
+            isMobileDirectoryCollapsed ? 'hidden lg:block' : 'block'
+          ]"
+        >
           <!-- 全部领域选项 -->
           <div
             @click="selectArea('all')"
@@ -94,7 +107,7 @@
               <span class="truncate">{{ t('project.allAreas') }}</span>
             </div>
             <span
-              class="text-[10px] px-1.5 py-0.2 rounded-full font-mono"
+              class="text-[10px] px-1.5 py-0.5 rounded-full font-mono"
               :class="selectedAreaId === 'all' ? 'bg-blue-100 dark:bg-blue-900/80 text-blue-700 dark:text-blue-200 font-bold' : 'bg-slate-200/60 dark:bg-slate-800 text-slate-500 dark:text-slate-400'"
             >
               {{ projects.length }}
@@ -1542,6 +1555,7 @@ const todayStr = formatDate(new Date())
 const selectedAreaId = ref<string>('all')
 const collapsedAreaMap = ref<Record<string, boolean>>({})
 const includeSubAreaProjects = ref<boolean>(true)
+const isMobileDirectoryCollapsed = ref<boolean>(false)
 
 const areaTree = computed(() => buildAreaTree(props.areas, props.projects))
 const flatAreaTree = computed(() => flattenAreaTree(areaTree.value))

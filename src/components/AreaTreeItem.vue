@@ -40,7 +40,6 @@ const hasChildren = computed(() => props.node.children && props.node.children.le
           ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-300 font-semibold border-blue-200/60 dark:border-blue-800/40 shadow-2xs'
           : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-800/60'
       ]"
-      :style="{ paddingLeft: `${node.depth * 14 + 8}px` }"
     >
       <div class="flex items-center gap-1.5 min-w-0 flex-1 mr-1">
         <!-- 折叠/展开箭头 -->
@@ -110,7 +109,7 @@ const hasChildren = computed(() => props.node.children && props.node.children.le
 
         <!-- 项目计数 Badge -->
         <span
-          class="text-[10px] px-1.5 py-0.2 rounded-full font-mono transition-colors"
+          class="text-[10px] px-1.5 py-0.5 rounded-full font-mono transition-colors"
           :class="[
             isSelected
               ? 'bg-blue-100 dark:bg-blue-900/80 text-blue-700 dark:text-blue-200 font-bold'
@@ -126,7 +125,7 @@ const hasChildren = computed(() => props.node.children && props.node.children.le
     <!-- 递归渲染子节点 -->
     <div
       v-if="hasChildren && !isCollapsed"
-      class="mt-0.5 space-y-0.5 border-l border-slate-200/60 dark:border-slate-800/80 ml-3"
+      class="mt-0.5 space-y-0.5 border-l border-slate-200/80 dark:border-slate-800 ml-3 pl-1"
     >
       <AreaTreeItem
         v-for="child in node.children"
