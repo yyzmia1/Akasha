@@ -487,12 +487,14 @@ function setMood(m: string) {
 }
 
 function handleClearOrDelete() {
-  if (activeEntry.value && confirm('确定清空今天写的这篇日记吗？')) {
-    emit('delete-journal', activeEntry.value.id)
-    journalContent.value = customTemplate.value
-  } else {
-    journalContent.value = customTemplate.value
-  }
+  if (activeEntry.value && !confirm('确定清空今天写的这篇日记吗？')) return
+  if (saveTimer) clearTimeout(saveTimer)
+  saveTimer = null
+  pendingSnapshot = null
+  isDirty.value = false
+  autoSaveStatus.value = ''
+  if (activeEntry.value) emit('delete-journal', activeEntry.value.id)
+  journalContent.value = customTemplate.value
 }
 
 function handleNewToday() {
@@ -585,7 +587,7 @@ function selectMonthFilter(monthKey: string) {
     filterMonth.value = monthKey
     const found = props.journals.find((j) => j.date.startsWith(monthKey) && !!j.content)
     if (found) {
-      selectedDate.value = found.date
+      selectDate(found.date)
     }
   }
 }
