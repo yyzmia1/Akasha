@@ -1,6 +1,11 @@
 import type { Habit, HabitLog } from '@/types'
 import { parseDate, formatDate, getMonday } from './date'
 
+export function normalizeTargetCount(value: unknown): number {
+  const count = Number(value)
+  return Number.isSafeInteger(count) && count > 0 ? count : 1
+}
+
 // JS getDay(): 0 is Sunday, 1 is Monday ... 6 is Saturday
 // 日常界面显示顺序：周一到周日
 export const WEEKDAY_ORDER = [1, 2, 3, 4, 5, 6, 0]

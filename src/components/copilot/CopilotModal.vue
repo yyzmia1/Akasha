@@ -900,10 +900,14 @@
                   <div class="flex flex-wrap items-center gap-2 text-[11px]">
                     <span class="text-slate-400 font-medium shrink-0">日期:</span>
                     <input
-                      v-model="s.date"
+                      :value="s.date"
+                      @input="moveDraftDate(s, ($event.target as HTMLInputElement).value)"
                       type="date"
                       class="px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
                     />
+                    <span v-if="s.recurringWeeks" class="text-slate-500">课程第1周日期；发生周：{{ s.recurringWeeks.join('、') }}</span>
+                    <span class="text-slate-400 font-medium shrink-0">结束日期:</span>
+                    <input v-model="s.endDate" type="date" aria-label="草稿结束日期" class="px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900" />
                     <span class="text-slate-400 font-medium shrink-0 ml-1">时间:</span>
                     <input
                       v-model="s.time"
@@ -1001,9 +1005,7 @@
                       <span
                         :class="[
                           'w-2 h-2 rounded-full shrink-0',
-                          t.importance === 4 ? 'bg-rose-500 ring-2 ring-rose-300 dark:ring-rose-900' :
-                          t.importance === 3 ? 'bg-amber-500' :
-                          t.importance === 2 ? 'bg-blue-500' : 'bg-slate-400'
+                          getPriorityStyle(t.importance).dotClass
                         ]"
                       ></span>
                       <span class="font-semibold text-slate-800 dark:text-slate-100 truncate">{{ t.title }}</span>
@@ -1072,7 +1074,7 @@
                       <span class="text-slate-400 font-medium shrink-0">重要程度:</span>
                       <div class="flex items-center gap-1">
                         <button
-                          v-for="imp in [1, 2, 3, 4]"
+                          v-for="imp in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]"
                           :key="imp"
                           type="button"
                           @click="t.importance = imp"
@@ -1203,7 +1205,7 @@
                         <span>{{ h.suggestedAreaTitle }}</span>
                       </span>
                       <span class="px-2 py-0.5 rounded-md text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-                        {{ h.frequency === 'daily' ? '每日' : '每周' }}
+                        {{ { daily: '每日', weekly: '每周', monthly: '每月', biweekly: '每两周' }[h.frequency] }} {{ h.targetCount || 1 }}次
                       </span>
                       <span v-if="h.time" class="font-mono text-blue-600 dark:text-blue-400 font-medium text-[11px]">
                         {{ h.time }}
@@ -1259,8 +1261,13 @@
                       >
                         <option value="daily">每日打卡</option>
                         <option value="weekly">每周打卡</option>
+                        <option value="monthly">每月打卡</option>
+                        <option value="biweekly">每两周打卡</option>
                       </select>
                     </div>
+                    <label class="flex items-center gap-1">目标次数:
+                      <input v-model.number="h.targetCount" type="number" min="1" step="1" aria-label="习惯目标次数" class="w-14 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900" />
+                    </label>
                     <div class="flex items-center gap-1">
                       <span class="text-slate-400 font-medium shrink-0">提醒时间:</span>
                       <input
@@ -1354,7 +1361,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onUnmounted, nextTick } from 'vue'
 import {
   Sparkles,
   Calendar,
@@ -1404,6 +1411,8 @@ import {
   getVisionConfig,
 } from '@/services/aiService'
 import { annotateConflicts } from '@/services/conflictDetector'
+import { addDays, formatDate, parseDate } from '@/utils/date'
+import { getPriorityStyle } from '@/utils/priority'
 
 const props = defineProps<{
   isOpen: boolean
@@ -1699,6 +1708,7 @@ watch(
         inputRef.value?.focus()
       }, 50)
     } else {
+      invalidateGeneration()
       showConfigView.value = false
       aiTestResult.value = null
       clearImage()
@@ -1707,7 +1717,8 @@ watch(
       // 关闭时清理幽灵草稿
       emit('update-ghosts', [])
     }
-  }
+  },
+  { flush: 'sync' }
 )
 
 const totalItemsCount = computed(() => {
@@ -1733,6 +1744,7 @@ const totalSelectedCount = computed(() => {
 
 function handleDraftSelectionChanged() {
   if (!currentPlan.value) return
+  refreshConflicts()
   // 将已选中的日程草稿向外广播，以更新日历上的幽灵虚影
   const activeGhostSchedules = currentPlan.value.schedules.filter((s) => s.selected)
   emit('update-ghosts', activeGhostSchedules)
@@ -1762,14 +1774,57 @@ const PRESET_COLORS = [
 ]
 
 const editingDraftId = ref<string | null>(null)
+let originalDraftTitle = ''
 
 function startEditDraft(id: string) {
+  stopEditDraft()
   editingDraftId.value = id
+  const item = [...(currentPlan.value?.areas || []), ...(currentPlan.value?.projects || [])].find(item => item.id === id)
+  originalDraftTitle = item?.title || ''
 }
 
 function stopEditDraft() {
+  const plan = currentPlan.value
+  if (plan && originalDraftTitle) {
+    const project = plan.projects.find(p => p.id === editingDraftId.value)
+    const area = plan.areas.find(a => a.id === editingDraftId.value)
+    const renamed = project || area
+    const oldTitle = originalDraftTitle.trim().toLowerCase()
+    if (renamed && renamed.title !== originalDraftTitle) {
+      for (const item of [...plan.schedules, ...plan.todos, ...plan.habits, ...plan.projects, ...plan.areas]) {
+        if (project && 'suggestedProjectTitle' in item && item.suggestedProjectTitle?.trim().toLowerCase() === oldTitle) item.suggestedProjectTitle = project.title
+        if (area && 'suggestedAreaTitle' in item && item.suggestedAreaTitle?.trim().toLowerCase() === oldTitle) item.suggestedAreaTitle = area.title
+        if (area && 'suggestedParentTitle' in item && item.suggestedParentTitle?.trim().toLowerCase() === oldTitle) item.suggestedParentTitle = area.title
+        if (area && 'parentId' in item && item.parentId?.trim().toLowerCase() === oldTitle) item.parentId = area.id
+      }
+    }
+  }
+  originalDraftTitle = ''
   editingDraftId.value = null
+  refreshConflicts()
 }
+
+function moveDraftDate(draft: ScheduleDraft, date: string) {
+  if (draft.date && draft.endDate && draft.recurringType === 'none' && date) {
+    const span = Math.round((parseDate(draft.endDate).getTime() - parseDate(draft.date).getTime()) / 86400000)
+    draft.endDate = formatDate(addDays(parseDate(date), Math.max(0, span)))
+  }
+  draft.date = date
+}
+
+function refreshConflicts() {
+  if (!currentPlan.value) return
+  const annotated = annotateConflicts(currentPlan.value.schedules, props.schedules)
+  annotated.forEach((result, index) => {
+    const draft = currentPlan.value!.schedules[index]
+    draft.isConflict = result.isConflict
+    draft.conflictReason = result.conflictReason
+  })
+}
+
+watch(() => [props.schedules, currentPlan.value?.schedules.map(s => [s.id, s.selected, s.title, s.date, s.endDate, s.time, s.endTime, s.recurringType, s.recurringDayOfWeek, s.recurringDayOfMonth, s.recurringWeeks])], () => {
+  if (currentPlan.value) handleDraftSelectionChanged()
+}, { deep: true })
 
 function deleteDraft(type: 'areas' | 'projects' | 'schedules' | 'todos' | 'habits', id: string) {
   if (!currentPlan.value) return
@@ -1910,6 +1965,15 @@ function handleDraftProjectOrAreaChange(draft: ScheduleDraft | TodoDraft | Habit
   }
 }
 
+let generationId = 0
+let generationController: AbortController | null = null
+function invalidateGeneration() {
+  generationId++
+  generationController?.abort()
+  generationController = null
+  isLoading.value = false
+}
+
 async function handleStartGenerate() {
   if (isLoading.value) return
   if (!selectedImageBase64.value && !inputPrompt.value.trim()) return
@@ -1932,6 +1996,10 @@ async function handleStartGenerate() {
   }
 
   isLoading.value = true
+  const requestId = ++generationId
+  const controller = new AbortController()
+  generationController = controller
+  const isCurrent = () => requestId === generationId && props.isOpen && !controller.signal.aborted
   streamingText.value = ''
   currentPlan.value = null
   isThinkingAutoScrollCoupled.value = true
@@ -1945,8 +2013,10 @@ async function handleStartGenerate() {
       result = await recognizeScheduleFromImage(
         selectedImageBase64.value,
         inputPrompt.value.trim() || undefined,
-        aiConfig.value
+        aiConfig.value,
+        controller.signal
       )
+      if (!isCurrent()) return
       // 识别完成后清理图片缓存
       clearImage()
     } else {
@@ -1964,31 +2034,41 @@ async function handleStartGenerate() {
         sysPrompt,
         getTextConfig(aiConfig.value),
         (textChunk) => {
-          streamingText.value = textChunk
-        }
+          if (isCurrent()) streamingText.value = textChunk
+        },
+        controller.signal
       )
     }
 
+    if (!isCurrent()) return
     // 对日程草稿进行本地高精度碰撞检测
     result.schedules = annotateConflicts(result.schedules, props.schedules)
     currentPlan.value = result
     streamingText.value = ''
 
     await nextTick()
+    if (!isCurrent()) return
     if (isMainAutoScrollCoupled.value && mainScrollRef.value) {
       mainScrollRef.value.scrollTop = mainScrollRef.value.scrollHeight
     }
 
     handleDraftSelectionChanged()
   } catch (err: any) {
+    if (!isCurrent()) return
     currentPlan.value = null
     streamingText.value = `❌ 解析排程失败: ${err?.message || '未知错误'}`
   } finally {
-    isLoading.value = false
+    if (isCurrent()) {
+      isLoading.value = false
+      generationController = null
+    }
   }
 }
 
 function handleDiscardPlan() {
+  invalidateGeneration()
+  editingDraftId.value = null
+  originalDraftTitle = ''
   currentPlan.value = null
   streamingText.value = ''
   emit('update-ghosts', [])
@@ -1996,6 +2076,21 @@ function handleDiscardPlan() {
 
 function handleApplyPlan() {
   if (!currentPlan.value) return
+  stopEditDraft()
+  const invalid = currentPlan.value.schedules.find(s => s.selected && (
+    (!s.date && (s.recurringType === 'none' || s.recurringWeeks)) ||
+    (s.recurringType === 'none' && s.endDate && s.endDate < s.date) ||
+    (s.time && s.endTime && (!s.endDate || s.endDate === s.date || s.recurringType !== 'none') && s.endTime <= s.time)
+  ))
+  if (invalid) {
+    alert(`日程「${invalid.title}」的起止时间无效；课程还需要填写第1周日期。请编辑后再应用。`)
+    return
+  }
+  refreshConflicts()
+  if (currentPlan.value.habits.some(h => h.selected && (!Number.isSafeInteger(h.targetCount ?? 1) || (h.targetCount ?? 1) < 1))) {
+    alert('习惯目标次数必须为正整数')
+    return
+  }
   emit('apply-plan', currentPlan.value)
   handleDiscardPlan()
   emit('close')
@@ -2019,22 +2114,7 @@ function handleKeyDown(e: KeyboardEvent) {
   }
 }
 
-function handleGlobalKey(e: KeyboardEvent) {
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'j') {
-    e.preventDefault()
-    if (props.isOpen) {
-      handleClose()
-    } else {
-      // 外层 App.vue 会监听并切换 isOpen
-    }
-  }
-}
-
-onMounted(() => {
-  window.addEventListener('keydown', handleGlobalKey)
-})
-
 onUnmounted(() => {
-  window.removeEventListener('keydown', handleGlobalKey)
+  invalidateGeneration()
 })
 </script>

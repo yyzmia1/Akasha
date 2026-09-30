@@ -2,6 +2,9 @@ import type { Project, ScheduleItem, Habit, Area } from '@/types'
 import type { AiProviderConfig, CopilotMode, CopilotPlanResult, SingleAiEndpointConfig, AiProviderType } from '@/types/copilot'
 import { buildAreaTree, flattenAreaTree } from '@/utils/areaTree'
 import { pb } from '@/sync/pocketbase'
+import { normalizePriority } from '@/utils/priority'
+import { normalizeTargetCount } from '@/utils/habit'
+import { formatDate, getMonday, parseDate } from '@/utils/date'
 export interface VisionCourseItem {
   id: string
   name: string
@@ -305,11 +308,11 @@ ${upcomingSchedulesStr}
 
 4. 待办 (Todos - Level 4 柔性任务动作)：
    - 语义定位：具体的执行行动项。
-   - 字段规范：title 必须为清晰具体的动宾结构（如“整理季度复盘数据报告”）；importance 评级为 1(日常低优) 至 4(紧急高优)；若任务步骤较多，可在 subtasks 中拆解 1~3 个简洁、具备直接落地行动力的子任务步骤。
+   - 字段规范：title 必须为清晰具体的动宾结构（如“整理季度复盘数据报告”）；importance 评级为 1(极低) 至 10(最高)，普通任务为 5，紧急任务为 9–10；若任务步骤较多，可在 subtasks 中拆解 1~3 个简洁、具备直接落地行动力的子任务步骤。
 
 5. 习惯 (Habits - Level 5 周期微习惯)：
    - 语义定位：高频自律打卡事务。
-   - 字段规范：明确 frequency ('daily' | 'weekly' | 'monthly') 与 timeSlot ('morning' | 'afternoon' | 'evening' | 'anytime')，可推荐具体触发时刻 time。
+   - 字段规范：明确 frequency ('daily' | 'weekly' | 'monthly') 与 timeSlot ('morning' | 'afternoon' | 'evening' | 'anytime')，可推荐具体触发时刻 time；targetCount 为每周期目标次数，必须为正整数（如每周三次填 3）。
 
 6. 严格输出协议与防幻觉约束：
    - 必须且仅输出合法的纯 JSON 文本，包裹在 \`\`\`json ... \`\`\` 代码块中。
@@ -360,7 +363,7 @@ JSON 输出协议结构如下：
     {
       "id": "todo-temp-1",
       "title": "梳理微调训练数据集结构",
-      "importance": 3,
+      "importance": 8,
       "dueDate": "${dateStr}",
       "dueTime": "18:00",
       "notes": "优先清洗并校验 JSONL 格式",
@@ -373,6 +376,7 @@ JSON 输出协议结构如下：
       "id": "habit-temp-1",
       "title": "阅读 AI 前沿顶会论文",
       "frequency": "daily",
+      "targetCount": 1,
       "timeSlot": "morning",
       "time": "08:30",
       "targetDaysOfWeek": [1, 2, 3, 4, 5],
@@ -391,13 +395,15 @@ export async function streamPlanGeneration(
   prompt: string,
   systemPrompt: string,
   cfg: AiProviderConfig | SingleAiEndpointConfig,
-  onChunk: (accumulatedText: string) => void
+  onChunk: (accumulatedText: string) => void,
+  signal?: AbortSignal
 ): Promise<CopilotPlanResult> {
   const { url, headers } = resolveEndpoint(cfg, '/chat/completions')
 
   const res = await fetch(url, {
     method: 'POST',
     headers,
+    signal,
     body: JSON.stringify({
       model: cfg.model,
       temperature: cfg.temperature ?? 0.3,
@@ -421,30 +427,37 @@ export async function streamPlanGeneration(
   let fullText = ''
   let buffer = ''
 
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
+  try {
+    reading: while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
 
-    buffer += decoder.decode(value, { stream: true })
-    const lines = buffer.split('\n')
-    buffer = lines.pop() || ''
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() || ''
 
-    for (const line of lines) {
-      const trimmed = line.trim()
-      if (!trimmed || !trimmed.startsWith('data:')) continue
-      const dataStr = trimmed.replace(/^data:\s*/, '')
-      if (dataStr === '[DONE]') continue
-
-      try {
-        const parsed = JSON.parse(dataStr)
-        const choice = parsed.choices?.[0]
-        const delta = (choice?.delta?.reasoning_content || '') + (choice?.delta?.content || '')
-        if (delta) {
-          fullText += delta
-          onChunk(fullText)
+      for (const line of lines) {
+        const trimmed = line.trim()
+        if (!trimmed || !trimmed.startsWith('data:')) continue
+        const dataStr = trimmed.replace(/^data:\s*/, '')
+        if (dataStr === '[DONE]') {
+          await reader.cancel()
+          break reading
         }
-      } catch (_e) {}
+
+        try {
+          const parsed = JSON.parse(dataStr)
+          const choice = parsed.choices?.[0]
+          const delta = (choice?.delta?.reasoning_content || '') + (choice?.delta?.content || '')
+          if (delta) {
+            fullText += delta
+            onChunk(fullText)
+          }
+        } catch (_e) {}
+      }
     }
+  } finally {
+    reader.releaseLock()
   }
 
   // 从 fullText 中提取 JSON
@@ -495,12 +508,14 @@ export function parsePlanResultFromText(text: string): CopilotPlanResult {
         id: s.id || `sch-draft-${Date.now()}-${idx}`,
         type: 'schedule',
         title: s.title || '拟定日程',
-        date: s.date || new Date().toISOString().substring(0, 10),
+        date: s.date || (s.recurringWeeks ? '' : formatDate(new Date())),
         time: s.time || undefined,
         endDate: s.endDate || s.date || undefined,
         endTime: s.endTime || undefined,
         recurringType: s.recurringType || 'none',
-        recurringDayOfWeek: s.recurringDayOfWeek,
+        recurringDayOfWeek: s.recurringDayOfWeek === undefined ? undefined : Number(s.recurringDayOfWeek) % 7,
+        recurringDayOfMonth: s.recurringDayOfMonth,
+        recurringWeeks: s.recurringWeeks,
         notes: s.notes || s.description || undefined,
         suggestedProjectTitle: s.suggestedProjectTitle,
         selected: true,
@@ -509,7 +524,7 @@ export function parsePlanResultFromText(text: string): CopilotPlanResult {
         id: t.id || `todo-draft-${Date.now()}-${idx}`,
         type: 'todo',
         title: t.title || '拟定待办',
-        importance: t.importance || 2,
+        importance: normalizePriority(t.importance),
         startDate: t.startDate,
         startTime: t.startTime,
         dueDate: t.dueDate,
@@ -527,6 +542,7 @@ export function parsePlanResultFromText(text: string): CopilotPlanResult {
         timeSlot: h.timeSlot || 'anytime',
         time: h.time,
         targetDaysOfWeek: h.targetDaysOfWeek,
+        targetCount: normalizeTargetCount(h.targetCount),
         description: h.description || h.notes || undefined,
         suggestedProjectTitle: h.suggestedProjectTitle,
         selected: true,
@@ -585,25 +601,28 @@ const SECTION_TIMES: Record<number, { start: string; end: string }> = {
  * 将解析出的多模态排程/课表数据规范化并转为 CopilotPlanResult
  */
 export function convertVisionDataToPlanResult(parsed: any): CopilotPlanResult {
-  const todayStr = new Date().toISOString().substring(0, 10)
+  const todayStr = formatDate(new Date())
   const schedules: CopilotPlanResult['schedules'] = []
   const todos: CopilotPlanResult['todos'] = []
   const habits: CopilotPlanResult['habits'] = []
-  const projects: CopilotPlanResult['projects'] = []
+  const projects: CopilotPlanResult['projects'] = parsePlanResultFromText(JSON.stringify({ projects: parsed.projects || [] })).projects
 
   // 1. 若模型返回标准 schedules
   if (Array.isArray(parsed.schedules)) {
     parsed.schedules.forEach((s: any, idx: number) => {
+      const courseWeeks = s.recurringWeeks || s.weeks
       schedules.push({
         id: s.id || `sch-vision-${Date.now()}-${idx}`,
         type: 'schedule',
         title: s.title || '拟定事项',
-        date: s.date || todayStr,
+        date: courseWeeks ? (parsed.semesterInfo?.startDate ? formatDate(getMonday(parseDate(parsed.semesterInfo.startDate))) : s.date || '') : s.date || todayStr,
         time: s.time,
         endDate: s.endDate || s.date || todayStr,
         endTime: s.endTime,
         recurringType: s.recurringType || 'none',
-        recurringDayOfWeek: s.recurringDayOfWeek,
+        recurringDayOfWeek: s.recurringDayOfWeek === undefined ? undefined : Number(s.recurringDayOfWeek) % 7,
+        recurringDayOfMonth: s.recurringDayOfMonth,
+        recurringWeeks: Array.isArray(courseWeeks) ? courseWeeks.map(Number).filter((week: number) => Number.isInteger(week) && week > 0 && week <= Math.min(50, Number(parsed.semesterInfo?.totalWeeks) || 50)) : undefined,
         notes: s.notes || s.description || undefined,
         suggestedProjectTitle: s.suggestedProjectTitle,
         selected: true,
@@ -626,23 +645,24 @@ export function convertVisionDataToPlanResult(parsed: any): CopilotPlanResult {
         id: `sch-vision-course-${Date.now()}-${idx}`,
         type: 'schedule',
         title: `${c.name}${locStr}${teacherStr}`,
-        date: c.date || todayStr,
+        date: parsed.semesterInfo?.startDate ? formatDate(getMonday(parseDate(parsed.semesterInfo.startDate))) : '',
         time: startTime,
-        endDate: c.endDate || c.date || todayStr,
+        endDate: undefined,
         endTime: endTime,
         recurringType: 'weekly',
-        recurringDayOfWeek: Number(c.dayOfWeek) || 1,
-        notes: [c.location ? `地点: ${c.location}` : '', c.teacher ? `讲师/负责人: ${c.teacher}` : ''].filter(Boolean).join(' | ') || undefined,
+        recurringDayOfWeek: (c.dayOfWeek === undefined ? 1 : Number(c.dayOfWeek)) % 7,
+        recurringWeeks: (Array.isArray(c.weeks) ? c.weeks : parseWeeksString(c.rawWeeksStr || '')).map(Number).filter((week: number) => Number.isInteger(week) && week > 0 && week <= Math.min(50, Number(parsed.semesterInfo?.totalWeeks) || 50)),
+        notes: [c.location ? `地点: ${c.location}` : '', c.teacher ? `讲师/负责人: ${c.teacher}` : '', !parsed.semesterInfo?.startDate ? '需填写课程第1周日期后再保存' : ''].filter(Boolean).join(' | ') || undefined,
         suggestedProjectTitle: parsed.semesterInfo?.semesterName || '日程排期',
         selected: true,
       })
     })
 
-    if (parsed.semesterInfo?.semesterName && !projects.some((p) => p.title === parsed.semesterInfo.semesterName)) {
+    if (!projects.some((p) => p.title === (parsed.semesterInfo?.semesterName || '日程排期'))) {
       projects.push({
         id: `proj-vision-${Date.now()}`,
         type: 'project',
-        title: parsed.semesterInfo.semesterName,
+        title: parsed.semesterInfo?.semesterName || '日程排期',
         color: '#6366f1',
         selected: true,
       })
@@ -656,7 +676,7 @@ export function convertVisionDataToPlanResult(parsed: any): CopilotPlanResult {
         id: t.id || `todo-vision-${Date.now()}-${idx}`,
         type: 'todo',
         title: t.title || '待办事项',
-        importance: t.importance || 2,
+        importance: normalizePriority(t.importance),
         startDate: t.startDate,
         startTime: t.startTime,
         dueDate: t.dueDate,
@@ -680,6 +700,7 @@ export function convertVisionDataToPlanResult(parsed: any): CopilotPlanResult {
         timeSlot: h.timeSlot || 'anytime',
         time: h.time,
         targetDaysOfWeek: h.targetDaysOfWeek,
+        targetCount: normalizeTargetCount(h.targetCount),
         description: h.description || h.notes || undefined,
         suggestedProjectTitle: h.suggestedProjectTitle,
         selected: true,
@@ -704,7 +725,8 @@ export function convertVisionDataToPlanResult(parsed: any): CopilotPlanResult {
 export async function recognizeScheduleFromImage(
   base64Image: string,
   userInstruction?: string,
-  configOverride?: AiProviderConfig | SingleAiEndpointConfig
+  configOverride?: AiProviderConfig | SingleAiEndpointConfig,
+  signal?: AbortSignal
 ): Promise<CopilotPlanResult> {
   const fullCfg = loadAiConfig()
   let cfg: SingleAiEndpointConfig
@@ -752,14 +774,14 @@ export async function recognizeScheduleFromImage(
       "time": "HH:mm，开始时间 (如 08:00)",
       "endTime": "HH:mm，结束时间 (如 09:40)",
       "recurringType": "none 或 weekly (若为周期性作息/课表请填 weekly)",
-      "recurringDayOfWeek": 1, // 周期性日程对应的星期几：1代表周一...7代表周日 (必须为数字 1-7)
+      "recurringDayOfWeek": 1, // 周期性日程对应的星期几：0代表周日、1代表周一...6代表周六 (必须为数字 0-6)
       "suggestedProjectTitle": "对应项目名称"
     }
   ],
   "todos": [
     {
       "title": "待办任务名称",
-      "importance": 2, // 重要度 1-4 (4最高)
+      "importance": 5, // 重要度 1-10 (10最高，普通为5)
       "dueDate": "YYYY-MM-DD (可选)",
       "subtasks": []
     }
@@ -768,6 +790,7 @@ export async function recognizeScheduleFromImage(
     {
       "title": "习惯名称",
       "frequency": "daily",
+      "targetCount": 1,
       "timeSlot": "morning"
     }
   ]
@@ -775,7 +798,8 @@ export async function recognizeScheduleFromImage(
 
 【提取规则要求】：
 1. 完整提取图片中的每一项安排，不要遗漏；
-2. 若为周课表/周作息表，请为每项日程标注 recurringType: "weekly" 和 recurringDayOfWeek (1-7)；
+若为课程，请提供 semesterInfo.startDate（学期第1周日期）及 totalWeeks，并保留每门课的 weeks 数组（单/双周不得丢弃）；无法识别时在 reasoning 说明。
+2. 若为周课表/周作息表，请为每项日程标注 recurringType: "weekly" 和 recurringDayOfWeek (0-6)；
 3. 只返回包含 JSON 内容的 Markdown 代码块，即以 \`\`\`json 开头，以 \`\`\` 结尾，严禁输出任何多余的寒暄或解释。`
 
   const userPrompt = userInstruction
@@ -805,6 +829,7 @@ export async function recognizeScheduleFromImage(
     res = await fetch(url, {
       method: 'POST',
       headers,
+      signal,
       body: JSON.stringify({
         model: cfg.model,
         messages,
@@ -874,8 +899,8 @@ export function parseRecognizedScheduleContent(rawContent: string): {
     const name = c.name.trim()
     if (!name) return
 
-    let dayOfWeek = Number(c.dayOfWeek) || 1
-    if (dayOfWeek < 1 || dayOfWeek > 7) dayOfWeek = 1
+    let dayOfWeek = Number(c.dayOfWeek)
+    if (!Number.isInteger(dayOfWeek) || dayOfWeek < 0 || dayOfWeek > 7) dayOfWeek = 1
 
     let startSection = Number(c.startSection) || 1
     if (startSection < 1) startSection = 1
@@ -885,7 +910,7 @@ export function parseRecognizedScheduleContent(rawContent: string): {
 
     let weeks: number[] = []
     if (Array.isArray(c.weeks) && c.weeks.length > 0) {
-      weeks = Array.from(new Set(c.weeks.map(Number).filter((n: number) => !isNaN(n) && n > 0 && n <= 50))).sort((a, b) => a - b)
+      weeks = Array.from(new Set<number>(c.weeks.map(Number).filter((n: number) => !isNaN(n) && n > 0 && n <= 50))).sort((a, b) => a - b)
     } else if (c.rawWeeksStr) {
       weeks = parseWeeksString(String(c.rawWeeksStr))
     }
