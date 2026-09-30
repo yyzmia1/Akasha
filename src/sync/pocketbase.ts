@@ -5,7 +5,7 @@ const PB_URL_STORAGE_KEY = 'akasha_pb_url'
 
 // By default in browser: use same origin if deployed behind reverse proxy, or fallback to relative '/'
 function getDefaultServerUrl(): string {
-  const saved = localStorage.getItem(PB_URL_STORAGE_KEY)
+  const saved = typeof localStorage !== 'undefined' ? localStorage.getItem(PB_URL_STORAGE_KEY) : null
   if (saved) return saved
   if (typeof window !== 'undefined' && window.location) {
     // If in dev mode on vite (e.g. localhost:5173), fallback to http://127.0.0.1:8090

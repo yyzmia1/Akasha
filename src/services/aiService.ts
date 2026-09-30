@@ -1,6 +1,7 @@
 import type { Project, ScheduleItem, Habit, Area } from '@/types'
 import type { AiProviderConfig, CopilotMode, CopilotPlanResult, SingleAiEndpointConfig, AiProviderType } from '@/types/copilot'
 import { buildAreaTree, flattenAreaTree } from '@/utils/areaTree'
+import { pb } from '@/sync/pocketbase'
 export interface VisionCourseItem {
   id: string
   name: string
@@ -131,6 +132,9 @@ function resolveEndpoint(
   const targetUrl = `${target}${cleanPath}`
 
   if (cfg.useProxy) {
+    if (!pb.authStore.isValid) {
+      throw new Error('使用 AI 代理前请先登录云端账号；也可关闭代理后直接连接支持跨域的接口。')
+    }
     // 走 Nginx 内部反向代理通道
     return {
       url: `/api/ai-proxy${cleanPath}`,
@@ -138,6 +142,7 @@ function resolveEndpoint(
         'Content-Type': 'application/json',
         Authorization: `Bearer ${cfg.apiKey || ''}`,
         'X-Target-Url': targetUrl,
+        'X-Akasha-Token': pb.authStore.token,
       },
     }
   }
