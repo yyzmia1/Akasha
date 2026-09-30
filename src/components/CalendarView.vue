@@ -2209,7 +2209,7 @@ import {
   List,
   AlertCircle,
 } from 'lucide-vue-next'
-import type { TodoItem, JournalEntry, ScheduleItem, Project, Habit, HabitLog, CalendarViewMode } from '@/types'
+import type { TodoItem, JournalEntry, ScheduleItem, Project, Habit, HabitLog, CalendarViewMode, Area } from '@/types'
 import type { ScheduleDraft } from '@/types/copilot'
 import {
   getViewDays,
@@ -2222,6 +2222,7 @@ import {
 } from '@/utils/date'
 import { getPriorityStyle } from '@/utils/priority'
 import { isHabitScheduledForDay } from '@/utils/habit'
+import { getAreaDescendantIds } from '@/utils/areaTree'
 import {
   parseMinutes,
   formatDuration,
@@ -2235,6 +2236,7 @@ const props = defineProps<{
   todos: TodoItem[]
   schedules: ScheduleItem[]
   projects: Project[]
+  areas?: Area[]
   journals: JournalEntry[]
   habits?: Habit[]
   habitLogs?: HabitLog[]
@@ -2555,9 +2557,56 @@ function getScheduleTimeDisplay(s: ScheduleItem, currentDateStr?: string): strin
   return '全天'
 }
 
+// 领域日历可见性：过滤隐藏领域（及其子孙领域）下的项目与对应习惯、日程、待办
+const hiddenAreaIds = computed<Set<string>>(() => {
+  if (!props.areas || props.areas.length === 0) return new Set<string>()
+  const set = new Set<string>()
+  for (const a of props.areas) {
+    if (a.showOnCalendar === false) {
+      set.add(a.id)
+      const descendants = getAreaDescendantIds(a.id, props.areas)
+      for (const d of descendants) {
+        set.add(d)
+      }
+    }
+  }
+  return set
+})
+
+const hiddenProjectIds = computed<Set<string>>(() => {
+  if (hiddenAreaIds.value.size === 0 || !props.projects || props.projects.length === 0) {
+    return new Set<string>()
+  }
+  const set = new Set<string>()
+  for (const p of props.projects) {
+    if (p.areaId && hiddenAreaIds.value.has(p.areaId)) {
+      set.add(p.id)
+    }
+  }
+  return set
+})
+
+const visibleHabits = computed<Habit[]>(() => {
+  if (!props.habits || props.habits.length === 0) return []
+  if (hiddenProjectIds.value.size === 0) return props.habits
+  return props.habits.filter((h) => !h.projectId || !hiddenProjectIds.value.has(h.projectId))
+})
+
+const visibleSchedules = computed<ScheduleItem[]>(() => {
+  if (!props.schedules || props.schedules.length === 0) return []
+  if (hiddenProjectIds.value.size === 0) return props.schedules
+  return props.schedules.filter((s) => !s.projectId || !hiddenProjectIds.value.has(s.projectId))
+})
+
+const visibleTodos = computed<TodoItem[]>(() => {
+  if (!props.todos || props.todos.length === 0) return []
+  if (hiddenProjectIds.value.size === 0) return props.todos
+  return props.todos.filter((t) => !t.projectId || !hiddenProjectIds.value.has(t.projectId))
+})
+
 function getHabitsForDay(dateStr: string): Habit[] {
-  if (!props.habits) return []
-  return props.habits.filter((h) => {
+  if (visibleHabits.value.length === 0) return []
+  return visibleHabits.value.filter((h) => {
     if (!h.showOnCalendar) return false
     return isHabitScheduledForDay(h, dateStr)
   })
@@ -2685,7 +2734,7 @@ function getProjectColor(projectId?: string | null): string {
 }
 
 function getSchedulesForDay(dateStr: string): ScheduleItem[] {
-  return props.schedules.filter((s) => {
+  return visibleSchedules.value.filter((s) => {
     if (s.endDate) {
       return isDateInRange(dateStr, s.date, s.endDate)
     }
@@ -2756,7 +2805,7 @@ function getTodoDayDateBadge(todo: TodoItem, dateStr: string): string {
 }
 
 const datedTodos = computed(() => {
-  return props.todos.filter((t) => !!t.dueDate || !!t.startDate)
+  return visibleTodos.value.filter((t) => !!t.dueDate || !!t.startDate)
 })
 
 function getTodosForDay(dateStr: string, limit?: number): TodoItem[] {

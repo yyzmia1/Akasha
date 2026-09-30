@@ -6,7 +6,9 @@ import {
   ChevronRight,
   Plus,
   Edit2,
-  Trash2
+  Trash2,
+  Calendar,
+  CalendarOff
 } from 'lucide-vue-next'
 import type { Area, AreaTreeNode } from '@/types'
 
@@ -22,6 +24,7 @@ const emit = defineEmits<{
   (e: 'add-subarea', parentId: string): void
   (e: 'edit-area', area: Area): void
   (e: 'delete-area', area: Area): void
+  (e: 'toggle-calendar', area: Area): void
   (e: 'drop-area', payload: { draggedId: string; targetId: string; position: 'before' | 'after' | 'inside' }): void
   (e: 'drop-project', payload: { projectId: string; targetAreaId: string }): void
 }>()
@@ -210,6 +213,18 @@ function handleDrop(e: DragEvent) {
         <div class="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-opacity">
           <button
             type="button"
+            @click.stop="emit('toggle-calendar', node)"
+            class="p-0.5 rounded transition-colors cursor-pointer"
+            :class="node.showOnCalendar === false
+              ? 'text-amber-500 hover:text-amber-600 hover:bg-amber-100/60 dark:hover:bg-amber-900/40'
+              : 'text-slate-400 hover:text-blue-600 hover:bg-slate-200/60 dark:hover:bg-slate-700/60'"
+            :title="node.showOnCalendar === false ? '日历已隐藏（点击在日历中显示）' : '日历已显示（点击在日历中隐藏）'"
+          >
+            <CalendarOff v-if="node.showOnCalendar === false" class="w-3 h-3" />
+            <Calendar v-else class="w-3 h-3" />
+          </button>
+          <button
+            type="button"
             @click.stop="emit('add-subarea', node.id)"
             class="p-0.5 rounded text-slate-400 hover:text-blue-600 hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors cursor-pointer"
             title="新建子领域"
@@ -233,6 +248,15 @@ function handleDrop(e: DragEvent) {
             <Trash2 class="w-3 h-3" />
           </button>
         </div>
+
+        <!-- 日历隐藏状态常驻指示（非 hover 状态也能感知） -->
+        <span
+          v-if="node.showOnCalendar === false"
+          class="text-amber-500/80 dark:text-amber-400/80 group-hover:hidden"
+          title="此领域已在日历中隐藏"
+        >
+          <CalendarOff class="w-3 h-3" />
+        </span>
 
         <!-- 项目计数 Badge -->
         <span
@@ -265,6 +289,7 @@ function handleDrop(e: DragEvent) {
         @add-subarea="emit('add-subarea', $event)"
         @edit-area="emit('edit-area', $event)"
         @delete-area="emit('delete-area', $event)"
+        @toggle-calendar="emit('toggle-calendar', $event)"
         @drop-area="emit('drop-area', $event)"
         @drop-project="emit('drop-project', $event)"
       />

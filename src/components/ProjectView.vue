@@ -131,6 +131,7 @@
               @add-subarea="openAddAreaModal($event)"
               @edit-area="openEditAreaModal($event)"
               @delete-area="handleDeleteAreaClick($event)"
+              @toggle-calendar="handleToggleAreaCalendar($event)"
               @drop-area="handleDropArea($event)"
               @drop-project="handleDropProject($event)"
             />
@@ -238,6 +239,22 @@
               >
                 <FolderPlus class="w-3.5 h-3.5" />
                 <span>{{ t('project.newSubArea') }}</span>
+              </button>
+
+              <!-- 日历可见性切换 -->
+              <button
+                v-if="selectedAreaId !== 'all' && currentSelectedArea"
+                type="button"
+                @click="handleToggleAreaCalendar(currentSelectedArea)"
+                class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+                :class="currentSelectedArea.showOnCalendar !== false
+                  ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60'
+                  : 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900/60'"
+                :title="currentSelectedArea.showOnCalendar !== false ? '在日历中显示（点击切换为隐藏）' : '在日历中隐藏（点击切换为显示）'"
+              >
+                <Calendar v-if="currentSelectedArea.showOnCalendar !== false" class="w-3.5 h-3.5" />
+                <CalendarOff v-else class="w-3.5 h-3.5" />
+                <span>{{ currentSelectedArea.showOnCalendar !== false ? '日历已显示' : '日历已隐藏' }}</span>
               </button>
 
               <!-- 编辑当前领域 -->
@@ -845,6 +862,18 @@
                 :style="{ backgroundColor: c }"
               ></button>
             </div>
+          </div>
+
+          <!-- 日历可见性 Calendar Visibility -->
+          <div class="pt-1">
+            <label class="flex items-center gap-2 cursor-pointer select-none text-xs text-slate-700 dark:text-slate-300">
+              <input
+                type="checkbox"
+                v-model="areaModalShowOnCalendar"
+                class="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
+              />
+              <span>在日历中显示此领域（含其子领域与项目的所有日程、待办与习惯）</span>
+            </label>
           </div>
         </div>
 
@@ -2350,12 +2379,14 @@ const editingAreaId = ref<string | null>(null)
 const areaModalTitle = ref('')
 const areaModalParentId = ref<string | null>(null)
 const areaModalColor = ref('#3b82f6')
+const areaModalShowOnCalendar = ref(true)
 
 function openAddAreaModal(parentId?: string | null) {
   editingAreaId.value = null
   areaModalTitle.value = ''
   areaModalParentId.value = parentId || null
   areaModalColor.value = '#3b82f6'
+  areaModalShowOnCalendar.value = true
   showAddAreaModal.value = true
 }
 
@@ -2364,7 +2395,15 @@ function openEditAreaModal(area: Area) {
   areaModalTitle.value = area.title
   areaModalParentId.value = area.parentId || null
   areaModalColor.value = area.color || '#3b82f6'
+  areaModalShowOnCalendar.value = area.showOnCalendar !== false
   showAddAreaModal.value = true
+}
+
+function handleToggleAreaCalendar(area: Area) {
+  emit('save-area', {
+    ...area,
+    showOnCalendar: area.showOnCalendar === false ? true : false,
+  })
 }
 
 const disabledParentAreaIds = computed(() => {
@@ -2451,12 +2490,14 @@ function handleSaveAreaModal() {
       title,
       parentId,
       color,
+      showOnCalendar: areaModalShowOnCalendar.value,
     })
   } else {
     emit('save-area', {
       title,
       parentId,
       color,
+      showOnCalendar: areaModalShowOnCalendar.value,
       order: props.areas.length,
     })
   }

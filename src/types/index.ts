@@ -9,6 +9,7 @@ export interface Area {
   order: number
   icon?: string
   color?: string
+  showOnCalendar?: boolean
   createdAt: string
   updatedAt?: number | string
 }

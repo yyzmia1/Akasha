@@ -16,6 +16,7 @@
         :todos="todos"
         :schedules="schedules"
         :projects="projects"
+        :areas="areas"
         :journals="journals"
         :habits="habits"
         :habit-logs="habitLogs"
@@ -500,9 +501,12 @@ async function handleApplyCopilotPlan(plan: CopilotPlanResult) {
   }
 
   for (const pd of selectedProjects) {
-    let resolvedAreaId = pd.areaId || null
-    if (!resolvedAreaId && pd.suggestedAreaTitle) {
+    let resolvedAreaId: string | null = null
+    if (pd.suggestedAreaTitle) {
       resolvedAreaId = areaTitleToRealId.get(pd.suggestedAreaTitle.trim().toLowerCase()) || null
+    }
+    if (!resolvedAreaId && pd.areaId) {
+      resolvedAreaId = pd.areaId
     }
     if (resolvedAreaId && realAreaIdMap.has(resolvedAreaId)) {
       resolvedAreaId = realAreaIdMap.get(resolvedAreaId)!
@@ -529,9 +533,12 @@ async function handleApplyCopilotPlan(plan: CopilotPlanResult) {
 
   // 2. 创建日程
   for (const sd of selectedSchedules) {
-    let assignedProjectId = sd.projectId || null
-    if (!assignedProjectId && sd.suggestedProjectTitle) {
+    let assignedProjectId: string | null = null
+    if (sd.suggestedProjectTitle) {
       assignedProjectId = projectTitleMap.get(sd.suggestedProjectTitle.trim().toLowerCase()) || null
+    }
+    if (!assignedProjectId && sd.projectId && projects.value.some((p) => p.id === sd.projectId)) {
+      assignedProjectId = sd.projectId
     }
 
     const newSch: ScheduleItem = {
@@ -555,9 +562,12 @@ async function handleApplyCopilotPlan(plan: CopilotPlanResult) {
 
   // 3. 创建待办 (含子任务)
   for (const td of selectedTodos) {
-    let assignedProjectId = td.projectId || null
-    if (!assignedProjectId && td.suggestedProjectTitle) {
+    let assignedProjectId: string | null = null
+    if (td.suggestedProjectTitle) {
       assignedProjectId = projectTitleMap.get(td.suggestedProjectTitle.trim().toLowerCase()) || null
+    }
+    if (!assignedProjectId && td.projectId && projects.value.some((p) => p.id === td.projectId)) {
+      assignedProjectId = td.projectId
     }
 
     const parentId = 'todo-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7)
@@ -605,9 +615,12 @@ async function handleApplyCopilotPlan(plan: CopilotPlanResult) {
 
   // 4. 创建习惯
   for (const hd of selectedHabits) {
-    let assignedProjectId = hd.projectId || null
-    if (!assignedProjectId && hd.suggestedProjectTitle) {
+    let assignedProjectId: string | null = null
+    if (hd.suggestedProjectTitle) {
       assignedProjectId = projectTitleMap.get(hd.suggestedProjectTitle.trim().toLowerCase()) || null
+    }
+    if (!assignedProjectId && hd.projectId && projects.value.some((p) => p.id === hd.projectId)) {
+      assignedProjectId = hd.projectId
     }
 
     const newHabit: Habit = {
@@ -806,6 +819,7 @@ async function handleSaveArea(areaData: Partial<Area>) {
       order: areaData.order ?? areas.value.length,
       icon: areaData.icon,
       color: areaData.color,
+      showOnCalendar: areaData.showOnCalendar ?? true,
       createdAt: new Date().toISOString(),
       updatedAt: now,
     }

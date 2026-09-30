@@ -458,13 +458,14 @@
 
         <!-- 流式打字生成进度与思考推理 -->
         <div
-          v-if="isLoading || streamingText"
+          v-if="(isLoading || streamingText) && !currentPlan"
           class="p-3.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/40 space-y-2 animate-in fade-in"
         >
           <div class="flex items-center justify-between text-xs font-semibold text-blue-700 dark:text-blue-300">
             <div class="flex items-center gap-2">
-              <Sparkles class="w-3.5 h-3.5 text-blue-500 animate-spin" />
-              <span>AI 排程思考与构思中...</span>
+              <Sparkles v-if="isLoading" class="w-3.5 h-3.5 text-blue-500 animate-spin" />
+              <AlertCircle v-else class="w-3.5 h-3.5 text-amber-500" />
+              <span>{{ isLoading ? 'AI 排程思考与构思中...' : '生成状态' }}</span>
             </div>
             <!-- 当用户向上翻动脱耦时，显示快速回到底部的提示按钮 -->
             <button
@@ -743,10 +744,11 @@
                     <div class="flex items-center gap-1.5 flex-1 min-w-[180px]">
                       <span class="text-slate-400 font-medium shrink-0">所属领域:</span>
                       <select
-                        v-model="p.suggestedAreaTitle"
-                        class="flex-1 max-w-[200px] px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                        :value="p.suggestedAreaTitle || ''"
+                        @change="handleProjectAreaChange(p, ($event.target as HTMLSelectElement).value)"
+                        class="flex-1 max-w-[200px] px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 truncate"
                       >
-                        <option :value="undefined">无所属领域</option>
+                        <option value="">无所属领域</option>
                         <option v-for="title in allAvailableAreaTitles" :key="title" :value="title">
                           {{ title }}
                         </option>
@@ -906,6 +908,23 @@
                       class="px-1.5 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
                     />
                   </div>
+                  <div class="flex items-center gap-1.5 text-[11px]">
+                    <span class="text-slate-400 font-medium shrink-0">所属项目/领域:</span>
+                    <select
+                      :value="s.suggestedProjectTitle || ''"
+                      @change="handleDraftProjectChange(s, ($event.target as HTMLSelectElement).value)"
+                      class="flex-1 max-w-[280px] px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 truncate"
+                    >
+                      <option value="">无所属项目（公用日程）</option>
+                      <option
+                        v-for="opt in allAvailableProjectOptions"
+                        :key="opt.title"
+                        :value="opt.title"
+                      >
+                        {{ opt.title }} ({{ opt.areaTitle ? `领域: ${opt.areaTitle}` : '无所属领域' }}) {{ opt.isDraft ? '[本次拟定]' : '' }}
+                      </option>
+                    </select>
+                  </div>
                   <div class="flex items-center justify-end gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
                     <button
                       type="button"
@@ -968,6 +987,12 @@
                     </label>
 
                     <div class="flex items-center gap-1.5 shrink-0">
+                      <span
+                        v-if="t.suggestedProjectTitle"
+                        class="text-[10px] px-2 py-0.5 rounded-full bg-blue-100/70 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 shrink-0"
+                      >
+                        {{ t.suggestedProjectTitle }}
+                      </span>
                       <span
                         v-if="t.dueDate"
                         class="text-[10px] text-slate-400 font-mono"
@@ -1047,6 +1072,23 @@
                       class="w-full px-2 py-1 text-xs rounded border border-blue-400 dark:border-blue-500 bg-white dark:bg-slate-900 focus:outline-hidden"
                     ></textarea>
                   </div>
+                  <div class="flex items-center gap-1.5 text-[11px]">
+                    <span class="text-slate-400 font-medium shrink-0">所属项目/领域:</span>
+                    <select
+                      :value="t.suggestedProjectTitle || ''"
+                      @change="handleDraftProjectChange(t, ($event.target as HTMLSelectElement).value)"
+                      class="flex-1 max-w-[280px] px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 truncate"
+                    >
+                      <option value="">无所属项目（独立待办）</option>
+                      <option
+                        v-for="opt in allAvailableProjectOptions"
+                        :key="opt.title"
+                        :value="opt.title"
+                      >
+                        {{ opt.title }} ({{ opt.areaTitle ? `领域: ${opt.areaTitle}` : '无所属领域' }}) {{ opt.isDraft ? '[本次拟定]' : '' }}
+                      </option>
+                    </select>
+                  </div>
                   <div class="flex items-center justify-end gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
                     <button
                       type="button"
@@ -1101,6 +1143,12 @@
                     </label>
 
                     <div class="flex items-center gap-1.5 shrink-0">
+                      <span
+                        v-if="h.suggestedProjectTitle"
+                        class="text-[10px] px-2 py-0.5 rounded-full bg-blue-100/70 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 shrink-0"
+                      >
+                        {{ h.suggestedProjectTitle }}
+                      </span>
                       <span class="px-2 py-0.5 rounded-md text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
                         {{ h.frequency === 'daily' ? '每日' : '每周' }}
                       </span>
@@ -1168,6 +1216,23 @@
                         class="px-1.5 py-0.5 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
                       />
                     </div>
+                  </div>
+                  <div class="flex items-center gap-1.5 text-[11px]">
+                    <span class="text-slate-400 font-medium shrink-0">所属项目/领域:</span>
+                    <select
+                      :value="h.suggestedProjectTitle || ''"
+                      @change="handleDraftProjectChange(h, ($event.target as HTMLSelectElement).value)"
+                      class="flex-1 max-w-[280px] px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 truncate"
+                    >
+                      <option value="">无所属项目（通用习惯）</option>
+                      <option
+                        v-for="opt in allAvailableProjectOptions"
+                        :key="opt.title"
+                        :value="opt.title"
+                      >
+                        {{ opt.title }} ({{ opt.areaTitle ? `领域: ${opt.areaTitle}` : '无所属领域' }}) {{ opt.isDraft ? '[本次拟定]' : '' }}
+                      </option>
+                    </select>
                   </div>
                   <div class="flex items-center justify-end gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
                     <button
@@ -1570,6 +1635,8 @@ watch(
       showConfigView.value = false
       aiTestResult.value = null
       clearImage()
+      streamingText.value = ''
+      currentPlan.value = null
       // 关闭时清理幽灵草稿
       emit('update-ghosts', [])
     }
@@ -1695,6 +1762,62 @@ const allAvailableAreaTitles = computed(() => {
   return Array.from(titles)
 })
 
+interface AvailableProjectOption {
+  title: string
+  areaTitle?: string
+  isDraft: boolean
+}
+
+const allAvailableProjectOptions = computed<AvailableProjectOption[]>(() => {
+  const options: AvailableProjectOption[] = []
+  const seenTitles = new Set<string>()
+
+  // 1. 本次拟定的项目草稿
+  if (currentPlan.value?.projects) {
+    for (const p of currentPlan.value.projects) {
+      const trimmed = p.title?.trim()
+      if (!trimmed || seenTitles.has(trimmed.toLowerCase())) continue
+      seenTitles.add(trimmed.toLowerCase())
+      let areaTitle = p.suggestedAreaTitle
+      if (!areaTitle && p.areaId) {
+        areaTitle = props.areas.find((a) => a.id === p.areaId)?.title
+      }
+      options.push({
+        title: trimmed,
+        areaTitle,
+        isDraft: true,
+      })
+    }
+  }
+
+  // 2. 数据库中已有的项目
+  for (const p of props.projects) {
+    const trimmed = p.title?.trim()
+    if (!trimmed || seenTitles.has(trimmed.toLowerCase())) continue
+    seenTitles.add(trimmed.toLowerCase())
+    const areaTitle = props.areas.find((a) => a.id === p.areaId)?.title
+    options.push({
+      title: trimmed,
+      areaTitle,
+      isDraft: false,
+    })
+  }
+
+  return options
+})
+
+function handleProjectAreaChange(p: ProjectDraft, title: string) {
+  p.suggestedAreaTitle = title || undefined
+  const matchingArea = props.areas.find((a) => a.title.trim().toLowerCase() === title.trim().toLowerCase())
+  p.areaId = matchingArea ? matchingArea.id : null
+}
+
+function handleDraftProjectChange(draft: ScheduleDraft | TodoDraft | HabitDraft, projectTitle: string) {
+  draft.suggestedProjectTitle = projectTitle || undefined
+  const matchingProj = props.projects.find((p) => p.title.trim().toLowerCase() === projectTitle.trim().toLowerCase())
+  draft.projectId = matchingProj ? matchingProj.id : null
+}
+
 async function handleStartGenerate() {
   if (isLoading.value) return
   if (!selectedImageBase64.value && !inputPrompt.value.trim()) return
@@ -1757,6 +1880,7 @@ async function handleStartGenerate() {
     // 对日程草稿进行本地高精度碰撞检测
     result.schedules = annotateConflicts(result.schedules, props.schedules)
     currentPlan.value = result
+    streamingText.value = ''
 
     await nextTick()
     if (isMainAutoScrollCoupled.value && mainScrollRef.value) {
@@ -1765,6 +1889,7 @@ async function handleStartGenerate() {
 
     handleDraftSelectionChanged()
   } catch (err: any) {
+    currentPlan.value = null
     streamingText.value = `❌ 解析排程失败: ${err?.message || '未知错误'}`
   } finally {
     isLoading.value = false
@@ -1773,6 +1898,7 @@ async function handleStartGenerate() {
 
 function handleDiscardPlan() {
   currentPlan.value = null
+  streamingText.value = ''
   emit('update-ghosts', [])
 }
 
