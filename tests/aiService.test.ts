@@ -105,6 +105,10 @@ describe('aiService (AI 规划解析与上下文构建)', () => {
       habits: [],
     })
     expect(promptScheduleOnly).toContain('专一模式：仅提取日程安排')
+    expect(promptScheduleOnly).toContain('以用户描述为第一准则')
+    expect(promptScheduleOnly).toContain('日程支持并允许重复交叠')
+    expect(promptScheduleOnly).not.toContain('主动避开已有重叠时段')
+    expect(promptScheduleOnly).not.toContain('说明避碰原因')
   })
 
   it('saveAiConfig 应触发 onAiConfigChange 监听回调', () => {

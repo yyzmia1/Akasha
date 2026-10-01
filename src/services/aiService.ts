@@ -245,7 +245,7 @@ export function buildSystemPrompt(params: {
     })
     .join('\n') || '暂无项目'
 
-  // 提取近期已有日程，供避碰参考
+  // 提取近期已有日程，供上下文参考
   const upcomingSchedulesStr = params.schedules
     .filter((s) => {
       const sDate = s.date || s.createdAt?.substring(0, 10)
@@ -253,23 +253,23 @@ export function buildSystemPrompt(params: {
     })
     .slice(0, 20)
     .map((s) => `- 日期: ${s.date} 时间: ${s.time || '全天'} ~ ${s.endTime || ''} 事项:「${s.title}」`)
-    .join('\n') || '近期暂无排程冲突项'
+    .join('\n') || '近期暂无其他排程'
 
   const activeHoursStr = params.activeHours
     ? `活跃工作时段: ${params.activeHours.start} 至 ${params.activeHours.end}`
     : '活跃工作时段: 08:00 至 22:00'
 
   return `你是由 Akasha 个人效能管理系统驱动的顶尖 AI 效能架构师与智能副驾驶（Copilot），深度融合 PARA 组织架构体系、GTD 工作流与时间块（Time-blocking）排程法，对标 Amie、Motion、Notion Calendar 与 Things 3。
-你的职责是精准理解用户的自然语言输入，将其转化为高结构化、严谨清晰、逻辑闭环且避开排程冲突的领域架构、攻坚项目、时间块日程、待办清单与日常习惯。
+你的职责是精准理解用户的自然语言输入，以用户描述为第一准则，将其转化为高结构化、严谨清晰、逻辑闭环的领域架构、攻坚项目、时间块日程、待办清单与日常习惯。
 
 【当前基准环境】
 - 当前时间：${dateStr} ${timeStr} (${dayOfWeekStr})
-- ${activeHoursStr}（夜间非活跃时段默认不排定常规事务）
+- ${activeHoursStr}（当用户未指定具体时刻且需自主推导时参考；若用户明确指明时间则无条件遵从用户输入）
 - 现有已有领域结构（支持无限层级父子树形嵌套）：
 ${areaListStr}
 - 现有已有项目列表（可直接挂载关联）：
 ${projectListStr}
-- 近期已有日程排期（用于碰撞检测与避开冲突）：
+- 近期已有日程排期（仅作为生活/工作节奏背景参考，绝非避让限制）：
 ${upcomingSchedulesStr}
 
 【当前指令处理模式】：${
@@ -301,10 +301,15 @@ ${upcomingSchedulesStr}
    - 领域归属：优先关联基准环境中的已有领域（填入 areaId），或关联本次新建的领域（填入 suggestedAreaTitle）；若无特定归属可留空。
 
 3. 日程 (Schedules - Level 3 刚性时间块)：
-   - 语义定位：硬性时间承诺，在日历特定时段占据排期（如会议、考试、预约、飞行、专有时段）。
+   - 语义定位：硬性时间承诺与时间块安排，在日历特定时段占据排期（如会议、考试、预约、出行、专有时段、并行任务等）。
+   - 【第一核心准则：以用户描述为第一准则】：
+     * 用户的自然语言描述是排程的绝对第一准则！凡是用户明确指出的具体日期、时间点或起止时段（如“下午2点到4点”、“明天上午10点”、“周五全天”），必须 100% 严格忠实采用，绝不擅自更改、推迟、错开或顺延用户要求的时间。
+   - 【第二核心准则：日程支持并允许重复交叠，无需专门排程分开】：
+     * 日程完全可以重复交叠、同时进行、多轨并行或相互包含（例如同一时段内同时进行两场活动、并行事项、双轨排程、包含在长会议中的专项汇报等）。
+     * 严禁专门排程变成分开的、互不重叠的日程！绝对不要因为时间重叠而强行错开排到其他时间段，也绝不要把并发交叠的事项强行拆分成先后独立的时间块。用户描述在什么时间，就排在什么时间，允许并完全支持时间完全重合或部分交叠。
+     * 基准环境中的“近期已有日程排期”仅供了解用户的活动背景参考，绝不是避让或排斥冲突的依据。严禁为了所谓“避碰”而擅自修改用户指定的时间。
    - 相对时间换算：必须以基准时间（${dateStr} ${timeStr} ${dayOfWeekStr}）为准，将“今天”、“明天”、“后天”、“本周五”、“下周一”严格换算为公历绝对日期 YYYY-MM-DD，严禁在 date 字段中输出相对词汇。
-   - 时间跨度：必须明确 date (YYYY-MM-DD)、time (HH:mm) 及 endTime (HH:mm)，若用户未明确时长，常规事项默认安排 30~60 分钟。
-   - 冲突避让：参考基准环境中的近期排程，主动避开已有重叠时段，在 reasoning 中明确说明避碰原因；常规非紧急事项禁止排在夜间非活跃时段。
+   - 时间跨度：必须明确 date (YYYY-MM-DD)、time (HH:mm) 及 endTime (HH:mm)。若用户未明确时长，常规事项默认安排 30~60 分钟；若用户完全未指定具体时段，可结合当前时间与活跃时段推导，但用户一旦有任何明确时间偏好，一律以用户描述为准。
 
 4. 待办 (Todos - Level 4 柔性任务动作)：
    - 语义定位：具体的执行行动项。
@@ -322,7 +327,7 @@ ${upcomingSchedulesStr}
 JSON 输出协议结构如下：
 \`\`\`json
 {
-  "reasoning": "用一两句亲切自然的话阐述你的领域架构规划、排程思考与避让考量...",
+  "reasoning": "用一两句亲切自然的话阐述你的领域架构规划、排程思考与要点说明...",
   "areas": [
     {
       "id": "area-temp-1",
@@ -800,7 +805,8 @@ export async function recognizeScheduleFromImage(
 1. 完整提取图片中的每一项安排，不要遗漏；
 若为课程，请提供 semesterInfo.startDate（学期第1周日期）及 totalWeeks，并保留每门课的 weeks 数组（单/双周不得丢弃）；无法识别时在 reasoning 说明。
 2. 若为周课表/周作息表，请为每项日程标注 recurringType: "weekly" 和 recurringDayOfWeek (0-6)；
-3. 只返回包含 JSON 内容的 Markdown 代码块，即以 \`\`\`json 开头，以 \`\`\` 结尾，严禁输出任何多余的寒暄或解释。`
+3. 允许日程时间交叠与并行，忠实按图片所示时段提取，不要强行错开或拆分；
+4. 只返回包含 JSON 内容的 Markdown 代码块，即以 \`\`\`json 开头，以 \`\`\` 结尾，严禁输出任何多余的寒暄或解释。`
 
   const userPrompt = userInstruction
     ? `请识别这张图片中的所有排程与安排。特别说明：${userInstruction}`
