@@ -27,10 +27,28 @@ export const authToken = ref<string>(pb.authStore.token)
 export const currentUser = ref<any>(pb.authStore.record || pb.authStore.model)
 export const isAuthenticated = computed(() => !!authToken.value && !!currentUser.value)
 
+export const LAST_USER_ID_KEY = 'akasha_last_user_id'
+
+export function getLastUserId(): string | null {
+  return typeof localStorage !== 'undefined' ? localStorage.getItem(LAST_USER_ID_KEY) : null
+}
+
+export function setLastUserId(id: string | null): void {
+  if (typeof localStorage === 'undefined') return
+  if (id) {
+    localStorage.setItem(LAST_USER_ID_KEY, id)
+  } else {
+    localStorage.removeItem(LAST_USER_ID_KEY)
+  }
+}
+
 // Listen to auth changes from PocketBase SDK
 pb.authStore.onChange((token, model) => {
   authToken.value = token
   currentUser.value = model
+  if (model?.id) {
+    setLastUserId(model.id)
+  }
 })
 
 export function setServerUrl(newUrl: string): void {
@@ -97,6 +115,9 @@ export async function loginUser(account: string, password: string): Promise<any>
   const authData = await pb.collection('users').authWithPassword(normalizedEmail, password)
   authToken.value = authData.token
   currentUser.value = authData.record || (authData as any).model
+  if (currentUser.value?.id) {
+    setLastUserId(currentUser.value.id)
+  }
   return authData
 }
 

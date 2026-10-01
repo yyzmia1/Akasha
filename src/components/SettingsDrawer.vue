@@ -1013,6 +1013,8 @@ import {
   registerUser,
   logoutUser,
   formatAuthErrorMessage,
+  getLastUserId,
+  setLastUserId,
 } from '@/sync/pocketbase'
 import {
   syncStatus,
@@ -1022,10 +1024,12 @@ import {
   uploadAllLocalToCloud,
   downloadAllCloudToLocal,
   resetSyncOutbox,
+  clearSyncState,
   syncCopilotEnabled,
   setSyncCopilotEnabled,
   enqueueChange,
 } from '@/sync/syncEngine'
+import { clearAllDatabaseData } from '@/db'
 
 const props = defineProps<{
   isOpen: boolean
@@ -1268,12 +1272,30 @@ async function handleAuthSubmit() {
 
   isAuthLoading.value = true
   try {
+    const prevUserId = getLastUserId()
     if (authMode.value === 'login') {
       await loginUser(trimmedAccount, authPassword.value)
     } else {
       await registerUser(trimmedAccount, authPassword.value)
     }
     const successMode = authMode.value
+    const currentUserId = currentUser.value?.id
+
+    // 检测多租户切换：如果是不同账号登录，防范跨账号数据串扰
+    if (prevUserId && currentUserId && prevUserId !== currentUserId) {
+      const shouldClearOld = confirm(
+        '⚠️ 检测到您切换了新的云端账号！\n\n' +
+        '当前设备上可能残留有上一账号的本地离线数据。为了避免数据相互混淆或错误覆盖，是否立即清空上一账号的本地缓存？\n\n' +
+        '【确定】：清空本地旧缓存并拉取新账号数据（强烈推荐）；\n' +
+        '【取消】：保留本地数据并尝试与新账号合并。'
+      )
+      if (shouldClearOld) {
+        clearSyncState()
+        await clearAllDatabaseData()
+      }
+    }
+    setLastUserId(currentUserId || null)
+
     // Perform initial bidirectional sync
     await syncAll()
     authPassword.value = ''
@@ -1287,9 +1309,27 @@ async function handleAuthSubmit() {
   }
 }
 
-function handleLogout() {
-  if (confirm('确定退出当前云端账号吗？退出后数据依然保存在本地浏览器中。')) {
+async function handleLogout() {
+  const shouldWipe = confirm(
+    '确定退出当前云端账号吗？\n\n' +
+    '【确定】：退出账号并清空本设备的离线缓存（强烈推荐在公用设备或他人设备上选择，保护个人隐私）。\n' +
+    '【取消】：如果希望仅断开同步并保留本地离线数据，请点击“取消”后在下一步确认。'
+  )
+
+  if (shouldWipe) {
+    clearSyncState()
     logoutUser()
+    await clearAllDatabaseData()
+    emit('reload-data')
+    alert('已安全退出并清空本设备的离线数据。')
+    return
+  }
+
+  // 询问是否仅断开云端账号但保留本地离线数据
+  if (confirm('是否仅退出登录并【保留】本设备上的本地离线数据？')) {
+    clearSyncState()
+    logoutUser()
+    alert('已断开云端账号，本地数据已保留。')
   }
 }
 
