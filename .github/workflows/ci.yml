@@ -1,10 +1,11 @@
-name: CI
+name: CI & CD
 
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   verify:
@@ -32,3 +33,40 @@ jobs:
 
       - name: Run Production Build (Vite)
         run: npm run build
+
+  deploy:
+    name: Deploy to Production Server
+    needs: verify
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script_stop: true
+          script: |
+            echo "=== 1. Pulling latest code on server ==="
+            cd /opt/app-stack/akasha
+            git fetch origin
+            git checkout main
+            git reset --hard origin/main
+
+            echo "=== 2. Rebuilding and restarting Akasha container ==="
+            docker compose build
+            docker compose up -d --force-recreate --no-deps akasha
+
+            echo "=== 3. Checking for database migrations ==="
+            if git diff --name-only HEAD@{1} HEAD 2>/dev/null | grep -q "^pb_migrations/"; then
+              echo "New PocketBase migrations found, restarting pocketbase..."
+              docker compose restart pocketbase
+            fi
+
+            echo "=== 4. Healthcheck ==="
+            docker ps --filter name=akasha --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
+            curl -s -I http://127.0.0.1:8080/ | head -n 5
+            echo "=== Deployment Successfully Completed ==="
