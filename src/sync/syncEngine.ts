@@ -5,12 +5,18 @@ import { loadAiConfig, saveAiConfig } from '@/services/aiService'
 import { pb, currentUser, isAuthenticated, setServerUrl } from './pocketbase'
 
 const LAST_SYNC_KEY = 'akasha_last_sync_timestamp'
+const LAST_SYNC_SERVER_TIME_KEY = 'akasha_last_sync_server_time'
 const PENDING_CHANGES_KEY = 'akasha_pending_sync_queue'
 const SYNC_COPILOT_KEY = 'akasha_sync_copilot_config'
 
 export const syncStatus = ref<SyncStatus>('offline')
 export const lastSyncTime = ref<number | null>(
-  localStorage.getItem(LAST_SYNC_KEY) ? Number(localStorage.getItem(LAST_SYNC_KEY)) : null
+  typeof localStorage !== 'undefined' && localStorage.getItem(LAST_SYNC_KEY)
+    ? Number(localStorage.getItem(LAST_SYNC_KEY))
+    : null
+)
+export const lastSyncServerTime = ref<string | null>(
+  typeof localStorage !== 'undefined' ? localStorage.getItem(LAST_SYNC_SERVER_TIME_KEY) : null
 )
 export const syncError = ref<string | null>(null)
 export const isOnline = ref(typeof navigator !== 'undefined' ? navigator.onLine : true)
@@ -292,17 +298,23 @@ export async function pullUpdates(): Promise<void> {
   syncError.value = null
 
   try {
-    const filter = lastSyncTime.value
-      ? `clientUpdatedAt > ${lastSyncTime.value}`
-      : ''
+    // 优先使用服务端权威更新时间戳进行严格增量拉取，免疫客户端时钟偏差；
+    // 首次同步或旧版本平滑过渡时无 lastSyncServerTime，则拉取全量或回退至旧时间戳
+    let filter = ''
+    if (lastSyncServerTime.value) {
+      filter = `updated > "${lastSyncServerTime.value}"`
+    } else if (lastSyncTime.value) {
+      filter = `clientUpdatedAt > ${lastSyncTime.value}`
+    }
 
     const records = await pb.collection('sync_items').getFullList<SyncItemRecord>({
       filter: filter || undefined,
-      sort: 'clientUpdatedAt',
+      sort: 'updated',
       requestKey: null,
     })
 
     let hasLocalUpdates = false
+    let maxServerUpdated = lastSyncServerTime.value
 
     for (const record of records) {
       const key = `${record.entityType}:${record.entityId}`
@@ -311,6 +323,12 @@ export async function pullUpdates(): Promise<void> {
       // If we have a newer local pending change, let our local change win
       if (pending && pending.clientUpdatedAt >= record.clientUpdatedAt) {
         continue
+      }
+
+      if (record.updated) {
+        if (!maxServerUpdated || record.updated > maxServerUpdated) {
+          maxServerUpdated = record.updated
+        }
       }
 
       // Special entity: copilotConfig (AI Copilot settings)
@@ -334,6 +352,10 @@ export async function pullUpdates(): Promise<void> {
       }
     }
 
+    if (maxServerUpdated) {
+      lastSyncServerTime.value = maxServerUpdated
+      localStorage.setItem(LAST_SYNC_SERVER_TIME_KEY, maxServerUpdated)
+    }
     lastSyncTime.value = Date.now()
     localStorage.setItem(LAST_SYNC_KEY, String(lastSyncTime.value))
     syncStatus.value = 'synced'
@@ -392,6 +414,12 @@ export async function startRealtimeSubscription(): Promise<void> {
         await table.put(record.payload)
       }
 
+      if (record.updated) {
+        if (!lastSyncServerTime.value || record.updated > lastSyncServerTime.value) {
+          lastSyncServerTime.value = record.updated
+          localStorage.setItem(LAST_SYNC_SERVER_TIME_KEY, record.updated)
+        }
+      }
       lastSyncTime.value = Math.max(lastSyncTime.value || 0, record.clientUpdatedAt || Date.now())
       localStorage.setItem(LAST_SYNC_KEY, String(lastSyncTime.value))
       notifyRemoteChange()
@@ -464,6 +492,8 @@ export async function uploadAllLocalToCloud(): Promise<{ count: number }> {
   }
 
   const now = Date.now()
+  let maxServerUpdated: string | null = null
+
   for (const item of batch) {
     try {
       let existingRecord: any = null
@@ -476,8 +506,9 @@ export async function uploadAllLocalToCloud(): Promise<{ count: number }> {
         if (err.status !== 404) throw err
       }
 
+      let res: any = null
       if (existingRecord) {
-        await pb.collection('sync_items').update(
+        res = await pb.collection('sync_items').update(
           existingRecord.id,
           {
             payload: item.payload || {},
@@ -487,7 +518,7 @@ export async function uploadAllLocalToCloud(): Promise<{ count: number }> {
           { requestKey: null }
         )
       } else {
-        await pb.collection('sync_items').create(
+        res = await pb.collection('sync_items').create(
           {
             entityType: item.entityType,
             entityId: item.entityId,
@@ -499,12 +530,19 @@ export async function uploadAllLocalToCloud(): Promise<{ count: number }> {
           { requestKey: null }
         )
       }
+      if (res?.updated && (!maxServerUpdated || res.updated > maxServerUpdated)) {
+        maxServerUpdated = res.updated
+      }
       count++
     } catch (err: any) {
       console.warn(`Failed to upload ${item.entityType}:${item.entityId}`, err)
     }
   }
 
+  if (maxServerUpdated) {
+    lastSyncServerTime.value = maxServerUpdated
+    localStorage.setItem(LAST_SYNC_SERVER_TIME_KEY, maxServerUpdated)
+  }
   lastSyncTime.value = now
   localStorage.setItem(LAST_SYNC_KEY, String(now))
   syncStatus.value = 'synced'
@@ -540,7 +578,11 @@ export async function downloadAllCloudToLocal(): Promise<{ count: number }> {
   const todos: any[] = []
   const journals: any[] = []
 
+  let maxServerUpdated: string | null = null
   for (const rec of records) {
+    if (rec.updated && (!maxServerUpdated || rec.updated > maxServerUpdated)) {
+      maxServerUpdated = rec.updated
+    }
     if (!rec.payload) continue
     switch (rec.entityType) {
       case 'area':
@@ -580,6 +622,10 @@ export async function downloadAllCloudToLocal(): Promise<{ count: number }> {
   if (todos.length) await db.todos.bulkAdd(todos)
   if (journals.length) await db.journals.bulkAdd(journals)
 
+  if (maxServerUpdated) {
+    lastSyncServerTime.value = maxServerUpdated
+    localStorage.setItem(LAST_SYNC_SERVER_TIME_KEY, maxServerUpdated)
+  }
   lastSyncTime.value = Date.now()
   localStorage.setItem(LAST_SYNC_KEY, String(lastSyncTime.value))
   syncStatus.value = 'synced'
@@ -596,6 +642,23 @@ export function resetSyncOutbox(): void {
   savePendingQueue()
   lastSyncTime.value = Date.now()
   localStorage.setItem(LAST_SYNC_KEY, String(lastSyncTime.value))
+}
+
+/**
+ * Cleanly reset all sync states, timers, and storage cursors (useful on logout / account switch)
+ */
+export function clearSyncState(): void {
+  stopRealtimeSubscription()
+  pendingChanges.clear()
+  savePendingQueue()
+  lastSyncTime.value = null
+  lastSyncServerTime.value = null
+  if (typeof localStorage !== 'undefined') {
+    localStorage.removeItem(LAST_SYNC_KEY)
+    localStorage.removeItem(LAST_SYNC_SERVER_TIME_KEY)
+  }
+  syncStatus.value = 'offline'
+  syncError.value = null
 }
 
 /**
