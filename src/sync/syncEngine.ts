@@ -135,6 +135,9 @@ function formatSyncErrorMessage(err: any): string {
       return err.data.message
     }
   }
+  if (msg.includes('Something went wrong')) {
+    return '云端服务短暂波动或正在重启，正在自动恢复重试...'
+  }
   return msg
 }
 
@@ -272,6 +275,15 @@ export async function flushPendingChanges(): Promise<void> {
         syncStatus.value = 'error'
         syncError.value = formatSyncErrorMessage(err)
         savePendingQueue()
+        // 对临时网络错误或服务重启波动，自动安排 3 秒后重试，避免永久僵死在 error 状态
+        if (err?.status !== 400 && !pushDebounceTimer) {
+          pushDebounceTimer = setTimeout(() => {
+            pushDebounceTimer = null
+            if (isAuthenticated.value && isOnline.value && pendingChanges.size > 0) {
+              flushPendingChanges()
+            }
+          }, 3000)
+        }
         return
       }
     }

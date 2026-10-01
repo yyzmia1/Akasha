@@ -107,6 +107,10 @@ export function formatAuthErrorMessage(err: any): string {
     }
   }
 
+  if (err?.message?.includes('Something went wrong')) {
+    return '云端服务暂时无响应或网络波动，请检查网络后重试'
+  }
+
   return err.message || '操作失败，请重试'
 }
 
