@@ -32,6 +32,9 @@ jobs:
         run: npm run typecheck
 
       - name: Run Production Build (Vite)
+        env:
+          VITE_GIT_COMMIT: ${{ github.sha }}
+          VITE_GIT_BRANCH: ${{ github.ref_name }}
         run: npm run build
 
   deploy:
@@ -56,8 +59,14 @@ jobs:
             git checkout main
             git reset --hard origin/main
 
-            echo "=== 2. Rebuilding and restarting Akasha container ==="
-            docker compose build
+            COMMIT_HASH=$(git rev-parse --short HEAD)
+            BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+            echo "$COMMIT_HASH" > .git-commit
+            export VITE_GIT_COMMIT=$COMMIT_HASH
+            export VITE_GIT_BRANCH=$BRANCH_NAME
+
+            echo "=== 2. Rebuilding and restarting Akasha container (Commit: $COMMIT_HASH, Branch: $BRANCH_NAME) ==="
+            docker compose build --build-arg VITE_GIT_COMMIT=$COMMIT_HASH --build-arg VITE_GIT_BRANCH=$BRANCH_NAME akasha
             docker compose up -d --force-recreate --no-deps akasha
 
             echo "=== 3. Checking for database migrations ==="

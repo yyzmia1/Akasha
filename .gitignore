@@ -35,3 +35,4 @@ dist-ssr
 # PocketBase Data
 pb_data/
 docker-compose.override.yml
+.git-commit

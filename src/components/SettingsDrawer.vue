@@ -911,12 +911,15 @@
                 </div>
               </div>
 
-              <!-- Commit 提交节点 -->
+              <!-- Commit 提交版本 -->
               <div v-if="versionInfo.commit" class="flex items-center justify-between">
                 <span class="text-slate-500 dark:text-slate-400">{{ t('settings.commit') }}</span>
-                <span class="font-mono text-[11px] text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-slate-700/60">
-                  {{ versionInfo.commit }}
-                </span>
+                <div class="flex items-center gap-1.5 font-mono text-[11px]">
+                  <GitCommit class="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                  <span class="font-mono text-[11px] font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-slate-700/60">
+                    {{ versionInfo.commit }}
+                  </span>
+                </div>
               </div>
 
               <!-- 存储引擎 -->
@@ -954,6 +957,10 @@
             <span class="font-mono font-medium text-slate-600 dark:text-slate-300">Akasha {{ versionInfo.version }} {{ t('settings.betaStage') }}</span>
             <span class="text-slate-300 dark:text-slate-700">·</span>
             <span class="text-[11px] font-mono text-indigo-500 dark:text-indigo-400 truncate">{{ versionInfo.branch }}</span>
+            <template v-if="versionInfo.commit">
+              <span class="text-slate-300 dark:text-slate-700">·</span>
+              <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">{{ versionInfo.commit }}</span>
+            </template>
           </div>
           <button
             @click="$emit('close')"
@@ -989,6 +996,7 @@ import {
   ChevronDown,
   Info,
   GitBranch,
+  GitCommit,
   Camera,
   MessageSquare,
 } from 'lucide-vue-next'

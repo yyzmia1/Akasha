@@ -1,6 +1,10 @@
 services:
   akasha:
-    build: .
+    build:
+      context: .
+      args:
+        VITE_GIT_COMMIT: ${VITE_GIT_COMMIT:-}
+        VITE_GIT_BRANCH: ${VITE_GIT_BRANCH:-}
     image: akasha:latest
     container_name: akasha
     restart: always

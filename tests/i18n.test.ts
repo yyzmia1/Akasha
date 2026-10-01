@@ -79,6 +79,17 @@ describe('i18n utility', () => {
     expect(t('settings.elegantSerif')).toBe('エレガント・明朝')
   })
 
+  it('translates commit version label properly in zh, en, and ja', () => {
+    setLocale('zh')
+    expect(t('settings.commit')).toBe('Commit 版本')
+
+    setLocale('en')
+    expect(t('settings.commit')).toBe('Commit Version')
+
+    setLocale('ja')
+    expect(t('settings.commit')).toBe('コミットバージョン')
+  })
+
   it('falls back to key when missing in another language', () => {
     setLocale('en')
     expect(t('nonexistent.key')).toBe('nonexistent.key')
