@@ -1385,13 +1385,13 @@ const currentUiScaleLabel = computed(() => {
 })
 
 const fontFamilyOptions = computed<{ value: FontFamily; label: string }[]>(() => [
-  { value: 'wenkai', label: t('settings.defaultFont') },
+  { value: 'wenkai', label: t('settings.wenkaiFont') || t('settings.defaultFont') },
   { value: 'system', label: t('settings.modernSans') },
   { value: 'serif', label: t('settings.elegantSerif') },
 ])
 
 const currentFontFamilyLabel = computed(() => {
-  return fontFamilyOptions.value.find((o) => o.value === props.fontFamily)?.label || t('settings.defaultFont')
+  return fontFamilyOptions.value.find((o) => o.value === props.fontFamily)?.label || t('settings.wenkaiFont') || t('settings.defaultFont')
 })
 
 const fontSizeOptions = computed<{ value: FontSize; label: string }[]>(() => [

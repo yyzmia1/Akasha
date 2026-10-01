@@ -59,6 +59,26 @@ describe('i18n utility', () => {
     expect(t('calendar.dailyTodoList', { count: 5 })).toBe('今日のToDoリスト (5)')
   })
 
+  it('translates font family options properly in zh, en, and ja', () => {
+    setLocale('zh')
+    expect(t('settings.defaultFont')).toBe('霞鹜文楷')
+    expect(t('settings.wenkaiFont')).toBe('霞鹜文楷')
+    expect(t('settings.modernSans')).toBe('现代黑体')
+    expect(t('settings.elegantSerif')).toBe('优雅衬线')
+
+    setLocale('en')
+    expect(t('settings.defaultFont')).toBe('LXGW WenKai')
+    expect(t('settings.wenkaiFont')).toBe('LXGW WenKai')
+    expect(t('settings.modernSans')).toBe('Modern Sans')
+    expect(t('settings.elegantSerif')).toBe('Elegant Serif')
+
+    setLocale('ja')
+    expect(t('settings.defaultFont')).toBe('霞鹜文楷')
+    expect(t('settings.wenkaiFont')).toBe('霞鹜文楷')
+    expect(t('settings.modernSans')).toBe('モダン・ゴシック')
+    expect(t('settings.elegantSerif')).toBe('エレガント・明朝')
+  })
+
   it('falls back to key when missing in another language', () => {
     setLocale('en')
     expect(t('nonexistent.key')).toBe('nonexistent.key')
