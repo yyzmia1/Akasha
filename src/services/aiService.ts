@@ -152,19 +152,7 @@ export function resolveEndpoint(
   const targetUrl = target + cleanPath
 
   if (cfg.useProxy) {
-    const isLocalhost =
-      typeof window === 'undefined' ||
-      window.location.hostname === 'localhost' ||
-        window.location.hostname === '127.0.0.1' ||
-        window.location.hostname === '[::1]'
-
-    if (!pb.authStore.isValid && !isLocalhost) {
-      throw new Error(
-        '使用服务器反向代理前请先登录云端账号（用于反向代理鉴权防滥用）。若无需代理，可关闭【使用服务器反向代理】后直接连接支持跨域的接口。'
-      )
-    }
-
-    // 走 Nginx 或 Vite 开发服务器内部反向代理通道
+    // 走 Nginx 或 Vite 开发服务器内部反向代理通道（绕过浏览器跨域 CORS 限制）
     return {
       url: '/api/ai-proxy' + cleanPath,
       headers: {
