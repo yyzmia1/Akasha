@@ -7,7 +7,7 @@
         ? 'items-center p-2 sm:p-4 lg:p-6'
         : 'items-start pt-3 sm:pt-12 px-2 sm:px-4 pb-4'
     ]"
-    @click.self="handleClose"
+    @mousedown.self="handleClose"
   >
     <div
       :class="[
@@ -16,6 +16,7 @@
           ? 'w-[96vw] max-w-5xl xl:max-w-6xl h-[92vh] max-h-[96vh]'
           : 'max-w-2xl max-h-[88vh]'
       ]"
+      @mousedown.stop
     >
       <!-- 头部：品牌标题 + 模式选择药丸 + 操作图标 -->
       <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2 bg-slate-50/70 dark:bg-slate-950/60 select-none">
@@ -460,12 +461,13 @@
         <div
           v-if="(isLoading || streamingText) && !currentPlan"
           class="p-3.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/40 space-y-2 animate-in fade-in"
+          :class="{ '!bg-red-50/70 dark:!bg-red-950/30 !border-red-200 dark:!border-red-900/40': streamingText.startsWith('❌') }"
         >
-          <div class="flex items-center justify-between text-xs font-semibold text-blue-700 dark:text-blue-300">
+          <div class="flex items-center justify-between text-xs font-semibold" :class="streamingText.startsWith('❌') ? 'text-red-700 dark:text-red-300' : 'text-blue-700 dark:text-blue-300'">
             <div class="flex items-center gap-2">
               <Sparkles v-if="isLoading" class="w-3.5 h-3.5 text-blue-500 animate-spin" />
-              <AlertCircle v-else class="w-3.5 h-3.5 text-amber-500" />
-              <span>{{ isLoading ? 'AI 排程思考与构思中...' : '生成状态' }}</span>
+              <AlertCircle v-else class="w-3.5 h-3.5" :class="streamingText.startsWith('❌') ? 'text-red-500' : 'text-amber-500'" />
+              <span>{{ isLoading ? 'AI 排程思考与构思中...' : (streamingText.startsWith('❌') ? '排程解析失败' : '生成状态') }}</span>
             </div>
             <!-- 当用户向上翻动脱耦时，显示快速回到底部的提示按钮 -->
             <button
@@ -481,11 +483,22 @@
             ref="thinkingBoxRef"
             @scroll="handleThinkingScroll"
             :class="[
-              'text-xs text-slate-600 dark:text-slate-300 font-mono whitespace-pre-wrap leading-relaxed overflow-y-auto',
+              'text-xs font-mono whitespace-pre-wrap leading-relaxed overflow-y-auto',
+              streamingText.startsWith('❌') ? 'text-red-600 dark:text-red-300' : 'text-slate-600 dark:text-slate-300',
               isExpanded ? 'max-h-72 sm:max-h-88' : 'max-h-48'
             ]"
           >
             {{ streamingText || '正在解析时间线与碰撞检测...' }}
+          </div>
+          <div v-if="streamingText.startsWith('❌')" class="pt-1 flex items-center justify-end">
+            <button
+              type="button"
+              @click="showConfigView = true"
+              class="text-xs font-medium text-red-700 dark:text-red-300 bg-red-100/80 dark:bg-red-900/40 hover:bg-red-200 dark:hover:bg-red-800/60 px-2.5 py-1 rounded-lg cursor-pointer transition-colors flex items-center gap-1.5"
+            >
+              <Settings class="w-3.5 h-3.5" />
+              <span>前往 AI 配置</span>
+            </button>
           </div>
         </div>
 
@@ -1386,6 +1399,8 @@ import {
   MessageSquare,
   Info,
   Lightbulb,
+  AlertCircle,
+  Settings,
 } from 'lucide-vue-next'
 import type { Area, Project, ScheduleItem, Habit } from '@/types'
 import type {
@@ -1542,14 +1557,14 @@ const aiTestResult = ref<{ success: boolean; message: string } | null>(null)
 const effectiveVisionConfig = computed(() => getVisionConfig(aiConfig.value))
 const effectiveTextConfig = computed(() => getTextConfig(aiConfig.value))
 
-const currentModelBadgeText = computed(() => {
-  const tCfg = effectiveTextConfig.value
-  return tCfg.apiKey || tCfg.provider === 'ollama' ? tCfg.model : '配置 AI'
-})
-
 const isCurrentActiveModelConfigured = computed(() => {
   const tCfg = effectiveTextConfig.value
-  return !!(tCfg.apiKey || tCfg.provider === 'ollama')
+  return !!(tCfg.baseUrl?.trim() && tCfg.model?.trim() && (tCfg.apiKey?.trim() || tCfg.provider === 'ollama'))
+})
+
+const currentModelBadgeText = computed(() => {
+  const tCfg = effectiveTextConfig.value
+  return isCurrentActiveModelConfigured.value ? tCfg.model : '配置 AI'
 })
 
 const currentModelTooltip = computed(() => {
@@ -1980,16 +1995,26 @@ async function handleStartGenerate() {
 
   dismissPromptChips()
 
-  // 检验 API 接口密钥
+  // 检验 API 接口与密钥配置完整性
   if (selectedImageBase64.value) {
     const vCfg = effectiveVisionConfig.value
-    if (!vCfg.apiKey && vCfg.provider !== 'ollama') {
+    const isVisionConfigured = !!(
+      vCfg.baseUrl?.trim() &&
+      vCfg.model?.trim() &&
+      (vCfg.apiKey?.trim() || vCfg.provider === 'ollama')
+    )
+    if (!isVisionConfigured) {
       showConfigView.value = true
       return
     }
   } else {
     const tCfg = effectiveTextConfig.value
-    if (!tCfg.apiKey && tCfg.provider !== 'ollama') {
+    const isTextConfigured = !!(
+      tCfg.baseUrl?.trim() &&
+      tCfg.model?.trim() &&
+      (tCfg.apiKey?.trim() || tCfg.provider === 'ollama')
+    )
+    if (!isTextConfigured) {
       showConfigView.value = true
       return
     }

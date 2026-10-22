@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
@@ -37,8 +37,72 @@ if (!gitBranch) {
 
 const isBranch = gitBranch !== 'main' && gitBranch !== 'master' && gitBranch !== 'HEAD'
 
+/**
+ * 本地开发环境 AI 反向代理中间件（模拟 Nginx /api/ai-proxy 行为，规避本地调试时的浏览器跨域 CORS 拦截）
+ */
+function aiProxyDevPlugin(): Plugin {
+  return {
+    name: 'ai-proxy-dev',
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        if (!req.url?.startsWith('/api/ai-proxy/')) {
+          return next()
+        }
+        const targetUrl = req.headers['x-target-url'] as string
+        if (!targetUrl) {
+          res.statusCode = 400
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ error: 'Missing X-Target-Url header' }))
+          return
+        }
+
+        try {
+          const chunks: Buffer[] = []
+          for await (const chunk of req) {
+            chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk)
+          }
+          const body = Buffer.concat(chunks)
+
+          const authHeader = req.headers['authorization']
+          const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+          }
+          if (authHeader) headers['Authorization'] = authHeader
+
+          const upstreamRes = await fetch(targetUrl, {
+            method: req.method || 'POST',
+            headers,
+            body: body.length > 0 ? body : undefined,
+          })
+
+          res.statusCode = upstreamRes.status
+          upstreamRes.headers.forEach((val, key) => {
+            if (key.toLowerCase() !== 'content-encoding') {
+              res.setHeader(key, val)
+            }
+          })
+
+          if (upstreamRes.body) {
+            const reader = upstreamRes.body.getReader()
+            while (true) {
+              const { done, value } = await reader.read()
+              if (done) break
+              res.write(value)
+            }
+          }
+          res.end()
+        } catch (err: any) {
+          res.statusCode = 502
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ error: `AI Dev Proxy Error: ${err?.message || err}` }))
+        }
+      })
+    },
+  }
+}
+
 export default defineConfig({
-  plugins: [vue(), tailwindcss()],
+  plugins: [vue(), tailwindcss(), aiProxyDevPlugin()],
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
     __GIT_BRANCH__: JSON.stringify(gitBranch),

@@ -120,32 +120,58 @@ export function saveAiConfig(cfg: AiProviderConfig) {
   notifyAiConfigChanged(cfg)
 }
 
-function resolveEndpoint(
+export function resolveEndpoint(
   cfg: { baseUrl: string; apiKey?: string; useProxy?: boolean; provider?: string },
   path: string
 ): { url: string; headers: Record<string, string> } {
-  let target = cfg.baseUrl.replace(/\/+$/, '')
+  const rawBase = (cfg.baseUrl || '').trim()
+  if (!rawBase) {
+    throw new Error('未配置 API 接口地址 (Base URL)。请点击右上角「设置」图标填写有效的 AI 接口地址。')
+  }
+
+  let target = rawBase
+  // 1. 若用户未填写协议头，补全 https://
+  if (!/^https?:\/\//i.test(target)) {
+    target = 'https://' + target
+  }
+
+  // 2. 移除末尾多余斜杠
+  target = target.replace(/\/+$/, '')
+
+  // 3. 避免用户粘贴完整接口地址导致重复拼接（如 /chat/completions/chat/completions）
+  target = target.replace(/\/chat\/completions\/?$/i, '')
+
+  // 4. 对部分知名平台补全 /v1
   if (!target.endsWith('/v1') && cfg.provider !== 'deepseek') {
-    // 很多代理平台如未带 /v1 则补全
-    if (!target.includes('/chat/completions')) {
-      // 保持用户原始输入或默认规则
+    if (target.endsWith('api.openai.com') || target.endsWith('api.siliconflow.cn')) {
+      target = target + '/v1'
     }
   }
+
   const cleanPath = path.startsWith('/') ? path : '/' + path
-  const targetUrl = `${target}${cleanPath}`
+  const targetUrl = target + cleanPath
 
   if (cfg.useProxy) {
-    if (!pb.authStore.isValid) {
-      throw new Error('使用 AI 代理前请先登录云端账号；也可关闭代理后直接连接支持跨域的接口。')
+    const isLocalhost =
+      typeof window === 'undefined' ||
+      window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname === '[::1]'
+
+    if (!pb.authStore.isValid && !isLocalhost) {
+      throw new Error(
+        '使用服务器反向代理前请先登录云端账号（用于反向代理鉴权防滥用）。若无需代理，可关闭【使用服务器反向代理】后直接连接支持跨域的接口。'
+      )
     }
-    // 走 Nginx 内部反向代理通道
+
+    // 走 Nginx 或 Vite 开发服务器内部反向代理通道
     return {
-      url: `/api/ai-proxy${cleanPath}`,
+      url: '/api/ai-proxy' + cleanPath,
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${cfg.apiKey || ''}`,
+        Authorization: 'Bearer ' + (cfg.apiKey || ''),
         'X-Target-Url': targetUrl,
-        'X-Akasha-Token': pb.authStore.token,
+        'X-Akasha-Token': pb.authStore.token || '',
       },
     }
   }
@@ -154,7 +180,7 @@ function resolveEndpoint(
     url: targetUrl,
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${cfg.apiKey || ''}`,
+      Authorization: 'Bearer ' + (cfg.apiKey || ''),
     },
   }
 }
@@ -193,10 +219,19 @@ export async function testAiConnection(
 
     return { success: true, latencyMs, message: `连接成功 (耗时: ${latencyMs}ms)` }
   } catch (err: any) {
+    const errMsg = String(err?.message || err || '')
+    let formattedMsg = '网络请求失败: ' + errMsg
+    if (errMsg.includes('Failed to fetch') || errMsg.includes('NetworkError') || err instanceof TypeError) {
+      if (!cfg.useProxy) {
+        formattedMsg = '连接失败 (Failed to fetch): 受到浏览器跨域 (CORS) 拦截。公网接口请开启【使用服务器反向代理】，或使用支持跨域的接口。'
+      } else {
+        formattedMsg = '代理连接失败 (Failed to fetch): 无法访问反向代理服务，请检查服务状态。'
+      }
+    }
     return {
       success: false,
       latencyMs: Date.now() - startTime,
-      message: `网络请求失败: ${err.message || err}`,
+      message: formattedMsg,
     }
   }
 }
@@ -405,20 +440,44 @@ export async function streamPlanGeneration(
 ): Promise<CopilotPlanResult> {
   const { url, headers } = resolveEndpoint(cfg, '/chat/completions')
 
-  const res = await fetch(url, {
-    method: 'POST',
-    headers,
-    signal,
-    body: JSON.stringify({
-      model: cfg.model,
-      temperature: cfg.temperature ?? 0.3,
-      stream: true,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: prompt },
-      ],
-    }),
-  })
+  let res: Response
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers,
+      signal,
+      body: JSON.stringify({
+        model: cfg.model,
+        temperature: cfg.temperature ?? 0.3,
+        stream: true,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: prompt },
+        ],
+      }),
+    })
+  } catch (err: any) {
+    if (signal?.aborted || err?.name === 'AbortError') {
+      throw err
+    }
+    const errMsg = String(err?.message || err || '')
+    if (
+      errMsg.includes('Failed to fetch') ||
+      errMsg.includes('NetworkError') ||
+      err instanceof TypeError
+    ) {
+      if (!cfg.useProxy) {
+        throw new Error(
+          '接口请求失败 (Failed to fetch)。\n由于浏览器跨域 (CORS) 限制，多数公网大模型服务（如 DeepSeek、OpenAI）不允许前端直接发起跨域请求。\n建议：\n1. 在 Copilot 设置中开启【使用服务器反向代理】；\n2. 检查接口地址 [' + url + '] 是否有效、网络是否通畅。'
+        )
+      } else {
+        throw new Error(
+          '反向代理请求失败 (Failed to fetch)。\n无法连接到代理服务 [' + url + ']。请检查服务是否正常启动，或目标地址 [' + (headers['X-Target-Url'] || '') + '] 是否可达。'
+        )
+      }
+    }
+    throw err
+  }
 
   if (!res.ok) {
     const errText = await res.text()
@@ -843,7 +902,20 @@ export async function recognizeScheduleFromImage(
       }),
     })
   } catch (err: any) {
-    throw new Error(`连接 AI 视觉接口失败: ${err?.message || '网络请求错误，请检查接口地址或反向代理配置'}`)
+    if (signal?.aborted || err?.name === 'AbortError') {
+      throw err
+    }
+    const errMsg = String(err?.message || err || '')
+    if (errMsg.includes('Failed to fetch') || errMsg.includes('NetworkError') || err instanceof TypeError) {
+      if (!cfg.useProxy) {
+        throw new Error(
+          '连接 AI 视觉接口失败 (Failed to fetch)。\n由于浏览器跨域 (CORS) 限制，请在 Copilot 设置中开启【使用服务器反向代理】，或检查视觉模型接口地址。'
+        )
+      } else {
+        throw new Error('连接 AI 视觉反向代理失败 (Failed to fetch): 无法连接代理服务，请检查服务状态。\n目标: [' + (headers['X-Target-Url'] || '') + ']')
+      }
+    }
+    throw new Error('连接 AI 视觉接口失败: ' + (errMsg || '网络请求错误，请检查接口地址或反向代理配置'))
   }
 
   if (!res.ok) {

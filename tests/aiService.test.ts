@@ -8,6 +8,7 @@ import {
   parseRecognizedScheduleContent,
   getTextConfig,
   getVisionConfig,
+  resolveEndpoint,
 } from '@/services/aiService'
 
 describe('aiService (AI 规划解析与上下文构建)', () => {
@@ -346,6 +347,32 @@ describe('aiService (AI 规划解析与上下文构建)', () => {
     expect(plan.schedules[0].notes).toBe('会议室B3，讨论服务下线方案')
     expect(plan.todos[0].notes).toBe('注意执行前先备份')
     expect(plan.habits[0].description).toBe('每组20次，共完成3组')
+  })
+
+  it('resolveEndpoint 未配置 baseUrl 时抛出友好异常', () => {
+    expect(() => resolveEndpoint({ baseUrl: '' }, '/chat/completions')).toThrowError(/未配置 API 接口地址/)
+    expect(() => resolveEndpoint({ baseUrl: '   ' }, '/chat/completions')).toThrowError(/未配置 API 接口地址/)
+  })
+
+  it('resolveEndpoint 自动补全 https 协议、去除多余斜杠并防止路径重复拼接', () => {
+    const r1 = resolveEndpoint({ baseUrl: 'api.deepseek.com' }, '/chat/completions')
+    expect(r1.url).toBe('https://api.deepseek.com/chat/completions')
+
+    const r2 = resolveEndpoint({ baseUrl: 'https://api.deepseek.com/v1/chat/completions' }, '/chat/completions')
+    expect(r2.url).toBe('https://api.deepseek.com/v1/chat/completions')
+
+    const r3 = resolveEndpoint({ baseUrl: 'api.openai.com' }, '/chat/completions')
+    expect(r3.url).toBe('https://api.openai.com/v1/chat/completions')
+  })
+
+  it('resolveEndpoint 在反向代理模式下正确构造内部代理地址并附带 X-Target-Url', () => {
+    const res = resolveEndpoint(
+      { baseUrl: 'https://api.deepseek.com', apiKey: 'sk-test', useProxy: true },
+      '/chat/completions'
+    )
+    expect(res.url).toBe('/api/ai-proxy/chat/completions')
+    expect(res.headers['X-Target-Url']).toBe('https://api.deepseek.com/chat/completions')
+    expect(res.headers['Authorization']).toBe('Bearer sk-test')
   })
 })
 
