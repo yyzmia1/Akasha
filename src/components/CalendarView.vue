@@ -355,10 +355,12 @@
         <div
           v-for="day in displayDays"
           :key="day.dateStr"
+          @click="jumpToDayView(day.dateStr)"
           :class="[
-            'px-2 flex items-center justify-center gap-1.5',
+            'px-2 flex items-center justify-center gap-1.5 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors select-none',
             day.isToday ? 'text-blue-600 dark:text-blue-400 font-bold' : day.isWeekend ? 'text-blue-600/80 dark:text-blue-400/80' : ''
           ]"
+          :title="`切换到单日视图 (${day.dateStr})`"
         >
           <span>{{ day.weekdayName }}</span>
           <span
@@ -385,16 +387,20 @@
         >
           <!-- Mobile Column Header -->
           <div class="sm:hidden flex items-center justify-between pb-2 mb-2 border-b border-slate-200/80 dark:border-slate-800 shrink-0">
-            <div class="flex items-center gap-1.5">
+            <div
+              class="flex items-center gap-1.5 cursor-pointer group"
+              @click="jumpToDayView(day.dateStr)"
+              title="切换到单日视图"
+            >
               <span
                 :class="[
-                  'text-xs font-bold w-6 h-6 flex items-center justify-center rounded-md',
+                  'text-xs font-bold w-6 h-6 flex items-center justify-center rounded-md transition-transform group-hover:scale-105',
                   day.isToday ? 'bg-blue-600 text-white' : day.isWeekend ? 'text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300'
                 ]"
               >
                 {{ day.dayNumber }}
               </span>
-              <span class="text-xs font-semibold text-slate-800 dark:text-slate-100">
+              <span class="text-xs font-semibold text-slate-800 dark:text-slate-100 group-hover:text-blue-600">
                 {{ day.weekdayName }}
               </span>
               <span v-if="day.isToday" class="text-[10px] font-medium text-blue-600 dark:text-blue-400">
@@ -421,9 +427,15 @@
 
           <!-- Desktop Column Subheader with Quick Actions -->
           <div class="hidden sm:flex items-center justify-between mb-2 pb-1 border-b border-slate-100 dark:border-slate-800 shrink-0">
-            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-              {{ day.date.getMonth() + 1 }}/{{ day.dayNumber }}
-            </span>
+            <button
+              type="button"
+              @click="jumpToDayView(day.dateStr)"
+              class="text-[10px] font-semibold text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 uppercase tracking-wider transition-colors flex items-center gap-1 cursor-pointer"
+              title="点击进入单日视图"
+            >
+              <span>{{ day.date.getMonth() + 1 }}/{{ day.dayNumber }}</span>
+              <ChevronRight class="w-2.5 h-2.5 opacity-60" />
+            </button>
             <button
               @click.stop="quickAddTodo(day.dateStr)"
               class="opacity-60 hover:opacity-100 p-0.5 rounded text-slate-500 hover:text-blue-600 transition-opacity"
@@ -551,7 +563,9 @@
             <!-- Empty state -->
             <div
               v-if="getSchedulesForDay(day.dateStr).length === 0 && getHabitsForDay(day.dateStr).length === 0 && getTodosForDay(day.dateStr).length === 0"
-              class="py-8 text-center text-slate-300 dark:text-slate-600 text-xs"
+              @click="jumpToDayView(day.dateStr)"
+              class="py-8 text-center text-slate-300 dark:text-slate-600 text-xs cursor-pointer hover:text-blue-500 transition-colors"
+              title="点击进入单日视图"
             >
               {{ t('calendar.noEvents') }}
             </div>
@@ -573,7 +587,7 @@
     <!-- VIEW 3: Single Day Dedicated Vertical Timeline -->
     <div
       v-else-if="viewMode === 'day'"
-      class="flex-1 min-h-0 max-w-4xl mx-auto w-full space-y-4 pb-6"
+      class="flex-1 min-h-0 max-w-6xl xl:max-w-7xl mx-auto w-full space-y-4 pb-6"
     >
       <template v-if="displayDays.length > 0">
         <!-- Day Card: All-day & Overview (Compact) -->
@@ -707,468 +721,489 @@
           </div>
         </div>
 
-        <!-- 全天待办事项独立卡片 -->
-        <div
-          v-if="typeFilters.todos"
-          class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-2xs space-y-3"
-        >
-          <div class="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-slate-800">
-            <div class="flex items-center gap-1.5">
-              <CheckSquare class="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <span class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
-                {{ t('calendar.dailyTodoList', { count: getTodosForDay(displayDays[0].dateStr).length }) }}
-              </span>
-            </div>
-            <button
-              @click="$emit('switch-tab', 'todos')"
-              class="text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-0.5 cursor-pointer"
-            >
-              <span>{{ t('calendar.goToTodoView') }}</span>
-              <ChevronRight class="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          <div v-if="getTodosForDay(displayDays[0].dateStr).length > 0" class="space-y-1.5">
-            <div
-              v-for="todo in getTodosForDay(displayDays[0].dateStr)"
-              :key="todo.id"
-              @click="$emit('open-todo', todo)"
-              :class="[
-                'flex items-center justify-between p-2.5 rounded-xl border text-xs cursor-pointer active:scale-[0.99] transition-all',
-                todo.completed
-                  ? 'opacity-60 bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 text-slate-500'
-                  : todo.importance && todo.importance >= 8
-                  ? 'bg-rose-50/60 text-rose-800 border-rose-200 dark:bg-rose-950/30 dark:text-rose-300 dark:border-rose-900'
-                  : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:border-slate-300'
-              ]"
-            >
-              <div class="flex items-center gap-2.5 min-w-0">
-                <button
-                  type="button"
-                  @click.stop="$emit('toggle-todo', todo.id)"
-                  class="w-4 h-4 rounded border border-slate-400 dark:border-slate-600 flex items-center justify-center shrink-0 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                  :class="todo.completed ? 'bg-emerald-600 border-emerald-600 text-white' : ''"
-                >
-                  <Check v-if="todo.completed" class="w-3 h-3 stroke-[3]" />
-                </button>
-                <span
-                  v-if="getTodoTimeDisplay(todo)"
-                  class="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 shrink-0"
-                >
-                  🕒 {{ getTodoTimeDisplay(todo) }}
-                </span>
-                <span :class="['font-medium truncate', todo.completed ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-800 dark:text-slate-100']">
-                  {{ todo.title }}
-                </span>
-                <span
-                  v-if="todo.importance"
-                  :class="['text-[10px] font-mono font-bold px-1.5 py-0.2 rounded border shrink-0', getPriorityStyle(todo.importance).badgeClass]"
-                >
-                  {{ getPriorityStyle(todo.importance).shortLabel ? `P${todo.importance} · ${getPriorityStyle(todo.importance).shortLabel}` : `P${todo.importance}` }}
-                </span>
-              </div>
-
-              <div class="flex items-center gap-2 shrink-0">
-                <span v-if="getProjectName(todo.projectId)" class="text-[11px] text-slate-400">
-                  {{ getProjectName(todo.projectId) }}
-                </span>
-                <span
-                  v-if="getTodoDayDateBadge(todo, displayDays[0].dateStr)"
-                  class="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400 font-bold"
-                >
-                  {{ getTodoDayDateBadge(todo, displayDays[0].dateStr) }}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div
-            v-else
-            @click="$emit('switch-tab', 'todos')"
-            class="text-xs text-slate-400 py-3.5 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-xl hover:border-emerald-300 dark:hover:border-emerald-700/60 hover:text-emerald-600 dark:hover:text-emerald-400 cursor-pointer transition-all"
-          >
-            {{ t('calendar.emptyDailyTodo') }}
-          </div>
-        </div>
-
-        <!-- Day Card: Professional Continuous Time Grid & Adaptive Timeline -->
-        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 shadow-2xs space-y-4">
-          <!-- Timeline Header with Status, Jump-to-Now, and View Mode Switcher -->
-          <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 flex-wrap gap-2">
-            <div class="flex items-center gap-2.5">
-              <div class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-2xs">
-                <Clock class="w-4 h-4" />
-              </div>
-              <div>
-                <div class="flex items-center gap-2 flex-wrap">
-                  <span class="text-sm font-bold text-slate-800 dark:text-slate-100">{{ t('calendar.dayTimeline') }}</span>
-                  <span class="text-[11px] px-2 py-0.5 rounded-full font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                    {{ dayTimedEvents.length }}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div class="flex items-center gap-2 ml-auto">
-              <!-- Jump to Now Button -->
-              <button
-                v-if="displayDays[0].isToday && dayTimelineMode === 'grid'"
-                type="button"
-                @click="scrollToCurrentTime(true)"
-                class="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-950/70 text-rose-600 dark:text-rose-400 font-semibold transition-all active:scale-95 shadow-2xs cursor-pointer"
-                :title="t('calendar.jumpToNowTip')"
-              >
-                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                <span>{{ t('calendar.jumpToNow') }}</span>
-              </button>
-
-              <!-- View Mode Toggle: Grid vs Agenda List -->
-              <div class="flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs">
-                <button
-                  type="button"
-                  @click="setDayTimelineMode('grid')"
-                  :class="[
-                    'px-2.5 py-1 rounded-md font-medium transition-all flex items-center gap-1 cursor-pointer',
-                    dayTimelineMode === 'grid'
-                      ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-2xs font-semibold'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
-                  ]"
-                  :title="t('calendar.gridTip')"
-                >
-                  <LayoutGrid class="w-3.5 h-3.5" />
-                  <span>{{ t('calendar.modeGrid') }}</span>
-                </button>
-                <button
-                  type="button"
-                  @click="setDayTimelineMode('list')"
-                  :class="[
-                    'px-2.5 py-1 rounded-md font-medium transition-all flex items-center gap-1 cursor-pointer',
-                    dayTimelineMode === 'list'
-                      ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-2xs font-semibold'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
-                  ]"
-                  :title="t('calendar.listTip')"
-                >
-                  <List class="w-3.5 h-3.5" />
-                  <span>{{ t('calendar.modeList') }}</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- All-day and Flexible section (if any) -->
-          <div
-            v-if="dayAllDayEvents.length > 0"
-            class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-850/60 border border-slate-200/80 dark:border-slate-800 flex-wrap"
-          >
-            <div class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-xs font-bold px-1 shrink-0">
-              <Calendar class="w-3.5 h-3.5 text-blue-500" />
-              <span>{{ t('calendar.allDayEvents') }}</span>
-            </div>
-            <div class="flex flex-wrap gap-2 flex-1 min-w-0">
-              <div
-                v-for="item in dayAllDayEvents"
-                :key="item.id"
-                @click="handleDayItemClick(item)"
-                class="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer transition-all hover:shadow-xs active:scale-95 border"
-                :class="[
-                  item.type === 'schedule'
-                    ? 'bg-indigo-50/80 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800'
-                    : item.completed
-                    ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
-                    : 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800'
-                ]"
-              >
-                <button
-                  v-if="item.type === 'habit'"
-                  type="button"
-                  @click.stop="$emit('toggle-habit', { habitId: item.data.id, date: displayDays[0].dateStr })"
-                  class="w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0"
-                  :class="item.completed ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-amber-400 bg-white dark:bg-slate-800'"
-                >
-                  <Check v-if="item.completed" class="w-2.5 h-2.5 stroke-[3]" />
-                </button>
-                <span class="truncate max-w-[180px]">{{ item.title }}</span>
-                <span class="text-[10px] opacity-75 font-mono">{{ t('calendar.allDay') }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- MODE 1: Continuous Time Grid (The Google Calendar / FullCalendar Model) -->
-          <div
-            v-if="dayTimelineMode === 'grid'"
-            ref="dayGridScrollContainer"
-            class="relative max-h-[580px] sm:max-h-[640px] overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-inner select-none scroll-smooth"
-          >
-            <!-- 24-Hour Continuous Canvas: 1 hour = 60px, total height = 1440px -->
-            <div class="relative w-full h-[1440px]">
-              <!-- Left Time Gutter (Hour Labels) -->
-              <div class="absolute left-0 top-0 bottom-0 w-12 sm:w-16 border-r border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/80 z-10 pointer-events-none select-none">
-                <template v-for="hour in 24" :key="`hour-lbl-${hour}`">
-                  <span
-                    class="absolute right-2 -translate-y-1/2 text-[10px] sm:text-[11px] font-mono font-medium text-slate-400 dark:text-slate-500"
-                    :style="{ top: `${(hour - 1) * 60}px` }"
-                  >
-                    {{ String(hour - 1).padStart(2, '0') }}:00
-                  </span>
-                </template>
-              </div>
-
-              <!-- Main Grid Lines (Across Content Canvas) -->
-              <div
-                class="absolute left-12 sm:left-16 right-0 top-0 bottom-0 cursor-pointer"
-                @dblclick="handleGridDoubleClick"
-                :title="t('calendar.doubleClickTip')"
-              >
-                <!-- Horizontal divider lines for each hour and half-hour -->
-                <template v-for="hour in 24" :key="`hour-line-${hour}`">
-                  <!-- Whole Hour Solid Line -->
-                  <div
-                    class="absolute left-0 right-0 h-[1px] bg-slate-100 dark:bg-slate-800/80 pointer-events-none"
-                    :style="{ top: `${(hour - 1) * 60}px` }"
-                  ></div>
-                  <!-- Half Hour Subtle Dashed Line -->
-                  <div
-                    class="absolute left-0 right-0 h-[1px] border-b border-dashed border-slate-100/70 dark:border-slate-800/40 pointer-events-none"
-                    :style="{ top: `${(hour - 1) * 60 + 30}px` }"
-                  ></div>
-                </template>
-
-                <!-- Single Global Physical Now Indicator Line (Only on Today) -->
-                <div
-                  v-if="displayDays[0].isToday"
-                  class="absolute -left-12 sm:-left-16 right-0 z-30 pointer-events-none flex items-center -translate-y-1/2 transition-all duration-300"
-                  :style="{ top: `${currentNowMinutes}px` }"
-                >
-                  <!-- Left time pill badge in gutter -->
-                  <div class="w-12 sm:w-16 pr-1.5 text-right shrink-0">
-                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-rose-500 text-white font-mono text-[9px] sm:text-[10px] font-bold shadow-xs">
-                      <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
-                      {{ currentNowTimeFormatted }}
-                    </span>
-                  </div>
-                  <!-- Glowing Red Laser Bead at Axis Joint -->
-                  <div class="w-2.5 h-2.5 rounded-full bg-rose-500 ring-3 ring-rose-200 dark:ring-rose-950 -ml-1.25 z-40 shrink-0"></div>
-                  <!-- Slicing Red Laser Line (Continuous across all columns) -->
-                  <div class="flex-1 h-[2px] bg-rose-500 shadow-sm relative">
-                    <div class="absolute inset-0 bg-rose-500/40 blur-xs"></div>
-                  </div>
-                </div>
-
-                <!-- Event Cards (Positioned Absolutely with Multi-Column Overlap Allocation) -->
-                <template v-for="item in timedGridItems" :key="item.id">
-                  <div
-                    @click.stop="handleDayItemClick(item)"
-                    :class="[
-                      'absolute rounded-xl transition-all cursor-pointer shadow-2xs hover:shadow-md hover:z-20 p-2 sm:p-2.5 flex flex-col justify-between overflow-hidden group border select-none',
-                      item.type === 'schedule'
-                        ? 'bg-indigo-50/95 dark:bg-indigo-950/70 border-indigo-200/90 dark:border-indigo-800/80 hover:border-indigo-400 dark:hover:border-indigo-600'
-                        : item.type === 'habit'
-                        ? item.completed
-                          ? 'bg-emerald-50/90 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-800'
-                          : 'bg-amber-50/90 dark:bg-amber-950/50 border-amber-200 dark:border-amber-800 hover:border-amber-400'
-                        : item.completed
-                        ? 'opacity-60 bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700'
-                        : 'bg-blue-50/90 dark:bg-blue-950/60 border-blue-200/90 dark:border-blue-800/80 hover:border-blue-400'
-                    ]"
-                    :style="{
-                      top: `${item.top}px`,
-                      height: `${item.height}px`,
-                      left: `calc(${item.leftPercent}% + 2px)`,
-                      width: `calc(${item.widthPercent}% - 4px)`,
-                      borderLeftWidth: '4px',
-                      borderLeftColor: item.projectColor || (item.type === 'schedule' ? '#6366f1' : item.type === 'habit' ? '#f59e0b' : '#3b82f6')
-                    }"
-                    :title="`${item.timeStr} ${item.title} (${formatDuration(item.durationMinutes)})`"
-                  >
-                    <!-- Top Row: Time, Duration & Overlap Badge -->
-                    <div class="flex items-center justify-between gap-1 min-w-0">
-                      <div class="flex items-center gap-1.5 min-w-0">
-                        <CalendarDays v-if="item.type === 'schedule'" class="w-3 h-3 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                        <Sparkles v-else-if="item.type === 'habit'" class="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />
-                        <CheckSquare v-else class="w-3 h-3 text-blue-600 dark:text-blue-400 shrink-0" />
-
-                        <span class="font-mono text-[10px] sm:text-[11px] font-bold text-slate-800 dark:text-slate-200 truncate">
-                          {{ item.timeStr }}
+        <!-- Main Day Body: Timeline (Left) + Today's Todos (Right Side) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+          <!-- Left: Professional Continuous Time Grid & Adaptive Timeline -->
+          <div :class="typeFilters.todos ? 'lg:col-span-7 xl:col-span-8 min-w-0' : 'lg:col-span-12 min-w-0'">
+    <!-- Day Card: Professional Continuous Time Grid & Adaptive Timeline -->
+              <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 shadow-2xs space-y-4">
+                <!-- Timeline Header with Status, Jump-to-Now, and View Mode Switcher -->
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 flex-wrap gap-2">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-2xs">
+                      <Clock class="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-sm font-bold text-slate-800 dark:text-slate-100">{{ t('calendar.dayTimeline') }}</span>
+                        <span class="text-[11px] px-2 py-0.5 rounded-full font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                          {{ dayTimedEvents.length }}
                         </span>
                       </div>
-
-                      <div class="flex items-center gap-1 shrink-0">
-                        <span class="text-[9px] px-1.5 py-0.2 rounded font-medium bg-white/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700">
+                    </div>
+                  </div>
+      
+                  <div class="flex items-center gap-2 ml-auto">
+                    <!-- Jump to Now Button -->
+                    <button
+                      v-if="displayDays[0].isToday && dayTimelineMode === 'grid'"
+                      type="button"
+                      @click="scrollToCurrentTime(true)"
+                      class="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-950/70 text-rose-600 dark:text-rose-400 font-semibold transition-all active:scale-95 shadow-2xs cursor-pointer"
+                      :title="t('calendar.jumpToNowTip')"
+                    >
+                      <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                      <span>{{ t('calendar.jumpToNow') }}</span>
+                    </button>
+      
+                    <!-- View Mode Toggle: Grid vs Agenda List -->
+                    <div class="flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs">
+                      <button
+                        type="button"
+                        @click="setDayTimelineMode('grid')"
+                        :class="[
+                          'px-2.5 py-1 rounded-md font-medium transition-all flex items-center gap-1 cursor-pointer',
+                          dayTimelineMode === 'grid'
+                            ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-2xs font-semibold'
+                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                        ]"
+                        :title="t('calendar.gridTip')"
+                      >
+                        <LayoutGrid class="w-3.5 h-3.5" />
+                        <span>{{ t('calendar.modeGrid') }}</span>
+                      </button>
+                      <button
+                        type="button"
+                        @click="setDayTimelineMode('list')"
+                        :class="[
+                          'px-2.5 py-1 rounded-md font-medium transition-all flex items-center gap-1 cursor-pointer',
+                          dayTimelineMode === 'list'
+                            ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-2xs font-semibold'
+                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                        ]"
+                        :title="t('calendar.listTip')"
+                      >
+                        <List class="w-3.5 h-3.5" />
+                        <span>{{ t('calendar.modeList') }}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+      
+                <!-- All-day and Flexible section (if any) -->
+                <div
+                  v-if="dayAllDayEvents.length > 0"
+                  class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-850/60 border border-slate-200/80 dark:border-slate-800 flex-wrap"
+                >
+                  <div class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-xs font-bold px-1 shrink-0">
+                    <Calendar class="w-3.5 h-3.5 text-blue-500" />
+                    <span>{{ t('calendar.allDayEvents') }}</span>
+                  </div>
+                  <div class="flex flex-wrap gap-2 flex-1 min-w-0">
+                    <div
+                      v-for="item in dayAllDayEvents"
+                      :key="item.id"
+                      @click="handleDayItemClick(item)"
+                      class="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer transition-all hover:shadow-xs active:scale-95 border"
+                      :class="[
+                        item.type === 'schedule'
+                          ? 'bg-indigo-50/80 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800'
+                          : item.completed
+                          ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                          : 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+                      ]"
+                    >
+                      <button
+                        v-if="item.type === 'habit'"
+                        type="button"
+                        @click.stop="$emit('toggle-habit', { habitId: item.data.id, date: displayDays[0].dateStr })"
+                        class="w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0"
+                        :class="item.completed ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-amber-400 bg-white dark:bg-slate-800'"
+                      >
+                        <Check v-if="item.completed" class="w-2.5 h-2.5 stroke-[3]" />
+                      </button>
+                      <span class="truncate max-w-[180px]">{{ item.title }}</span>
+                      <span class="text-[10px] opacity-75 font-mono">{{ t('calendar.allDay') }}</span>
+                    </div>
+                  </div>
+                </div>
+      
+                <!-- MODE 1: Continuous Time Grid (The Google Calendar / FullCalendar Model) -->
+                <div
+                  v-if="dayTimelineMode === 'grid'"
+                  ref="dayGridScrollContainer"
+                  class="relative max-h-[580px] sm:max-h-[640px] overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-inner select-none scroll-smooth"
+                >
+                  <!-- 24-Hour Continuous Canvas: 1 hour = 60px, total height = 1440px -->
+                  <div class="relative w-full h-[1440px]">
+                    <!-- Left Time Gutter (Hour Labels) -->
+                    <div class="absolute left-0 top-0 bottom-0 w-12 sm:w-16 border-r border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/80 z-10 pointer-events-none select-none">
+                      <template v-for="hour in 24" :key="`hour-lbl-${hour}`">
+                        <span
+                          class="absolute right-2 -translate-y-1/2 text-[10px] sm:text-[11px] font-mono font-medium text-slate-400 dark:text-slate-500"
+                          :style="{ top: `${(hour - 1) * 60}px` }"
+                        >
+                          {{ String(hour - 1).padStart(2, '0') }}:00
+                        </span>
+                      </template>
+                    </div>
+      
+                    <!-- Main Grid Lines (Across Content Canvas) -->
+                    <div
+                      class="absolute left-12 sm:left-16 right-0 top-0 bottom-0 cursor-pointer"
+                      @dblclick="handleGridDoubleClick"
+                      :title="t('calendar.doubleClickTip')"
+                    >
+                      <!-- Horizontal divider lines for each hour and half-hour -->
+                      <template v-for="hour in 24" :key="`hour-line-${hour}`">
+                        <!-- Whole Hour Solid Line -->
+                        <div
+                          class="absolute left-0 right-0 h-[1px] bg-slate-100 dark:bg-slate-800/80 pointer-events-none"
+                          :style="{ top: `${(hour - 1) * 60}px` }"
+                        ></div>
+                        <!-- Half Hour Subtle Dashed Line -->
+                        <div
+                          class="absolute left-0 right-0 h-[1px] border-b border-dashed border-slate-100/70 dark:border-slate-800/40 pointer-events-none"
+                          :style="{ top: `${(hour - 1) * 60 + 30}px` }"
+                        ></div>
+                      </template>
+      
+                      <!-- Single Global Physical Now Indicator Line (Only on Today) -->
+                      <div
+                        v-if="displayDays[0].isToday"
+                        class="absolute -left-12 sm:-left-16 right-0 z-30 pointer-events-none flex items-center -translate-y-1/2 transition-all duration-300"
+                        :style="{ top: `${currentNowMinutes}px` }"
+                      >
+                        <!-- Left time pill badge in gutter -->
+                        <div class="w-12 sm:w-16 pr-1.5 text-right shrink-0">
+                          <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-rose-500 text-white font-mono text-[9px] sm:text-[10px] font-bold shadow-xs">
+                            <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
+                            {{ currentNowTimeFormatted }}
+                          </span>
+                        </div>
+                        <!-- Glowing Red Laser Bead at Axis Joint -->
+                        <div class="w-2.5 h-2.5 rounded-full bg-rose-500 ring-3 ring-rose-200 dark:ring-rose-950 -ml-1.25 z-40 shrink-0"></div>
+                        <!-- Slicing Red Laser Line (Continuous across all columns) -->
+                        <div class="flex-1 h-[2px] bg-rose-500 shadow-sm relative">
+                          <div class="absolute inset-0 bg-rose-500/40 blur-xs"></div>
+                        </div>
+                      </div>
+      
+                      <!-- Event Cards (Positioned Absolutely with Multi-Column Overlap Allocation) -->
+                      <template v-for="item in timedGridItems" :key="item.id">
+                        <div
+                          @click.stop="handleDayItemClick(item)"
+                          :class="[
+                            'absolute rounded-xl transition-all cursor-pointer shadow-2xs hover:shadow-md hover:z-20 p-2 sm:p-2.5 flex flex-col justify-between overflow-hidden group border select-none',
+                            item.type === 'schedule'
+                              ? 'bg-indigo-50/95 dark:bg-indigo-950/70 border-indigo-200/90 dark:border-indigo-800/80 hover:border-indigo-400 dark:hover:border-indigo-600'
+                              : item.type === 'habit'
+                              ? item.completed
+                                ? 'bg-emerald-50/90 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-800'
+                                : 'bg-amber-50/90 dark:bg-amber-950/50 border-amber-200 dark:border-amber-800 hover:border-amber-400'
+                              : item.completed
+                              ? 'opacity-60 bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700'
+                              : 'bg-blue-50/90 dark:bg-blue-950/60 border-blue-200/90 dark:border-blue-800/80 hover:border-blue-400'
+                          ]"
+                          :style="{
+                            top: `${item.top}px`,
+                            height: `${item.height}px`,
+                            left: `calc(${item.leftPercent}% + 2px)`,
+                            width: `calc(${item.widthPercent}% - 4px)`,
+                            borderLeftWidth: '4px',
+                            borderLeftColor: item.projectColor || (item.type === 'schedule' ? '#6366f1' : item.type === 'habit' ? '#f59e0b' : '#3b82f6')
+                          }"
+                          :title="`${item.timeStr} ${item.title} (${formatDuration(item.durationMinutes)})`"
+                        >
+                          <!-- Top Row: Time, Duration & Overlap Badge -->
+                          <div class="flex items-center justify-between gap-1 min-w-0">
+                            <div class="flex items-center gap-1.5 min-w-0">
+                              <CalendarDays v-if="item.type === 'schedule'" class="w-3 h-3 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                              <Sparkles v-else-if="item.type === 'habit'" class="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />
+                              <CheckSquare v-else class="w-3 h-3 text-blue-600 dark:text-blue-400 shrink-0" />
+      
+                              <span class="font-mono text-[10px] sm:text-[11px] font-bold text-slate-800 dark:text-slate-200 truncate">
+                                {{ item.timeStr }}
+                              </span>
+                            </div>
+      
+                            <div class="flex items-center gap-1 shrink-0">
+                              <span class="text-[9px] px-1.5 py-0.2 rounded font-medium bg-white/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700">
+                                {{ formatDuration(item.durationMinutes) }}
+                              </span>
+                            </div>
+                          </div>
+      
+                          <!-- Middle / Main Content -->
+                          <div class="min-w-0 mt-0.5">
+                            <div class="flex items-center gap-1.5">
+                              <!-- Checkbox for todo/habit -->
+                              <button
+                                v-if="item.type === 'todo'"
+                                type="button"
+                                @click.stop="$emit('toggle-todo', item.data.id)"
+                                class="w-3.5 h-3.5 rounded border border-slate-400 dark:border-slate-600 flex items-center justify-center shrink-0 hover:bg-slate-200 dark:hover:bg-slate-700"
+                                :class="item.completed ? 'bg-emerald-600 border-emerald-600 text-white' : ''"
+                              >
+                                <Check v-if="item.completed" class="w-2.5 h-2.5 stroke-[3]" />
+                              </button>
+                              <button
+                                v-else-if="item.type === 'habit'"
+                                type="button"
+                                @click.stop="$emit('toggle-habit', { habitId: item.data.id, date: displayDays[0].dateStr })"
+                                class="w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0"
+                                :class="item.completed ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-amber-400 bg-white dark:bg-slate-800'"
+                              >
+                                <Check v-if="item.completed" class="w-2.5 h-2.5 stroke-[3]" />
+                              </button>
+      
+                              <span
+                                :class="[
+                                  'font-bold text-xs text-slate-900 dark:text-slate-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors',
+                                  item.completed ? 'line-through text-slate-400 dark:text-slate-500' : ''
+                                ]"
+                              >
+                                {{ item.title }}
+                              </span>
+                            </div>
+      
+                            <!-- Subtitle info if card height >= 48px -->
+                            <div
+                              v-if="item.height >= 48 && (item.projectName || item.data?.location)"
+                              class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1.5 truncate"
+                            >
+                              <span
+                                v-if="item.projectColor"
+                                class="w-1.5 h-1.5 rounded-full shrink-0"
+                                :style="{ backgroundColor: item.projectColor }"
+                              ></span>
+                              <span v-if="item.projectName" class="truncate">{{ item.projectName }}</span>
+                              <span v-if="item.data?.location" class="truncate text-slate-400">📍 {{ item.data.location }}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </template>
+      
+                      <!-- Empty overlay prompt if no timed events -->
+                      <div
+                        v-if="timedGridItems.length === 0"
+                        class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none space-y-2 select-none px-4 text-center"
+                      >
+                        <div class="w-10 h-10 rounded-full bg-slate-100/90 dark:bg-slate-800/90 flex items-center justify-center text-slate-400 dark:text-slate-500 mb-0.5">
+                          <Clock class="w-5 h-5 stroke-[1.5]" />
+                        </div>
+                        <span class="text-xs font-medium text-slate-400 dark:text-slate-500 tracking-wide">{{ t('calendar.emptyTimelineDesc') }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+      
+                <!-- MODE 2: Chronological Agenda List View (with Clear Overlap Warnings) -->
+                <div v-else class="space-y-3">
+                  <template v-if="agendaListItems.length > 0">
+                    <template v-for="(item, idx) in agendaListItems" :key="item.id">
+                      <!-- If Today and current time lies between previous item and this item, render Single Now Divider -->
+                      <div
+                        v-if="displayDays[0].isToday && shouldRenderNowDividerBefore(idx)"
+                        class="flex items-center gap-2 py-1.5"
+                      >
+                        <div class="h-[2px] bg-rose-500/80 flex-1 rounded-full relative">
+                          <div class="absolute left-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-rose-500"></div>
+                        </div>
+                        <span class="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-500 text-white shadow-xs shrink-0 select-none">
+                          <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
+                          {{ t('calendar.currentTime', { time: currentNowTimeFormatted }) }}
+                        </span>
+                        <div class="h-[2px] bg-rose-500/80 w-8 rounded-full"></div>
+                      </div>
+      
+                      <!-- Agenda Item Card -->
+                      <div
+                        @click="handleDayItemClick(item)"
+                        :class="[
+                          'p-3 sm:p-3.5 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-xs flex items-center justify-between gap-3 group relative select-none',
+                          item.type === 'schedule'
+                            ? 'border-indigo-200/80 dark:border-indigo-900/70 bg-indigo-50/40 dark:bg-indigo-950/20 hover:border-indigo-300'
+                            : item.type === 'habit'
+                            ? item.completed
+                              ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/60'
+                              : 'bg-amber-50/40 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/60'
+                            : item.completed
+                            ? 'opacity-60 bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800'
+                            : 'bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/60'
+                        ]"
+                        :style="{
+                          borderLeftWidth: '4px',
+                          borderLeftColor: item.projectColor || (item.type === 'schedule' ? '#6366f1' : item.type === 'habit' ? '#f59e0b' : '#3b82f6')
+                        }"
+                      >
+                        <div class="flex items-center gap-3 min-w-0">
+                          <!-- Action checkbox or icon -->
+                          <button
+                            v-if="item.type === 'todo'"
+                            type="button"
+                            @click.stop="$emit('toggle-todo', item.data.id)"
+                            class="w-5 h-5 rounded-md border flex items-center justify-center shrink-0 hover:bg-slate-200 dark:hover:bg-slate-700"
+                            :class="item.completed ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-400 dark:border-slate-600'"
+                          >
+                            <Check v-if="item.completed" class="w-3.5 h-3.5 stroke-[3]" />
+                          </button>
+                          <button
+                            v-else-if="item.type === 'habit'"
+                            type="button"
+                            @click.stop="$emit('toggle-habit', { habitId: item.data.id, date: displayDays[0].dateStr })"
+                            class="w-5 h-5 rounded-md border flex items-center justify-center shrink-0"
+                            :class="item.completed ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-amber-400 bg-white dark:bg-slate-800'"
+                          >
+                            <Check v-if="item.completed" class="w-3.5 h-3.5 stroke-[3]" />
+                          </button>
+                          <div
+                            v-else
+                            class="w-5 h-5 rounded-md bg-indigo-100 dark:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0"
+                          >
+                            <CalendarDays class="w-3.5 h-3.5" />
+                          </div>
+      
+                          <div class="min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
+                              <span class="font-mono text-xs font-bold text-slate-500 dark:text-slate-400 shrink-0">
+                                {{ item.timeStr }}
+                              </span>
+                              <span :class="['font-semibold text-xs sm:text-sm truncate text-slate-800 dark:text-slate-100', item.completed ? 'line-through text-slate-400' : '']">
+                                {{ item.title }}
+                              </span>
+                            </div>
+                            <div v-if="item.projectName || item.data?.location" class="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1.5 truncate">
+                              <span v-if="item.projectName" class="truncate">{{ item.projectName }}</span>
+                              <span v-if="item.data?.location" class="truncate">📍 {{ item.data.location }}</span>
+                            </div>
+                          </div>
+                        </div>
+      
+                        <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold shrink-0 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
                           {{ formatDuration(item.durationMinutes) }}
                         </span>
                       </div>
+                    </template>
+                  </template>
+      
+                  <!-- Empty State for List Mode -->
+                  <div
+                    v-else
+                    class="py-8 text-center space-y-2.5"
+                  >
+                    <div class="w-11 h-11 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
+                      <Clock class="w-5 h-5" />
                     </div>
-
-                    <!-- Middle / Main Content -->
-                    <div class="min-w-0 mt-0.5">
-                      <div class="flex items-center gap-1.5">
-                        <!-- Checkbox for todo/habit -->
-                        <button
-                          v-if="item.type === 'todo'"
-                          type="button"
-                          @click.stop="$emit('toggle-todo', item.data.id)"
-                          class="w-3.5 h-3.5 rounded border border-slate-400 dark:border-slate-600 flex items-center justify-center shrink-0 hover:bg-slate-200 dark:hover:bg-slate-700"
-                          :class="item.completed ? 'bg-emerald-600 border-emerald-600 text-white' : ''"
-                        >
-                          <Check v-if="item.completed" class="w-2.5 h-2.5 stroke-[3]" />
-                        </button>
-                        <button
-                          v-else-if="item.type === 'habit'"
-                          type="button"
-                          @click.stop="$emit('toggle-habit', { habitId: item.data.id, date: displayDays[0].dateStr })"
-                          class="w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0"
-                          :class="item.completed ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-amber-400 bg-white dark:bg-slate-800'"
-                        >
-                          <Check v-if="item.completed" class="w-2.5 h-2.5 stroke-[3]" />
-                        </button>
-
-                        <span
-                          :class="[
-                            'font-bold text-xs text-slate-900 dark:text-slate-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors',
-                            item.completed ? 'line-through text-slate-400 dark:text-slate-500' : ''
-                          ]"
-                        >
-                          {{ item.title }}
-                        </span>
+                    <div class="space-y-1">
+                      <div class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                        {{ t('calendar.emptyTimeline') }}
                       </div>
-
-                      <!-- Subtitle info if card height >= 48px -->
-                      <div
-                        v-if="item.height >= 48 && (item.projectName || item.data?.location)"
-                        class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1.5 truncate"
-                      >
-                        <span
-                          v-if="item.projectColor"
-                          class="w-1.5 h-1.5 rounded-full shrink-0"
-                          :style="{ backgroundColor: item.projectColor }"
-                        ></span>
-                        <span v-if="item.projectName" class="truncate">{{ item.projectName }}</span>
-                        <span v-if="item.data?.location" class="truncate text-slate-400">📍 {{ item.data.location }}</span>
+                      <div class="text-xs text-slate-400 max-w-sm mx-auto px-4">
+                        {{ t('calendar.emptyTimelineDesc') }}
                       </div>
                     </div>
                   </div>
-                </template>
-
-                <!-- Empty overlay prompt if no timed events -->
-                <div
-                  v-if="timedGridItems.length === 0"
-                  class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none space-y-2 select-none px-4 text-center"
-                >
-                  <div class="w-10 h-10 rounded-full bg-slate-100/90 dark:bg-slate-800/90 flex items-center justify-center text-slate-400 dark:text-slate-500 mb-0.5">
-                    <Clock class="w-5 h-5 stroke-[1.5]" />
-                  </div>
-                  <span class="text-xs font-medium text-slate-400 dark:text-slate-500 tracking-wide">{{ t('calendar.emptyTimelineDesc') }}</span>
                 </div>
               </div>
-            </div>
           </div>
 
-          <!-- MODE 2: Chronological Agenda List View (with Clear Overlap Warnings) -->
-          <div v-else class="space-y-3">
-            <template v-if="agendaListItems.length > 0">
-              <template v-for="(item, idx) in agendaListItems" :key="item.id">
-                <!-- If Today and current time lies between previous item and this item, render Single Now Divider -->
-                <div
-                  v-if="displayDays[0].isToday && shouldRenderNowDividerBefore(idx)"
-                  class="flex items-center gap-2 py-1.5"
-                >
-                  <div class="h-[2px] bg-rose-500/80 flex-1 rounded-full relative">
-                    <div class="absolute left-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-rose-500"></div>
+          <!-- Right: 全天待办事项独立卡片 (侧边栏布局) -->
+          <div
+            v-if="typeFilters.todos"
+            class="lg:col-span-5 xl:col-span-4 min-w-0 lg:sticky lg:top-4"
+          >
+    <!-- 全天待办事项独立卡片 -->
+              <div
+                v-if="typeFilters.todos"
+                class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-2xs space-y-3"
+              >
+                <div class="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-slate-800">
+                  <div class="flex items-center gap-1.5">
+                    <CheckSquare class="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate">
+                      {{ t('calendar.dailyTodoList', { count: getTodosForDay(displayDays[0].dateStr).length }) }}
+                    </span>
                   </div>
-                  <span class="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-500 text-white shadow-xs shrink-0 select-none">
-                    <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
-                    {{ t('calendar.currentTime', { time: currentNowTimeFormatted }) }}
-                  </span>
-                  <div class="h-[2px] bg-rose-500/80 w-8 rounded-full"></div>
-                </div>
-
-                <!-- Agenda Item Card -->
-                <div
-                  @click="handleDayItemClick(item)"
-                  :class="[
-                    'p-3 sm:p-3.5 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-xs flex items-center justify-between gap-3 group relative select-none',
-                    item.type === 'schedule'
-                      ? 'border-indigo-200/80 dark:border-indigo-900/70 bg-indigo-50/40 dark:bg-indigo-950/20 hover:border-indigo-300'
-                      : item.type === 'habit'
-                      ? item.completed
-                        ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/60'
-                        : 'bg-amber-50/40 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/60'
-                      : item.completed
-                      ? 'opacity-60 bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800'
-                      : 'bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/60'
-                  ]"
-                  :style="{
-                    borderLeftWidth: '4px',
-                    borderLeftColor: item.projectColor || (item.type === 'schedule' ? '#6366f1' : item.type === 'habit' ? '#f59e0b' : '#3b82f6')
-                  }"
-                >
-                  <div class="flex items-center gap-3 min-w-0">
-                    <!-- Action checkbox or icon -->
+                  <div class="flex items-center gap-1.5 shrink-0">
                     <button
-                      v-if="item.type === 'todo'"
-                      type="button"
-                      @click.stop="$emit('toggle-todo', item.data.id)"
-                      class="w-5 h-5 rounded-md border flex items-center justify-center shrink-0 hover:bg-slate-200 dark:hover:bg-slate-700"
-                      :class="item.completed ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-400 dark:border-slate-600'"
+                      @click="quickAddTodo(displayDays[0].dateStr)"
+                      class="p-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs transition-colors cursor-pointer"
+                      :title="t('calendar.addTodo')"
                     >
-                      <Check v-if="item.completed" class="w-3.5 h-3.5 stroke-[3]" />
+                      <Plus class="w-3.5 h-3.5" />
                     </button>
                     <button
-                      v-else-if="item.type === 'habit'"
-                      type="button"
-                      @click.stop="$emit('toggle-habit', { habitId: item.data.id, date: displayDays[0].dateStr })"
-                      class="w-5 h-5 rounded-md border flex items-center justify-center shrink-0"
-                      :class="item.completed ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-amber-400 bg-white dark:bg-slate-800'"
-                    >
-                      <Check v-if="item.completed" class="w-3.5 h-3.5 stroke-[3]" />
+                      @click="$emit('switch-tab', 'todos')"
+                    class="text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-0.5 cursor-pointer"
+                  >
+                    <span>{{ t('calendar.goToTodoView') }}</span>
+                    <ChevronRight class="w-3.5 h-3.5" />
                     </button>
-                    <div
-                      v-else
-                      class="w-5 h-5 rounded-md bg-indigo-100 dark:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0"
-                    >
-                      <CalendarDays class="w-3.5 h-3.5" />
+                  </div>
+                </div>
+      
+                <div v-if="getTodosForDay(displayDays[0].dateStr).length > 0" class="space-y-1.5 max-h-[580px] sm:max-h-[640px] overflow-y-auto pr-1">
+                  <div
+                    v-for="todo in getTodosForDay(displayDays[0].dateStr)"
+                    :key="todo.id"
+                    @click="$emit('open-todo', todo)"
+                    :class="[
+                      'flex items-center justify-between p-2.5 rounded-xl border text-xs cursor-pointer active:scale-[0.99] transition-all',
+                      todo.completed
+                        ? 'opacity-60 bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 text-slate-500'
+                        : todo.importance && todo.importance >= 8
+                        ? 'bg-rose-50/60 text-rose-800 border-rose-200 dark:bg-rose-950/30 dark:text-rose-300 dark:border-rose-900'
+                        : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:border-slate-300'
+                    ]"
+                  >
+                    <div class="flex items-center gap-2.5 min-w-0">
+                      <button
+                        type="button"
+                        @click.stop="$emit('toggle-todo', todo.id)"
+                        class="w-4 h-4 rounded border border-slate-400 dark:border-slate-600 flex items-center justify-center shrink-0 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                        :class="todo.completed ? 'bg-emerald-600 border-emerald-600 text-white' : ''"
+                      >
+                        <Check v-if="todo.completed" class="w-3 h-3 stroke-[3]" />
+                      </button>
+                      <span
+                        v-if="getTodoTimeDisplay(todo)"
+                        class="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 shrink-0"
+                      >
+                        🕒 {{ getTodoTimeDisplay(todo) }}
+                      </span>
+                      <span :class="['font-medium truncate', todo.completed ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-800 dark:text-slate-100']">
+                        {{ todo.title }}
+                      </span>
+                      <span
+                        v-if="todo.importance"
+                        :class="['text-[10px] font-mono font-bold px-1.5 py-0.2 rounded border shrink-0', getPriorityStyle(todo.importance).badgeClass]"
+                      >
+                        {{ getPriorityStyle(todo.importance).shortLabel ? `P${todo.importance} · ${getPriorityStyle(todo.importance).shortLabel}` : `P${todo.importance}` }}
+                      </span>
                     </div>
-
-                    <div class="min-w-0">
-                      <div class="flex items-center gap-2 flex-wrap">
-                        <span class="font-mono text-xs font-bold text-slate-500 dark:text-slate-400 shrink-0">
-                          {{ item.timeStr }}
-                        </span>
-                        <span :class="['font-semibold text-xs sm:text-sm truncate text-slate-800 dark:text-slate-100', item.completed ? 'line-through text-slate-400' : '']">
-                          {{ item.title }}
-                        </span>
-                      </div>
-                      <div v-if="item.projectName || item.data?.location" class="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1.5 truncate">
-                        <span v-if="item.projectName" class="truncate">{{ item.projectName }}</span>
-                        <span v-if="item.data?.location" class="truncate">📍 {{ item.data.location }}</span>
-                      </div>
+      
+                    <div class="flex items-center gap-2 shrink-0">
+                      <span v-if="getProjectName(todo.projectId)" class="text-[11px] text-slate-400">
+                        {{ getProjectName(todo.projectId) }}
+                      </span>
+                      <span
+                        v-if="getTodoDayDateBadge(todo, displayDays[0].dateStr)"
+                        class="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400 font-bold"
+                      >
+                        {{ getTodoDayDateBadge(todo, displayDays[0].dateStr) }}
+                      </span>
                     </div>
                   </div>
-
-                  <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold shrink-0 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
-                    {{ formatDuration(item.durationMinutes) }}
-                  </span>
                 </div>
-              </template>
-            </template>
-
-            <!-- Empty State for List Mode -->
-            <div
-              v-else
-              class="py-8 text-center space-y-2.5"
-            >
-              <div class="w-11 h-11 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
-                <Clock class="w-5 h-5" />
-              </div>
-              <div class="space-y-1">
-                <div class="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  {{ t('calendar.emptyTimeline') }}
-                </div>
-                <div class="text-xs text-slate-400 max-w-sm mx-auto px-4">
-                  {{ t('calendar.emptyTimelineDesc') }}
+                <div
+                  v-else
+                  @click="$emit('switch-tab', 'todos')"
+                  class="text-xs text-slate-400 py-3.5 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-xl hover:border-emerald-300 dark:hover:border-emerald-700/60 hover:text-emerald-600 dark:hover:text-emerald-400 cursor-pointer transition-all"
+                >
+                  {{ t('calendar.emptyDailyTodo') }}
                 </div>
               </div>
-            </div>
           </div>
         </div>
       </template>
@@ -1193,10 +1228,14 @@
       >
         <!-- Day Card Header -->
         <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
-          <div class="flex items-center gap-2.5">
+          <div
+            class="flex items-center gap-2.5 cursor-pointer group"
+            @click="jumpToDayView(day.dateStr)"
+            title="点击进入单日视图"
+          >
             <span
               :class="[
-                'text-base font-bold px-2 py-0.5 rounded-lg flex items-center justify-center',
+                'text-base font-bold px-2 py-0.5 rounded-lg flex items-center justify-center transition-transform group-hover:scale-105',
                 day.isToday
                   ? 'bg-blue-600 text-white'
                   : day.isWeekend
@@ -1207,11 +1246,12 @@
               {{ day.dayNumber }}
             </span>
             <div>
-              <div class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+              <div class="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-blue-600 flex items-center gap-1.5">
                 <span>{{ day.weekdayName }}</span>
                 <span v-if="day.isToday" class="text-xs font-medium text-blue-600 dark:text-blue-400">
                   ({{ t('calendar.today') }})
                 </span>
+                <ChevronRight class="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
               <div class="text-xs text-slate-400 font-mono">
                 {{ day.dateStr }}
@@ -2523,11 +2563,7 @@ function goToToday() {
 }
 
 function handleDayCellClick(dateStr: string) {
-  selectedMobileDate.value = dateStr
-  // 注意：在月视图/双周视图中点击具体日期仅切换下方抽屉详情，不再污染全局 currentBaseDate，避免切换至双日/多日视图时日期偏移跳变
-  if (typeof window !== 'undefined' && window.innerWidth >= 640) {
-    emit('open-journal', dateStr)
-  }
+  jumpToDayView(dateStr)
 }
 
 function jumpToDayView(dateStr: string) {
