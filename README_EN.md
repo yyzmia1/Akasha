@@ -112,7 +112,7 @@ This project can be deployed on your **personal computer** or **cloud server**, 
 #### Option A: Run locally with Node.js
 ```bash
 # 1. Clone repository and navigate into directory
-git clone https://github.com/yyzmiao/Akasha.git
+git clone https://github.com/yyzmia1/Akasha.git
 cd Akasha
 
 # 2. Install dependencies
@@ -135,7 +135,7 @@ docker compose up -d --build
 #### Step 1: Start container with Docker Compose
 ```bash
 # Clone the repository on your server
-git clone https://github.com/yyzmiao/Akasha.git
+git clone https://github.com/yyzmia1/Akasha.git
 cd Akasha
 
 # Launch container service (mapped to host port 8080)

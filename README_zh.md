@@ -119,7 +119,7 @@
 #### 方式 A：Node.js 本地极速运行
 ```bash
 # 1. 克隆代码仓库并进入目录
-git clone https://github.com/yyzmiao/Akasha.git
+git clone https://github.com/yyzmia1/Akasha.git
 cd Akasha
 
 # 2. 安装项目依赖
@@ -142,7 +142,7 @@ docker compose up -d --build
 #### 第一步：Docker 容器化启动
 ```bash
 # 在服务器克隆代码并进入目录
-git clone https://github.com/yyzmiao/Akasha.git
+git clone https://github.com/yyzmia1/Akasha.git
 cd Akasha
 
 # 启动容器服务 (包含 Akasha 前端与 PocketBase 实时同步后端)
